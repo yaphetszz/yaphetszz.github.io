@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>kali linux下PM3环境配置 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="kali linux下PM3环境配置">
+  <meta name="twitter:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！ 前段时间入手了proxmark3 rdv4，好像目前还是最新版本，不过听说马上又要有新版本了(2024更新：4.1早就出了，听说又有新版本了)，这次买的是官方标配加蓝牙拓展模块
+看起来研制还阔以，迫不及待开始搭环境准备下手
+首先看到了官方文档的官方wiki
+直接在kali上开搞，毕竟kali也是常用系统么
+根据官网指示首先输入如下命令安装相关依赖
+sudo apt install git build-essential libreadline5 libreadline-dev gcc-arm-none-eabi libusb-0.1-4 libusb-dev libqt4-dev ncurses-dev perl pkg-config libpcsclite-dev pcscd 然后再git clone下来以后开始编译，成功后如图所示：
+之后将PM3连接到kali中，我的就是这样的，连到了虚拟机，希望不要出什么岔子，我可不希望几千块买的东西变砖
+我们继续跟着教程走，输入 dmesg | grep -i usb
+我的出现了一大串…
+根据提到的关键字检索后发现如下
+此时根据教程提示我们跳到下一步
+然后通过以下命令进行固件升级操作
+这时候我们来执行命令看看PM3是否正常了
+惊了，居然报错了，那问题是什么呢，报的是不正确的端口，通过之前的dmesg | grep -i usb命令再来看一下，原来端口变了…以前在windows上玩盗版PM3也遇到过，插拔以后COM号会加1
+那让我们重新输一次命令OK了！
+完美！！！
+也就是说到此时我们kali Linux上的PM3环境已经完全配置完成了，之后就可以开始搞事情了哈哈哈哈
+成功把自己差点变砖的PM3rdv4给救了回来，我TM真是个天才！！！
+让我们来看看读卡效果，
+读卡也读到了，简直完美！入门环境搭建教程就到这边，后续会根据实际情况写一些其他的教程。（其实这是一次救砖教程，之前因为一番神奇的操作导致我的PM3变砖，想想这400美刀买回来的东西就这么变砖了是真的难受！还好又在一番神器的操作下救了回来，果然电子产品出问题解决问题三部曲：重启重装重买）">
+
+    <meta property="og:url" content="http://127.0.0.1:1313/posts/kali-linux%E4%B8%8Bpm3%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="kali linux下PM3环境配置">
+  <meta property="og:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！ 前段时间入手了proxmark3 rdv4，好像目前还是最新版本，不过听说马上又要有新版本了(2024更新：4.1早就出了，听说又有新版本了)，这次买的是官方标配加蓝牙拓展模块
+看起来研制还阔以，迫不及待开始搭环境准备下手
+首先看到了官方文档的官方wiki
+直接在kali上开搞，毕竟kali也是常用系统么
+根据官网指示首先输入如下命令安装相关依赖
+sudo apt install git build-essential libreadline5 libreadline-dev gcc-arm-none-eabi libusb-0.1-4 libusb-dev libqt4-dev ncurses-dev perl pkg-config libpcsclite-dev pcscd 然后再git clone下来以后开始编译，成功后如图所示：
+之后将PM3连接到kali中，我的就是这样的，连到了虚拟机，希望不要出什么岔子，我可不希望几千块买的东西变砖
+我们继续跟着教程走，输入 dmesg | grep -i usb
+我的出现了一大串…
+根据提到的关键字检索后发现如下
+此时根据教程提示我们跳到下一步
+然后通过以下命令进行固件升级操作
+这时候我们来执行命令看看PM3是否正常了
+惊了，居然报错了，那问题是什么呢，报的是不正确的端口，通过之前的dmesg | grep -i usb命令再来看一下，原来端口变了…以前在windows上玩盗版PM3也遇到过，插拔以后COM号会加1
+那让我们重新输一次命令OK了！
+完美！！！
+也就是说到此时我们kali Linux上的PM3环境已经完全配置完成了，之后就可以开始搞事情了哈哈哈哈
+成功把自己差点变砖的PM3rdv4给救了回来，我TM真是个天才！！！
+让我们来看看读卡效果，
+读卡也读到了，简直完美！入门环境搭建教程就到这边，后续会根据实际情况写一些其他的教程。（其实这是一次救砖教程，之前因为一番神奇的操作导致我的PM3变砖，想想这400美刀买回来的东西就这么变砖了是真的难受！还好又在一番神器的操作下救了回来，果然电子产品出问题解决问题三部曲：重启重装重买）">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2019-09-04T19:21:57+08:00">
+    <meta property="article:modified_time" content="2019-09-04T19:21:57+08:00">
+    <meta property="article:tag" content="环境配置">
+    <meta property="article:tag" content="硬件">
+    <meta property="article:tag" content="近源渗透">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://127.0.0.1:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">Home</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/posts/">posts</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">Tags</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">About</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://yaphetszz.github.com" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">kali linux下PM3环境配置</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Sep 4, 2019
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          2227 Words - 
+          
+          4 min read
+        </div>
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%A1%AC%E4%BB%B6/">硬件</a>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E8%BF%91%E6%BA%90%E6%B8%97%E9%80%8F/">近源渗透</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！</strong>
+前段时间入手了proxmark3 rdv4，好像目前还是最新版本，不过听说马上又要有新版本了(2024更新：4.1早就出了，听说又有新版本了)，这次买的是官方标配加蓝牙拓展模块</p>
+<p><img src="../index_files/048a3de0-c49a-45df-9084-ee5698a7ddbd.jpg" alt="img"></p>
+<p><img src="../index_files/4193f5e1-a708-4e06-84d5-05d8a9f2bdce.jpg" alt="img"></p>
+<p><img src="../index_files/772761cc-d7e1-4c8b-98c1-feb7da22a43a.jpg" alt="img"></p>
+<p>看起来研制还阔以，迫不及待开始搭环境准备下手</p>
+<p>首先看到了官方文档的<a href="https://github.com/Proxmark/proxmark3/wiki">官方wiki</a></p>
+<p>直接在kali上开搞，毕竟kali也是常用系统么</p>
+<p>根据官网指示首先输入如下命令安装相关依赖</p>
+<pre tabindex="0"><code>  sudo apt install git build-essential libreadline5 libreadline-dev gcc-arm-none-eabi libusb-0.1-4 libusb-dev libqt4-dev ncurses-dev perl pkg-config libpcsclite-dev pcscd
+</code></pre><p>然后再git clone下来以后开始编译，成功后如图所示：</p>
+<p><img src="../index_files/3891243b-bdf7-44eb-bf79-a4d4da603350.png" alt="img"></p>
+<p>之后将PM3连接到kali中，我的就是这样的，连到了虚拟机，希望不要出什么岔子，我可不希望几千块买的东西变砖</p>
+<p><img src="../index_files/b889a54c-576b-434a-b36e-e9b026b9f9db.png" alt="img"></p>
+<p>我们继续跟着教程走，输入 <code>dmesg | grep -i usb</code></p>
+<p>我的出现了一大串&hellip;</p>
+<p><img src="../index_files/059f8037-3ad5-4ca4-8b06-988588b1f960.png" alt="img"></p>
+<p>根据提到的关键字检索后发现如下</p>
+<p><img src="../index_files/2bd156c3-65aa-4947-aef1-bf2a65755e7c.png" alt="img"></p>
+<p>此时根据教程提示我们跳到下一步</p>
+<p><img src="../index_files/15d98960-dc01-4642-9499-20961c702b55.png" alt="img"></p>
+<p>然后通过以下命令进行固件升级操作</p>
+<p><img src="../index_files/2fba87d4-d506-4206-93e6-a105e80f1632.png" alt="img"></p>
+<p>这时候我们来执行命令看看PM3是否正常了</p>
+<p><img src="../index_files/ed2fa1cb-5b53-43dd-83f5-9369d26eea02.png" alt="img"></p>
+<p>惊了，居然报错了，那问题是什么呢，报的是不正确的端口，通过之前的dmesg | grep -i usb命令再来看一下，原来端口变了&hellip;以前在windows上玩盗版PM3也遇到过，插拔以后COM号会加1</p>
+<p><img src="../index_files/6b0b0fd0-fa2f-47d5-a669-775aeeeb9d6d.png" alt="img"></p>
+<p>那让我们重新输一次命令OK了！</p>
+<p><img src="../index_files/39f1566d-9f68-44f5-a35d-08b649a8d27a.png" alt="img"></p>
+<p>完美！！！</p>
+<p><img src="../index_files/36777762-34d2-438c-bd5a-5afcb7fb1bc1.png" alt="img"></p>
+<p>也就是说到此时我们kali Linux上的PM3环境已经完全配置完成了，之后就可以开始搞事情了哈哈哈哈</p>
+<p><img src="../index_files/d4c54ef5-f81e-4380-980f-7b1ac44d8299.png" alt="img"></p>
+<p>成功把自己差点变砖的PM3rdv4给救了回来，我TM真是个天才！！！</p>
+<p>让我们来看看读卡效果，</p>
+<p><img src="../index_files/8bc41e5a-5b1b-41fa-9750-88c0721c8102.png" alt="img"></p>
+<p>读卡也读到了，简直完美！入门环境搭建教程就到这边，后续会根据实际情况写一些其他的教程。（其实这是一次救砖教程，之前因为一番神奇的操作导致我的PM3变砖，想想这400美刀买回来的东西就这么变砖了是真的难受！还好又在一番神器的操作下救了回来，果然电子产品出问题解决问题三部曲：重启重装重买）</p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+  </body>
+</html>

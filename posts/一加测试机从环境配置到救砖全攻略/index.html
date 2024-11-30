@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>一加测试机从环境配置到救砖全攻略 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="一加测试机从环境配置到救砖全攻略">
+  <meta name="twitter:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+主要是公众号之前因为一些原因导致停更了，加上其他的原因很多东西其实都只沉积在个人笔记里了，刚好这两天入了个一加6T的测试机，配环境的时候也遇到了不少坑，但是在网上好像看文章别人配环境都是一马平川，就顺手把踩坑和解决的过程记录分享一下。
+首先装一下1&#43; USB Driver，官方论坛都能找到
+主要是为了让电脑检测到设备，然后安装驱动，官方论坛也有
+第一步就已经遇到坑了，如果电脑上有模拟器虚拟机啥的没关干净，存在僵尸进程的时候是无法安装成功的，建议重启后安装，否则就会卡在执行命令。
+如果这两个包找不到，建议直接去找一个一加万能工具包，正常的工具包测试不带毒，如果是第三方渠道下载的建议扫一扫，不排除被投毒的可能。因为我在下的时候就遇到一个疑似被投毒的工具包，后续如果有时间可能会出一篇分析文章。
+打开开发者选项，允许USB调试和OEM解锁，然后使用adb命令解锁BootLoader
+使用音量键选择解锁后电源键确认，这步忘了拍照了。然后重启进入系统需要重新打开开发者模式并启用USB调试
+接下来使用高级重启引导加载器，也可以用adb reboot recovery命令进行
+在设备管理器里确定驱动情况
+准备好TWRP的包，使用fastboot命令进入临时系统
+中间好像出了什么奇怪的问题，直接裂开
+怀疑是驱动也出了什么问题，似乎是高通的驱动问题？
+于是网上下了个一加万能工具包
+下完之后先把能装的驱动都装上，然后重刷一下系统，完成救砖之后降级了一下系统（原来是安卓11）降级到9或者10都可以，一加官方论坛是提供全量包的，可能由于系统版本原因导致无法刷入，降级之后重刷TWRP就成功了，可以改个语言，也可以不改
+进入高级-》Sideload-》滑块
+将完整的twrp包刷入
+之后重新进入恢复模式，重新进行sideload，刷入magisk
+重启后magisk已安装，直接su即可切换到root
+完成magisk安装后就已经root完了，现在就是一些基础的环境配置，建议装一下scrcpy这款神器，可以直接电脑操作，特别方便，截止发文的最新下载地址
+https://github.com/Genymobile/scrcpy/releases/tag/v1.23
+接下来安装rirucore，在github获取官方包后用magisk装一下，当然进入recovery模式和之前一样用sideload也可以刷入，下载地址
+https://github.com/RikkaApps/Riru/releases/
+重启之后没有出现新的软件图标，在magisk的模块中可以看到已经加载
+继续安装Edxposed的时候又出问题了，配个环境真就一直踩坑
+Edxposed检测不到Riru框架了，主要版本太新，还是降版本解决问题，使用25版本的Riru解决问题
+重启完就可以看到我们的Edxposed了
+根据提示安装完整版的Edxposed
+之后就是一些常规的环境配置，比如BP的证书导入，由于Android7开始系统更改了信任用户安装的证书的默认行为，应用程序仅信任系统级CA，所以需要对证书进行一定的更改才能使用（其实这个文章也有很多人写过了，我这里就再水一水）
+建议重新生成BP证书，在Proxy-Options中进行
+对证书进行一波简单操作
+通过ADB push将证书移到对应的目录下
+测试一下访问百度可以正常抓到包，证书安装成功
+接着再装一些基础环境比如frida等，可以按需进行配置
+顺便简单写一下frida的环境配置，首先去官网下载对应Python版本的frida包
+下载完成后进行安装，一般在运行setup.py的时候会自动下载frida对应的egg，通常来说因为大家都懂的原因下载速度会很慢，只要找到输出的下载目录直接把刚刚下载的egg文件拖进去再重新执行install命令就行">
+
+    <meta property="og:url" content="http://127.0.0.1:1313/posts/%E4%B8%80%E5%8A%A0%E6%B5%8B%E8%AF%95%E6%9C%BA%E4%BB%8E%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE%E5%88%B0%E6%95%91%E7%A0%96%E5%85%A8%E6%94%BB%E7%95%A5/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="一加测试机从环境配置到救砖全攻略">
+  <meta property="og:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+主要是公众号之前因为一些原因导致停更了，加上其他的原因很多东西其实都只沉积在个人笔记里了，刚好这两天入了个一加6T的测试机，配环境的时候也遇到了不少坑，但是在网上好像看文章别人配环境都是一马平川，就顺手把踩坑和解决的过程记录分享一下。
+首先装一下1&#43; USB Driver，官方论坛都能找到
+主要是为了让电脑检测到设备，然后安装驱动，官方论坛也有
+第一步就已经遇到坑了，如果电脑上有模拟器虚拟机啥的没关干净，存在僵尸进程的时候是无法安装成功的，建议重启后安装，否则就会卡在执行命令。
+如果这两个包找不到，建议直接去找一个一加万能工具包，正常的工具包测试不带毒，如果是第三方渠道下载的建议扫一扫，不排除被投毒的可能。因为我在下的时候就遇到一个疑似被投毒的工具包，后续如果有时间可能会出一篇分析文章。
+打开开发者选项，允许USB调试和OEM解锁，然后使用adb命令解锁BootLoader
+使用音量键选择解锁后电源键确认，这步忘了拍照了。然后重启进入系统需要重新打开开发者模式并启用USB调试
+接下来使用高级重启引导加载器，也可以用adb reboot recovery命令进行
+在设备管理器里确定驱动情况
+准备好TWRP的包，使用fastboot命令进入临时系统
+中间好像出了什么奇怪的问题，直接裂开
+怀疑是驱动也出了什么问题，似乎是高通的驱动问题？
+于是网上下了个一加万能工具包
+下完之后先把能装的驱动都装上，然后重刷一下系统，完成救砖之后降级了一下系统（原来是安卓11）降级到9或者10都可以，一加官方论坛是提供全量包的，可能由于系统版本原因导致无法刷入，降级之后重刷TWRP就成功了，可以改个语言，也可以不改
+进入高级-》Sideload-》滑块
+将完整的twrp包刷入
+之后重新进入恢复模式，重新进行sideload，刷入magisk
+重启后magisk已安装，直接su即可切换到root
+完成magisk安装后就已经root完了，现在就是一些基础的环境配置，建议装一下scrcpy这款神器，可以直接电脑操作，特别方便，截止发文的最新下载地址
+https://github.com/Genymobile/scrcpy/releases/tag/v1.23
+接下来安装rirucore，在github获取官方包后用magisk装一下，当然进入recovery模式和之前一样用sideload也可以刷入，下载地址
+https://github.com/RikkaApps/Riru/releases/
+重启之后没有出现新的软件图标，在magisk的模块中可以看到已经加载
+继续安装Edxposed的时候又出问题了，配个环境真就一直踩坑
+Edxposed检测不到Riru框架了，主要版本太新，还是降版本解决问题，使用25版本的Riru解决问题
+重启完就可以看到我们的Edxposed了
+根据提示安装完整版的Edxposed
+之后就是一些常规的环境配置，比如BP的证书导入，由于Android7开始系统更改了信任用户安装的证书的默认行为，应用程序仅信任系统级CA，所以需要对证书进行一定的更改才能使用（其实这个文章也有很多人写过了，我这里就再水一水）
+建议重新生成BP证书，在Proxy-Options中进行
+对证书进行一波简单操作
+通过ADB push将证书移到对应的目录下
+测试一下访问百度可以正常抓到包，证书安装成功
+接着再装一些基础环境比如frida等，可以按需进行配置
+顺便简单写一下frida的环境配置，首先去官网下载对应Python版本的frida包
+下载完成后进行安装，一般在运行setup.py的时候会自动下载frida对应的egg，通常来说因为大家都懂的原因下载速度会很慢，只要找到输出的下载目录直接把刚刚下载的egg文件拖进去再重新执行install命令就行">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2022-04-26T06:14:00+08:00">
+    <meta property="article:modified_time" content="2022-04-26T06:14:00+08:00">
+    <meta property="article:tag" content="环境配置">
+    <meta property="article:tag" content="安卓">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://127.0.0.1:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">Home</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/posts/">posts</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">Tags</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">About</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://yaphetszz.github.com" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">一加测试机从环境配置到救砖全攻略</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Apr 26, 2022
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          4504 Words - 
+          
+          9 min read
+        </div>
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E5%AE%89%E5%8D%93/">安卓</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！</strong></p>
+<p>主要是公众号之前因为一些原因导致停更了，加上其他的原因很多东西其实都只沉积在个人笔记里了，刚好这两天入了个一加6T的测试机，配环境的时候也遇到了不少坑，但是在网上好像看文章别人配环境都是一马平川，就顺手把踩坑和解决的过程记录分享一下。</p>
+<p>首先装一下1+ USB Driver，官方论坛都能找到</p>
+<p><img src="../index_files/39658ba5-f584-424a-b9d7-2a1df835d5f3.png" alt="img"></p>
+<p>主要是为了让电脑检测到设备，然后安装驱动，官方论坛也有</p>
+<p><img src="../index_files/5db877cd-69cc-4810-a60f-a4a7cef6ca1d.png" alt="img"></p>
+<p>第一步就已经遇到坑了，如果电脑上有模拟器虚拟机啥的没关干净，存在僵尸进程的时候是无法安装成功的，建议重启后安装，否则就会卡在执行命令。</p>
+<p>如果这两个包找不到，建议直接去找一个一加万能工具包，正常的工具包测试不带毒，如果是第三方渠道下载的建议扫一扫，不排除被投毒的可能。因为我在下的时候就遇到一个疑似被投毒的工具包，后续如果有时间可能会出一篇分析文章。</p>
+<p>打开开发者选项，允许USB调试和OEM解锁，然后使用adb命令解锁BootLoader</p>
+<p><img src="../index_files/29127671.jpg" alt="img"></p>
+<p>使用音量键选择解锁后电源键确认，这步忘了拍照了。然后重启进入系统需要重新打开开发者模式并启用USB调试</p>
+<p>接下来使用高级重启引导加载器，也可以用adb reboot recovery命令进行</p>
+<p><img src="../index_files/67ae3422-0a0c-4b8b-b9fd-279763e63154.jpg" alt="img"></p>
+<p>在设备管理器里确定驱动情况</p>
+<p><img src="../index_files/d0d3d009-e6fa-4a42-af25-585dd8a94c3b.png" alt="img"></p>
+<p>准备好TWRP的包，使用fastboot命令进入临时系统</p>
+<p><img src="../index_files/20e28879-5124-49ee-a8ad-7e3d847a1840.png" alt="img"></p>
+<p>中间好像出了什么奇怪的问题，直接裂开</p>
+<p><img src="../index_files/474cf285-7849-42a1-ba54-400d5031c520.jpg" alt="img"></p>
+<p>怀疑是驱动也出了什么问题，似乎是高通的驱动问题？</p>
+<p><img src="../index_files/4db22e0c-63a1-41ff-a5d1-147db143c90e.png" alt="img"></p>
+<p>于是网上下了个一加万能工具包</p>
+<p><img src="../index_files/ea3c3318-d1e4-42f4-b211-3f9467b52f4c.jpg" alt="img"></p>
+<p>下完之后先把能装的驱动都装上，然后重刷一下系统，完成救砖之后降级了一下系统（原来是安卓11）降级到9或者10都可以，一加官方论坛是提供全量包的，可能由于系统版本原因导致无法刷入，降级之后重刷TWRP就成功了，可以改个语言，也可以不改</p>
+<p><img src="../index_files/189d25e1-ed2f-45b7-a1a3-854dd367154d.jpg" alt="img"></p>
+<p>进入高级-》Sideload-》滑块</p>
+<p><img src="../index_files/16cc15a5-4298-494c-9dac-63a38b848014.jpg" alt="img"></p>
+<p>将完整的twrp包刷入</p>
+<p><img src="../index_files/4b8f1348-6e1b-4436-8cde-225382f73007.png" alt="img"></p>
+<p>之后重新进入恢复模式，重新进行sideload，刷入magisk</p>
+<p><img src="../index_files/b1105f71-7e4f-4703-ba34-c5387500e5b7.png" alt="img"></p>
+<p><img src="../index_files/528ad50a-2b36-43a5-9b38-c2b4f7bea8d8.jpg" alt="img"></p>
+<p>重启后magisk已安装，直接su即可切换到root</p>
+<p><img src="../index_files/05594d79-4b71-47e9-977d-7c93fe3cce71.png" alt="img"></p>
+<p>完成magisk安装后就已经root完了，现在就是一些基础的环境配置，建议装一下scrcpy这款神器，可以直接电脑操作，特别方便，截止发文的最新下载地址</p>
+<p><a href="https://github.com/Genymobile/scrcpy/releases/tag/v1.23">https://github.com/Genymobile/scrcpy/releases/tag/v1.23</a></p>
+<p><img src="../index_files/3d95b4f8-5e83-4e16-ab9f-1eca48040c9a.jpg" alt="img"></p>
+<p>接下来安装rirucore，在github获取官方包后用magisk装一下，当然进入recovery模式和之前一样用sideload也可以刷入，下载地址</p>
+<p><a href="https://github.com/RikkaApps/Riru/releases/">https://github.com/RikkaApps/Riru/releases/</a></p>
+<p><img src="../index_files/b5cb8168-7320-4c77-98d8-44660e722c76.jpg" alt="img"></p>
+<p>重启之后没有出现新的软件图标，在magisk的模块中可以看到已经加载</p>
+<p><img src="../index_files/91791d82-2dae-44aa-8443-9dd734c04d25.jpg" alt="img"></p>
+<p>继续安装Edxposed的时候又出问题了，配个环境真就一直踩坑</p>
+<p><img src="../index_files/846ccc88-e281-452a-ae1e-614e5bf792e0.jpg" alt="img"></p>
+<p>Edxposed检测不到Riru框架了，主要版本太新，还是降版本解决问题，使用25版本的Riru解决问题</p>
+<p><img src="../index_files/908c7cca-3d83-4e8e-8a62-ade4b32f90bf.jpg" alt="img"></p>
+<p>重启完就可以看到我们的Edxposed了</p>
+<p><img src="../index_files/b97eea39-9564-4c56-af33-5caf20ff5232.jpg" alt="img"></p>
+<p>根据提示安装完整版的Edxposed</p>
+<p><img src="../index_files/367af7e1-e3c9-48a7-ad88-bd2379d3243f.jpg" alt="img"></p>
+<p><img src="../index_files/a1f5f146-7a17-4727-8693-60275c5fa40f.jpg" alt="img"></p>
+<p>之后就是一些常规的环境配置，比如BP的证书导入，由于Android7开始系统更改了信任用户安装的证书的默认行为，应用程序仅信任系统级CA，所以需要对证书进行一定的更改才能使用（其实这个文章也有很多人写过了，我这里就再水一水）</p>
+<p>建议重新生成BP证书，在Proxy-Options中进行</p>
+<p><img src="../index_files/c1cc0521-e630-4ce0-b15f-c5d63f0dfebe.png" alt="img"></p>
+<p>对证书进行一波简单操作</p>
+<p><img src="../index_files/084b0cdb-4a91-41d3-ab65-61f2a3c9ebd9.png" alt="img"></p>
+<p>通过ADB push将证书移到对应的目录下</p>
+<p><img src="../index_files/e7b40647-c46b-4bb7-8646-50171fe20f37.png" alt="img"></p>
+<p>测试一下访问百度可以正常抓到包，证书安装成功</p>
+<p><img src="../index_files/81867ee0-63c7-440a-b88a-187cd07802aa.jpg" alt="img"></p>
+<p>接着再装一些基础环境比如frida等，可以按需进行配置</p>
+<p>顺便简单写一下frida的环境配置，首先去官网下载对应Python版本的frida包</p>
+<p><img src="../index_files/970a489c-b895-4eda-9c0d-08276089e688.png" alt="img"></p>
+<p>下载完成后进行安装，一般在运行setup.py的时候会自动下载frida对应的egg，通常来说因为大家都懂的原因下载速度会很慢，只要找到输出的下载目录直接把刚刚下载的egg文件拖进去再重新执行install命令就行</p>
+<p><img src="../index_files/e7f01076-c9cf-46b9-9f29-ee0f16e96b59.png" alt="img"></p>
+<p>安装完成后继续安装frida-tools</p>
+<p><img src="../index_files/3e923542-e060-48cb-89f8-0bdfc9d23ca9.png" alt="img"></p>
+<p>接下来就可以在cmd窗口中检测自己的frida是否安装完成</p>
+<p><img src="../index_files/e3592891-4616-449f-94d9-4491bd0fb1a8.png" alt="img"></p>
+<p>下载对应的frida-server，通过adbpush命令传入测试机，并通过chmod命令赋予执行权限</p>
+<p><img src="../index_files/7d267090-a80d-46f1-a593-a3511c0aa5ea.png" alt="img"></p>
+<p>启动frida-server,通过frida-ps -U命令查看功能是否正常</p>
+<p><img src="../index_files/ebfdb89a-b6e4-49c9-9dfd-5be445895232.png" alt="img"></p>
+<p>至于安卓测试的一些东西后面可能会发出来，其实这些文章别人也写了挺多了，这次就当是记录一下，文章很水，不喜勿喷。</p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+  </body>
+</html>

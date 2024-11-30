@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>红队基础设施建设与改造（三）——武装你的Burpsuite（中） // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="红队基础设施建设与改造（三）——武装你的Burpsuite（中）">
+  <meta name="twitter:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+Burp的基础插件安装已经在上一篇文章中讲了，本篇主要讲BP插件的开发，毕竟别人的东西用起来还是自己写的香。本来这篇文章是准备全写完再发出来，但是发现内容真的有亿点点多还是决定拆一下。
+BP插件的开发语言支持Java和Python，由于BP本来就是Java开发的所以对Java的插件支持也更好，我们在后面的文章中JAVA开发和Python开发都会讲到。在找了半天资料后发现官方给出了一个链接,这个连接中的文档描述了各种编写规则
+还给出了一些实例
+首先来讲讲BP开发的基础，了解一下API，来解读一下官方文档
+第一个Interface IBurpCollaboratorClientContext
+这个接口用于生成payload并与collaborator服务器交互，通过轮询来得到网络交互的数据包。该类接口包含有以下方法，可以接收返回，生成payload，得到collaborator服务器地址等
+Modifier and Type Method and Description java.util.List&lt;IBurpCollaboratorInteraction&gt; fetchAllCollaboratorInteractions() This method is used to retrieve all interactions received by the Collaborator server resulting from payloads that were generated for this context. java.util.List&lt;IBurpCollaboratorInteraction&gt; fetchAllInfiltratorInteractions() This method is used to retrieve all interactions made by Burp Infiltrator instrumentation resulting from payloads that were generated for this context. java.util.List&lt;IBurpCollaboratorInteraction&gt; fetchCollaboratorInteractionsFor(java.lang.String payload) This method is used to retrieve interactions received by the Collaborator server resulting from a single payload that was generated for this context. java.util.List&lt;IBurpCollaboratorInteraction&gt; fetchInfiltratorInteractionsFor(java.lang.String payload) This method is used to retrieve interactions made by Burp Infiltrator instrumentation resulting from a single payload that was generated for this context. java.lang.String generatePayload(boolean includeCollaboratorServerLocation) This method is used to generate new Burp Collaborator payloads. java.lang.String getCollaboratorServerLocation() This method is used to retrieve the network location of the Collaborator server.">
+
+    <meta property="og:url" content="http://127.0.0.1:1313/posts/%E7%BA%A2%E9%98%9F%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E5%BB%BA%E8%AE%BE%E4%B8%8E%E6%94%B9%E9%80%A0%E4%B8%89%E6%AD%A6%E8%A3%85%E4%BD%A0%E7%9A%84burpsuite%E4%B8%AD/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="红队基础设施建设与改造（三）——武装你的Burpsuite（中）">
+  <meta property="og:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+Burp的基础插件安装已经在上一篇文章中讲了，本篇主要讲BP插件的开发，毕竟别人的东西用起来还是自己写的香。本来这篇文章是准备全写完再发出来，但是发现内容真的有亿点点多还是决定拆一下。
+BP插件的开发语言支持Java和Python，由于BP本来就是Java开发的所以对Java的插件支持也更好，我们在后面的文章中JAVA开发和Python开发都会讲到。在找了半天资料后发现官方给出了一个链接,这个连接中的文档描述了各种编写规则
+还给出了一些实例
+首先来讲讲BP开发的基础，了解一下API，来解读一下官方文档
+第一个Interface IBurpCollaboratorClientContext
+这个接口用于生成payload并与collaborator服务器交互，通过轮询来得到网络交互的数据包。该类接口包含有以下方法，可以接收返回，生成payload，得到collaborator服务器地址等
+Modifier and Type Method and Description java.util.List&lt;IBurpCollaboratorInteraction&gt; fetchAllCollaboratorInteractions() This method is used to retrieve all interactions received by the Collaborator server resulting from payloads that were generated for this context. java.util.List&lt;IBurpCollaboratorInteraction&gt; fetchAllInfiltratorInteractions() This method is used to retrieve all interactions made by Burp Infiltrator instrumentation resulting from payloads that were generated for this context. java.util.List&lt;IBurpCollaboratorInteraction&gt; fetchCollaboratorInteractionsFor(java.lang.String payload) This method is used to retrieve interactions received by the Collaborator server resulting from a single payload that was generated for this context. java.util.List&lt;IBurpCollaboratorInteraction&gt; fetchInfiltratorInteractionsFor(java.lang.String payload) This method is used to retrieve interactions made by Burp Infiltrator instrumentation resulting from a single payload that was generated for this context. java.lang.String generatePayload(boolean includeCollaboratorServerLocation) This method is used to generate new Burp Collaborator payloads. java.lang.String getCollaboratorServerLocation() This method is used to retrieve the network location of the Collaborator server.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2021-01-08T11:25:18+08:00">
+    <meta property="article:modified_time" content="2021-01-08T11:25:18+08:00">
+    <meta property="article:tag" content="红队技术">
+    <meta property="article:tag" content="红队武器研究">
+    <meta property="article:tag" content="Burpsuite">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://127.0.0.1:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">Home</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/posts/">posts</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">Tags</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">About</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://yaphetszz.github.com" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">红队基础设施建设与改造（三）——武装你的Burpsuite（中）</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Jan 8, 2021
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          34203 Words - 
+          
+          68 min read
+        </div>
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%BA%A2%E9%98%9F%E6%AD%A6%E5%99%A8%E7%A0%94%E7%A9%B6/">红队武器研究</a>
+              <a class="tag" href="http://127.0.0.1:1313/tags/burpsuite/">Burpsuite</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！</strong></p>
+<p>Burp的基础插件安装已经在上一篇文章中讲了，本篇主要讲BP插件的开发，毕竟别人的东西用起来还是自己写的香。本来这篇文章是准备全写完再发出来，但是发现内容真的有亿点点多还是决定拆一下。</p>
+<p>BP插件的开发语言支持Java和Python，由于BP本来就是Java开发的所以对Java的插件支持也更好，我们在后面的文章中JAVA开发和Python开发都会讲到。在找了半天资料后发现官方给出了一个<a href="https://portswigger.net/burp/extender/api/index.html">链接</a>,这个连接中的文档描述了各种编写规则</p>
+<p><img src="../ksohtml20628/wps86.jpg" alt="img"></p>
+<p>还给出了一些<a href="https://portswigger.net/burp/extender/">实例</a></p>
+<p>首先来讲讲BP开发的基础，了解一下API，来解读一下官方文档</p>
+<p><img src="../ksohtml20628/wps87.jpg" alt="img"></p>
+<p>第一个Interface IBurpCollaboratorClientContext</p>
+<p>这个接口用于生成payload并与collaborator服务器交互，通过轮询来得到网络交互的数据包。该类接口包含有以下方法，可以接收返回，生成payload，得到collaborator服务器地址等</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IBurpCollaboratorInteraction.html">IBurpCollaboratorInteraction</a>&gt;</td>
+          <td><a href="#fetchAllCollaboratorInteractions()">fetchAllCollaboratorInteractions</a>() This method is used to retrieve all interactions received by the Collaborator server resulting from payloads that were generated for this context.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IBurpCollaboratorInteraction.html">IBurpCollaboratorInteraction</a>&gt;</td>
+          <td><a href="#fetchAllInfiltratorInteractions()">fetchAllInfiltratorInteractions</a>() This method is used to retrieve all interactions made by Burp Infiltrator instrumentation resulting from payloads that were generated for this context.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IBurpCollaboratorInteraction.html">IBurpCollaboratorInteraction</a>&gt;</td>
+          <td><a href="#fetchCollaboratorInteractionsFor(java.lang.String)">fetchCollaboratorInteractionsFor</a>(java.lang.String payload) This method is used to retrieve interactions received by the Collaborator server resulting from a single payload that was generated for this context.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IBurpCollaboratorInteraction.html">IBurpCollaboratorInteraction</a>&gt;</td>
+          <td><a href="#fetchInfiltratorInteractionsFor(java.lang.String)">fetchInfiltratorInteractionsFor</a>(java.lang.String payload) This method is used to retrieve interactions made by Burp Infiltrator instrumentation resulting from a single payload that was generated for this context.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#generatePayload(boolean)">generatePayload</a>(boolean includeCollaboratorServerLocation) This method is used to generate new Burp Collaborator payloads.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getCollaboratorServerLocation()">getCollaboratorServerLocation</a>() This method is used to retrieve the network location of the Collaborator server.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps88.jpg" alt="img"></p>
+<p>第二个接口的描述就简短很多，会与Burp Collaborator服务器进行网络交互。方法也就是获取发生交互的属性。</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>java.util.Map&lt;java.lang.String,java.lang.String&gt;</td>
+          <td><a href="#getProperties()">getProperties</a>() This method is used to retrieve a map containing all properties of the interaction.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getProperty(java.lang.String)">getProperty</a>(java.lang.String name) This method is used to retrieve a property of the interaction.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps89.jpg" alt="img"></p>
+<p>IBurpExtender是所有插件都必须实现的接口，且必须以public形式声明且提供默认构造函数，方法在加载插件时才会调用。</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>void</td>
+          <td><a href="#registerExtenderCallbacks(burp.IBurpExtenderCallbacks)">registerExtenderCallbacks</a>(<a href="https://portswigger.net/burp/extender/api/burp/IBurpExtenderCallbacks.html">IBurpExtenderCallbacks</a> callbacks) This method is invoked when the extension is loaded.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps90.jpg" alt="img"></p>
+<p>IBurpExtenderCallbacks接口用于通过回调函数告诉相关组件插件需要调用哪些部分来进行支持或是拓展哪些部分的功能。具有的方法为各个模块下的声明，burp中能调用的功能似乎都在这里了</p>
+<table>
+  <thead>
+      <tr>
+          <th></th>
+          <th></th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Modifier and Type</td>
+          <td>Method and Description</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#addScanIssue(burp.IScanIssue)">addScanIssue</a>(<a href="https://portswigger.net/burp/extender/api/burp/IScanIssue.html">IScanIssue</a> issue) This method is used to register a new Scanner issue.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#addSuiteTab(burp.ITab)">addSuiteTab</a>(<a href="https://portswigger.net/burp/extender/api/burp/ITab.html">ITab</a> tab) This method is used to add a custom tab to the main Burp Suite window.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#addToSiteMap(burp.IHttpRequestResponse)">addToSiteMap</a>(<a href="https://portswigger.net/burp/extender/api/burp/IHttpRequestResponse.html">IHttpRequestResponse</a> item) This method can be used to add an item to Burp&rsquo;s site map with the specified request/response details.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IHttpRequestResponseWithMarkers.html">IHttpRequestResponseWithMarkers</a></td>
+          <td>[applyMarkers](#applyMarkers(burp.IHttpRequestResponse, java.util.List, java.util.List))(<a href="https://portswigger.net/burp/extender/api/burp/IHttpRequestResponse.html">IHttpRequestResponse</a> httpRequestResponse, java.util.List&lt;int[]&gt; requestMarkers, java.util.List&lt;int[]&gt; responseMarkers) This method is used to apply markers to an HTTP request or response, at offsets into the message that are relevant for some particular purpose.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IBurpCollaboratorClientContext.html">IBurpCollaboratorClientContext</a></td>
+          <td><a href="#createBurpCollaboratorClientContext()">createBurpCollaboratorClientContext</a>() This method is used to create a new Burp Collaborator client context, which can be used to generate Burp Collaborator payloads and poll the Collaborator server for any network interactions that result from using those payloads.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IMessageEditor.html">IMessageEditor</a></td>
+          <td>[createMessageEditor](#createMessageEditor(burp.IMessageEditorController, boolean))(<a href="https://portswigger.net/burp/extender/api/burp/IMessageEditorController.html">IMessageEditorController</a> controller, boolean editable) This method is used to create a new instance of Burp&rsquo;s HTTP message editor, for the extension to use in its own UI.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/ITextEditor.html">ITextEditor</a></td>
+          <td><a href="#createTextEditor()">createTextEditor</a>() This method is used to create a new instance of Burp&rsquo;s plain text editor, for the extension to use in its own UI.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#customizeUiComponent(java.awt.Component)">customizeUiComponent</a>(java.awt.Component component) This method is used to customize UI components in line with Burp&rsquo;s UI style, including font size, colors, table line spacing, etc.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IScanQueueItem.html">IScanQueueItem</a></td>
+          <td>[doActiveScan](#doActiveScan(java.lang.String, int, boolean, byte[]))(java.lang.String host, int port, boolean useHttps, byte[] request) This method can be used to send an HTTP request to the Burp Scanner tool to perform an active vulnerability scan.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IScanQueueItem.html">IScanQueueItem</a></td>
+          <td>[doActiveScan](#doActiveScan(java.lang.String, int, boolean, byte[], java.util.List))(java.lang.String host, int port, boolean useHttps, byte[] request, java.util.List&lt;int[]&gt; insertionPointOffsets) This method can be used to send an HTTP request to the Burp Scanner tool to perform an active vulnerability scan, based on a custom list of insertion points that are to be scanned.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td>[doPassiveScan](#doPassiveScan(java.lang.String, int, boolean, byte[], byte[]))(java.lang.String host, int port, boolean useHttps, byte[] request, byte[] response) This method can be used to send an HTTP request to the Burp Scanner tool to perform a passive vulnerability scan.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#excludeFromScope(java.net.URL)">excludeFromScope</a>(java.net.URL url) This method can be used to exclude the specified URL from the Suite-wide scope.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#exitSuite(boolean)">exitSuite</a>(boolean promptUser) This method can be used to shut down Burp programmatically, with an optional prompt to the user.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td>[generateScanReport](#generateScanReport(java.lang.String, burp.IScanIssue[], java.io.File))(java.lang.String format, <a href="https://portswigger.net/burp/extender/api/burp/IScanIssue.html">IScanIssue</a>[] issues, java.io.File file) This method is used to generate a report for the specified Scanner issues.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String[]</td>
+          <td><a href="#getBurpVersion()">getBurpVersion</a>() This method retrieves information about the version of Burp in which the extension is running.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String[]</td>
+          <td><a href="#getCommandLineArguments()">getCommandLineArguments</a>() This method returns the command line arguments that were passed to Burp on startup.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IContextMenuFactory.html">IContextMenuFactory</a>&gt;</td>
+          <td><a href="#getContextMenuFactories()">getContextMenuFactories</a>() This method is used to retrieve the context menu factories that are registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/ICookie.html">ICookie</a>&gt;</td>
+          <td><a href="#getCookieJarContents()">getCookieJarContents</a>() This method is used to retrieve the contents of Burp&rsquo;s session handling cookie jar.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getExtensionFilename()">getExtensionFilename</a>() This method retrieves the absolute path name of the file from which the current extension was loaded.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IExtensionStateListener.html">IExtensionStateListener</a>&gt;</td>
+          <td><a href="#getExtensionStateListeners()">getExtensionStateListeners</a>() This method is used to retrieve the extension state listeners that are registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String[]</td>
+          <td><a href="#getHeaders(byte%5B%5D)">getHeaders</a>(byte[] message) Deprecated. <strong>Use</strong> <strong>IExtensionHelpers.analyzeRequest()</strong> <strong>or</strong> <strong>IExtensionHelpers.analyzeResponse()</strong> <strong>instead.</strong></td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IExtensionHelpers.html">IExtensionHelpers</a></td>
+          <td><a href="#getHelpers()">getHelpers</a>() This method is used to obtain an IExtensionHelpers object, which can be used by the extension to perform numerous useful tasks.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IHttpListener.html">IHttpListener</a>&gt;</td>
+          <td><a href="#getHttpListeners()">getHttpListeners</a>() This method is used to retrieve the HTTP listeners that are registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IIntruderPayloadGeneratorFactory.html">IIntruderPayloadGeneratorFactory</a>&gt;</td>
+          <td><a href="#getIntruderPayloadGeneratorFactories()">getIntruderPayloadGeneratorFactories</a>() This method is used to retrieve the Intruder payload generator factories that are registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IIntruderPayloadProcessor.html">IIntruderPayloadProcessor</a>&gt;</td>
+          <td><a href="#getIntruderPayloadProcessors()">getIntruderPayloadProcessors</a>() This method is used to retrieve the Intruder payload processors that are registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IMessageEditorTabFactory.html">IMessageEditorTabFactory</a>&gt;</td>
+          <td><a href="#getMessageEditorTabFactories()">getMessageEditorTabFactories</a>() This method is used to retrieve the message editor tab factories that are registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String[][]</td>
+          <td><a href="#getParameters(byte%5B%5D)">getParameters</a>(byte[] request) Deprecated. <strong>Use</strong> <strong>IExtensionHelpers.analyzeRequest()</strong> <strong>instead.</strong></td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IHttpRequestResponse.html">IHttpRequestResponse</a>[]</td>
+          <td><a href="#getProxyHistory()">getProxyHistory</a>() This method returns details of all items in the Proxy history.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IProxyListener.html">IProxyListener</a>&gt;</td>
+          <td><a href="#getProxyListeners()">getProxyListeners</a>() This method is used to retrieve the Proxy listeners that are registered by the extension.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IScanIssue.html">IScanIssue</a>[]</td>
+          <td><a href="#getScanIssues(java.lang.String)">getScanIssues</a>(java.lang.String urlPrefix) This method returns all of the current scan issues for URLs matching the specified literal prefix.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IScannerCheck.html">IScannerCheck</a>&gt;</td>
+          <td><a href="#getScannerChecks()">getScannerChecks</a>() This method is used to retrieve the Scanner checks that are registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IScannerInsertionPointProvider.html">IScannerInsertionPointProvider</a>&gt;</td>
+          <td><a href="#getScannerInsertionPointProviders()">getScannerInsertionPointProviders</a>() This method is used to retrieve the Scanner insertion point providers that are registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IScannerListener.html">IScannerListener</a>&gt;</td>
+          <td><a href="#getScannerListeners()">getScannerListeners</a>() This method is used to retrieve the Scanner listeners that are registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/IScopeChangeListener.html">IScopeChangeListener</a>&gt;</td>
+          <td><a href="#getScopeChangeListeners()">getScopeChangeListeners</a>() This method is used to retrieve the scope change listeners that are registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>java.util.List&lt;<a href="https://portswigger.net/burp/extender/api/burp/ISessionHandlingAction.html">ISessionHandlingAction</a>&gt;</td>
+          <td><a href="#getSessionHandlingActions()">getSessionHandlingActions</a>() This method is used to retrieve the session handling actions that are registered by the extension.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IHttpRequestResponse.html">IHttpRequestResponse</a>[]</td>
+          <td><a href="#getSiteMap(java.lang.String)">getSiteMap</a>(java.lang.String urlPrefix) This method returns details of items in the site map.</td>
+      </tr>
+      <tr>
+          <td>java.io.OutputStream</td>
+          <td><a href="#getStderr()">getStderr</a>() This method is used to obtain the current extension&rsquo;s standard error stream.</td>
+      </tr>
+      <tr>
+          <td>java.io.OutputStream</td>
+          <td><a href="#getStdout()">getStdout</a>() This method is used to obtain the current extension&rsquo;s standard output stream.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getToolName(int)">getToolName</a>(int toolFlag) This method is used to obtain the descriptive name for the Burp tool identified by the tool flag provided.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#includeInScope(java.net.URL)">includeInScope</a>(java.net.URL url) This method can be used to include the specified URL in the Suite-wide scope.</td>
+      </tr>
+      <tr>
+          <td>boolean</td>
+          <td><a href="#isExtensionBapp()">isExtensionBapp</a>() This method determines whether the current extension was loaded as a BApp (a Burp App from the BApp Store).</td>
+      </tr>
+      <tr>
+          <td>boolean</td>
+          <td><a href="#isInScope(java.net.URL)">isInScope</a>(java.net.URL url) This method can be used to query whether a specified URL is within the current Suite-wide scope.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#issueAlert(java.lang.String)">issueAlert</a>(java.lang.String message) This method can be used to display a specified message in the Burp Suite alerts tab.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#loadConfig(java.util.Map)">loadConfig</a>(java.util.Map&lt;java.lang.String,java.lang.String&gt; config) Deprecated. <strong>Use</strong> <strong>loadConfigFromJson()</strong> <strong>instead.</strong></td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#loadConfigFromJson(java.lang.String)">loadConfigFromJson</a>(java.lang.String config) This method causes Burp to load a new project-level configuration from the JSON String provided.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#loadExtensionSetting(java.lang.String)">loadExtensionSetting</a>(java.lang.String name) This method is used to load configuration settings for the extension that were saved using the method saveExtensionSetting().</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IHttpRequestResponse.html">IHttpRequestResponse</a></td>
+          <td>[makeHttpRequest](#makeHttpRequest(burp.IHttpService, byte[]))(<a href="https://portswigger.net/burp/extender/api/burp/IHttpService.html">IHttpService</a> httpService, byte[] request) This method can be used to issue HTTP requests and retrieve their responses.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td>[makeHttpRequest](#makeHttpRequest(java.lang.String, int, boolean, byte[]))(java.lang.String host, int port, boolean useHttps, byte[] request) This method can be used to issue HTTP requests and retrieve their responses.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#printError(java.lang.String)">printError</a>(java.lang.String error) This method prints a line of output to the current extension&rsquo;s standard error stream.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#printOutput(java.lang.String)">printOutput</a>(java.lang.String output) This method prints a line of output to the current extension&rsquo;s standard output stream.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#registerContextMenuFactory(burp.IContextMenuFactory)">registerContextMenuFactory</a>(<a href="https://portswigger.net/burp/extender/api/burp/IContextMenuFactory.html">IContextMenuFactory</a> factory) This method is used to register a factory for custom context menu items.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#registerExtensionStateListener(burp.IExtensionStateListener)">registerExtensionStateListener</a>(<a href="https://portswigger.net/burp/extender/api/burp/IExtensionStateListener.html">IExtensionStateListener</a> listener) This method is used to register a listener which will be notified of changes to the extension&rsquo;s state.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#registerHttpListener(burp.IHttpListener)">registerHttpListener</a>(<a href="https://portswigger.net/burp/extender/api/burp/IHttpListener.html">IHttpListener</a> listener) This method is used to register a listener which will be notified of requests and responses made by any Burp tool.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#registerIntruderPayloadGeneratorFactory(burp.IIntruderPayloadGeneratorFactory)">registerIntruderPayloadGeneratorFactory</a>(<a href="https://portswigger.net/burp/extender/api/burp/IIntruderPayloadGeneratorFactory.html">IIntruderPayloadGeneratorFactory</a> factory) This method is used to register a factory for Intruder payloads.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#registerIntruderPayloadProcessor(burp.IIntruderPayloadProcessor)">registerIntruderPayloadProcessor</a>(<a href="https://portswigger.net/burp/extender/api/burp/IIntruderPayloadProcessor.html">IIntruderPayloadProcessor</a> processor) This method is used to register a custom Intruder payload processor.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td>[registerMenuItem](#registerMenuItem(java.lang.String, burp.IMenuItemHandler))(java.lang.String menuItemCaption, <a href="https://portswigger.net/burp/extender/api/burp/IMenuItemHandler.html">IMenuItemHandler</a> menuItemHandler) Deprecated. <strong>Use</strong> <strong>registerContextMenuFactory()</strong> <strong>instead.</strong></td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#registerMessageEditorTabFactory(burp.IMessageEditorTabFactory)">registerMessageEditorTabFactory</a>(<a href="https://portswigger.net/burp/extender/api/burp/IMessageEditorTabFactory.html">IMessageEditorTabFactory</a> factory) This method is used to register a factory for custom message editor tabs.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#registerProxyListener(burp.IProxyListener)">registerProxyListener</a>(<a href="https://portswigger.net/burp/extender/api/burp/IProxyListener.html">IProxyListener</a> listener) This method is used to register a listener which will be notified of requests and responses being processed by the Proxy tool.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#registerScannerCheck(burp.IScannerCheck)">registerScannerCheck</a>(<a href="https://portswigger.net/burp/extender/api/burp/IScannerCheck.html">IScannerCheck</a> check) This method is used to register a custom Scanner check.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#registerScannerInsertionPointProvider(burp.IScannerInsertionPointProvider)">registerScannerInsertionPointProvider</a>(<a href="https://portswigger.net/burp/extender/api/burp/IScannerInsertionPointProvider.html">IScannerInsertionPointProvider</a> provider) This method is used to register a provider of Scanner insertion points.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#registerScannerListener(burp.IScannerListener)">registerScannerListener</a>(<a href="https://portswigger.net/burp/extender/api/burp/IScannerListener.html">IScannerListener</a> listener) This method is used to register a listener which will be notified of new issues that are reported by the Scanner tool.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#registerScopeChangeListener(burp.IScopeChangeListener)">registerScopeChangeListener</a>(<a href="https://portswigger.net/burp/extender/api/burp/IScopeChangeListener.html">IScopeChangeListener</a> listener) This method is used to register a listener which will be notified of changes to Burp&rsquo;s suite-wide target scope.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#registerSessionHandlingAction(burp.ISessionHandlingAction)">registerSessionHandlingAction</a>(<a href="https://portswigger.net/burp/extender/api/burp/ISessionHandlingAction.html">ISessionHandlingAction</a> action) This method is used to register a custom session handling action.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#removeContextMenuFactory(burp.IContextMenuFactory)">removeContextMenuFactory</a>(<a href="https://portswigger.net/burp/extender/api/burp/IContextMenuFactory.html">IContextMenuFactory</a> factory) This method is used to remove a context menu factory that has been registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#removeExtensionStateListener(burp.IExtensionStateListener)">removeExtensionStateListener</a>(<a href="https://portswigger.net/burp/extender/api/burp/IExtensionStateListener.html">IExtensionStateListener</a> listener) This method is used to remove an extension state listener that has been registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#removeHttpListener(burp.IHttpListener)">removeHttpListener</a>(<a href="https://portswigger.net/burp/extender/api/burp/IHttpListener.html">IHttpListener</a> listener) This method is used to remove an HTTP listener that has been registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#removeIntruderPayloadGeneratorFactory(burp.IIntruderPayloadGeneratorFactory)">removeIntruderPayloadGeneratorFactory</a>(<a href="https://portswigger.net/burp/extender/api/burp/IIntruderPayloadGeneratorFactory.html">IIntruderPayloadGeneratorFactory</a> factory) This method is used to remove an Intruder payload generator factory that has been registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#removeIntruderPayloadProcessor(burp.IIntruderPayloadProcessor)">removeIntruderPayloadProcessor</a>(<a href="https://portswigger.net/burp/extender/api/burp/IIntruderPayloadProcessor.html">IIntruderPayloadProcessor</a> processor) This method is used to remove an Intruder payload processor that has been registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#removeMessageEditorTabFactory(burp.IMessageEditorTabFactory)">removeMessageEditorTabFactory</a>(<a href="https://portswigger.net/burp/extender/api/burp/IMessageEditorTabFactory.html">IMessageEditorTabFactory</a> factory) This method is used to remove a message editor tab factory that has been registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#removeProxyListener(burp.IProxyListener)">removeProxyListener</a>(<a href="https://portswigger.net/burp/extender/api/burp/IProxyListener.html">IProxyListener</a> listener) This method is used to remove a Proxy listener that has been registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#removeScannerCheck(burp.IScannerCheck)">removeScannerCheck</a>(<a href="https://portswigger.net/burp/extender/api/burp/IScannerCheck.html">IScannerCheck</a> check) This method is used to remove a Scanner check that has been registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#removeScannerInsertionPointProvider(burp.IScannerInsertionPointProvider)">removeScannerInsertionPointProvider</a>(<a href="https://portswigger.net/burp/extender/api/burp/IScannerInsertionPointProvider.html">IScannerInsertionPointProvider</a> provider) This method is used to remove a Scanner insertion point provider that has been registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#removeScannerListener(burp.IScannerListener)">removeScannerListener</a>(<a href="https://portswigger.net/burp/extender/api/burp/IScannerListener.html">IScannerListener</a> listener) This method is used to remove a Scanner listener that has been registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#removeScopeChangeListener(burp.IScopeChangeListener)">removeScopeChangeListener</a>(<a href="https://portswigger.net/burp/extender/api/burp/IScopeChangeListener.html">IScopeChangeListener</a> listener) This method is used to remove a scope change listener that has been registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#removeSessionHandlingAction(burp.ISessionHandlingAction)">removeSessionHandlingAction</a>(<a href="https://portswigger.net/burp/extender/api/burp/ISessionHandlingAction.html">ISessionHandlingAction</a> action) This method is used to remove a session handling action that has been registered by the extension.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#removeSuiteTab(burp.ITab)">removeSuiteTab</a>(<a href="https://portswigger.net/burp/extender/api/burp/ITab.html">ITab</a> tab) This method is used to remove a previously-added tab from the main Burp Suite window.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#restoreState(java.io.File)">restoreState</a>(java.io.File file) Deprecated. <strong>State files have been replaced with Burp project files.</strong></td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IHttpRequestResponsePersisted.html">IHttpRequestResponsePersisted</a></td>
+          <td><a href="#saveBuffersToTempFiles(burp.IHttpRequestResponse)">saveBuffersToTempFiles</a>(<a href="https://portswigger.net/burp/extender/api/burp/IHttpRequestResponse.html">IHttpRequestResponse</a> httpRequestResponse) This method is used to save the request and response of an IHttpRequestResponse object to temporary files, so that they are no longer held in memory.</td>
+      </tr>
+      <tr>
+          <td>java.util.Map&lt;java.lang.String,java.lang.String&gt;</td>
+          <td><a href="#saveConfig()">saveConfig</a>() Deprecated. <strong>Use</strong> <strong>saveConfigAsJson()</strong> <strong>instead.</strong></td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#saveConfigAsJson(java.lang.String...)">saveConfigAsJson</a>(java.lang.String&hellip; configPaths) This method causes Burp to save its current project-level configuration in JSON format.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td>[saveExtensionSetting](#saveExtensionSetting(java.lang.String, java.lang.String))(java.lang.String name, java.lang.String value) This method is used to save configuration settings for the extension in a persistent way that survives reloads of the extension and of Burp Suite.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#saveState(java.io.File)">saveState</a>(java.io.File file) Deprecated. <strong>State files have been replaced with Burp project files.</strong></td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/ITempFile.html">ITempFile</a></td>
+          <td><a href="#saveToTempFile(byte%5B%5D)">saveToTempFile</a>(byte[] buffer) This method is used to create a temporary file on disk containing the provided data.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#sendToComparer(byte%5B%5D)">sendToComparer</a>(byte[] data) This method can be used to send data to the Comparer tool.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td>[sendToIntruder](#sendToIntruder(java.lang.String, int, boolean, byte[]))(java.lang.String host, int port, boolean useHttps, byte[] request) This method can be used to send an HTTP request to the Burp Intruder tool.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td>[sendToIntruder](#sendToIntruder(java.lang.String, int, boolean, byte[], java.util.List))(java.lang.String host, int port, boolean useHttps, byte[] request, java.util.List&lt;int[]&gt; payloadPositionOffsets) This method can be used to send an HTTP request to the Burp Intruder tool.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td>[sendToRepeater](#sendToRepeater(java.lang.String, int, boolean, byte[], java.lang.String))(java.lang.String host, int port, boolean useHttps, byte[] request, java.lang.String tabCaption) This method can be used to send an HTTP request to the Burp Repeater tool.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#sendToSpider(java.net.URL)">sendToSpider</a>(java.net.URL url) This method can be used to send a seed URL to the Burp Spider tool.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#setExtensionName(java.lang.String)">setExtensionName</a>(java.lang.String name) This method is used to set the display name for the current extension, which will be displayed within the user interface for the Extender tool.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#setProxyInterceptionEnabled(boolean)">setProxyInterceptionEnabled</a>(boolean enabled) This method sets the master interception mode for Burp Proxy.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#unloadExtension()">unloadExtension</a>() This method is used to unload the extension from Burp Suite.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#updateCookieJar(burp.ICookie)">updateCookieJar</a>(<a href="https://portswigger.net/burp/extender/api/burp/ICookie.html">ICookie</a> cookie) This method is used to update the contents of Burp&rsquo;s session handling cookie jar.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps91.jpg" alt="img"></p>
+<p>IContextMenuFactory用于添加自定义菜单，这和我们上篇文章中看到的大部分插件一样，会有单独的菜单。</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>java.util.List&lt;javax.swing.JMenuItem&gt;</td>
+          <td><a href="#createMenuItems(burp.IContextMenuInvocation)">createMenuItems</a>(<a href="https://portswigger.net/burp/extender/api/burp/IContextMenuInvocation.html">IContextMenuInvocation</a> invocation) This method will be called by Burp when the user invokes a context menu anywhere within Burp.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps92.jpg" alt="img"></p>
+<p>IContextMenuInvocation这个接口可以获得调用事件的详细信息，以确定应该显示哪些菜单项。方法主要被用于获取相关信息</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>java.awt.event.InputEvent</td>
+          <td><a href="#getInputEvent()">getInputEvent</a>() This method can be used to retrieve the native Java input event that was the trigger for the context menu invocation.</td>
+      </tr>
+      <tr>
+          <td>byte</td>
+          <td><a href="#getInvocationContext()">getInvocationContext</a>() This method can be used to retrieve the context within which the menu was invoked.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IScanIssue.html">IScanIssue</a>[]</td>
+          <td><a href="#getSelectedIssues()">getSelectedIssues</a>() This method can be used to retrieve details of the Scanner issues that were selected by the user when the context menu was invoked.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IHttpRequestResponse.html">IHttpRequestResponse</a>[]</td>
+          <td><a href="#getSelectedMessages()">getSelectedMessages</a>() This method can be used to retrieve details of the HTTP requests / responses that were shown or selected by the user when the context menu was invoked.</td>
+      </tr>
+      <tr>
+          <td>int[]</td>
+          <td><a href="#getSelectionBounds()">getSelectionBounds</a>() This method can be used to retrieve the bounds of the user&rsquo;s selection into the current message, if applicable.</td>
+      </tr>
+      <tr>
+          <td>int</td>
+          <td><a href="#getToolFlag()">getToolFlag</a>() This method can be used to retrieve the Burp tool within which the context menu was invoked.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps93.jpg" alt="img"></p>
+<p>Interface ICookie接口用于保存Cookie的详细信息，方法主要用于从cookie中获取相关信息如cookie名称，内容，过期时间等</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getDomain()">getDomain</a>() This method is used to retrieve the domain for which the cookie is in scope.</td>
+      </tr>
+      <tr>
+          <td>java.util.Date</td>
+          <td><a href="#getExpiration()">getExpiration</a>() This method is used to retrieve the expiration time for the cookie.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getName()">getName</a>() This method is used to retrieve the name of the cookie.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getPath()">getPath</a>() This method is used to retrieve the path for which the cookie is in scope.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getValue()">getValue</a>() This method is used to retrieve the value of the cookie.</td>
+      </tr>
+  </tbody>
+</table>
+<p>========================这是一条分割线========================</p>
+<p>写到这里的时候我发现一个个介绍似乎太复杂了，反正大部分人学开发不用全部用到，所以该踩的坑我帮你们踩了，下面就介绍一些开发中常用的接口，但其实还是很多啊…</p>
+<p><img src="../ksohtml20628/wps94.jpg" alt="img"></p>
+<p>IExtensionHelpers提供了很多常用的辅助方法，扩展可以通过调用 IBurpExtenderCallbacks.getHelpers 获得此接口的实例。</p>
+<p>常用方法如下，主要是一些编码转换等以及对包的修改。</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>byte[]</td>
+          <td>[addParameter](#addParameter(byte[], burp.IParameter))(byte[] request, <a href="https://portswigger.net/burp/extender/api/burp/IParameter.html">IParameter</a> parameter) This method adds a new parameter to an HTTP request, and if appropriate updates the Content-Length header.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IRequestInfo.html">IRequestInfo</a></td>
+          <td><a href="#analyzeRequest(byte%5B%5D)">analyzeRequest</a>(byte[] request) This method can be used to analyze an HTTP request, and obtain various key details about it.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IResponseInfo.html">IResponseInfo</a></td>
+          <td><a href="#analyzeResponse(byte%5B%5D)">analyzeResponse</a>(byte[] response) This method can be used to analyze an HTTP response, and obtain various key details about it.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IResponseKeywords.html">IResponseKeywords</a></td>
+          <td>[analyzeResponseKeywords](#analyzeResponseKeywords(java.util.List, byte[]&hellip;))(java.util.List&lt;java.lang.String&gt; keywords, byte[]&hellip; responses) This method analyzes one or more responses to identify the number of occurrences of the specified keywords and returns an IResponseKeywords object that can be queried to obtain details of the number of occurrences of each keyword.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td><a href="#base64Decode(byte%5B%5D)">base64Decode</a>(byte[] data) This method can be used to Base64-decode the specified data.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td><a href="#base64Decode(java.lang.String)">base64Decode</a>(java.lang.String data) This method can be used to Base64-decode the specified data.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#base64Encode(byte%5B%5D)">base64Encode</a>(byte[] data) This method can be used to Base64-encode the specified data.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#base64Encode(java.lang.String)">base64Encode</a>(java.lang.String data) This method can be used to Base64-encode the specified data.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td>[buildHttpMessage](#buildHttpMessage(java.util.List, byte[]))(java.util.List&lt;java.lang.String&gt; headers, byte[] body) This method builds an HTTP message containing the specified headers and message body.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td><a href="#buildHttpRequest(java.net.URL)">buildHttpRequest</a>(java.net.URL url) This method creates a GET request to the specified URL.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IParameter.html">IParameter</a></td>
+          <td>[buildParameter](#buildParameter(java.lang.String, java.lang.String, byte))(java.lang.String name, java.lang.String value, byte type) This method constructs an IParameter object based on the details provided.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#bytesToString(byte%5B%5D)">bytesToString</a>(byte[] data) This method can be used to convert data from an array of bytes into String form.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td><a href="#urlDecode(byte%5B%5D)">urlDecode</a>(byte[] data) This method can be used to URL-decode the specified data.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#urlDecode(java.lang.String)">urlDecode</a>(java.lang.String data) This method can be used to URL-decode the specified data.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td><a href="#urlEncode(byte%5B%5D)">urlEncode</a>(byte[] data) This method can be used to URL-encode the specified data.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#urlEncode(java.lang.String)">urlEncode</a>(java.lang.String data) This method can be used to URL-encode the specified data.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps95.jpg" alt="img"></p>
+<p>IExtensionStateListener接口可以注册一个扩展的状态监听器。在扩展的状态发生改变时，监听器将会收到通知。</p>
+<p>官方还给了一条提示：任何启动后台线程或打开系统资源（如文件或数据库连接）的扩展插件都应该注册一个监听器，并在被卸载后终止线程/关闭资源。</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>void</td>
+          <td><a href="#extensionUnloaded()">extensionUnloaded</a>() This method is called when the extension is unloaded.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps96.jpg" alt="img"></p>
+<p>IHttpListener同样是一个注册监听器的接口。Burp 里的任何一个工具发起 HTTP 请求或收到 HTTP 响应都会通知此监听器。扩展可以得到这些交互的数据，进行分析和修改，例如我们上篇文章中提到的Autorize等插件都会调用该接口请求用于捕获请求和响应。</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>void</td>
+          <td>[processHttpMessage](#processHttpMessage(int, boolean, burp.IHttpRequestResponse))(int toolFlag, boolean messageIsRequest, <a href="https://portswigger.net/burp/extender/api/burp/IHttpRequestResponse.html">IHttpRequestResponse</a> messageInfo) This method is invoked when an HTTP request is about to be issued, and when an HTTP response has been received.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps97.jpg" alt="img"></p>
+<p>IHttpRequestResponse用于检索和更新有关 HTTP 消息的详细信息。</p>
+<p>注意：setter 方法通常只能在消息被被处理之前使用，因为它是一个写操作，因此在只读的上下文中也是不可用的。与响应细节相关的 getter 方法只能用在请求发出后使用。主要方法可以获取请求响应，用户的注释和高亮条目，并且可以更新他们。</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getComment()">getComment</a>() This method is used to retrieve the user-annotated comment for this item, if applicable.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getHighlight()">getHighlight</a>() This method is used to retrieve the user-annotated highlight for this item, if applicable.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IHttpService.html">IHttpService</a></td>
+          <td><a href="#getHttpService()">getHttpService</a>() This method is used to retrieve the HTTP service for this request / response.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td><a href="#getRequest()">getRequest</a>() This method is used to retrieve the request message.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td><a href="#getResponse()">getResponse</a>() This method is used to retrieve the response message.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#setComment(java.lang.String)">setComment</a>(java.lang.String comment) This method is used to update the user-annotated comment for this item.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#setHighlight(java.lang.String)">setHighlight</a>(java.lang.String color) This method is used to update the user-annotated highlight for this item.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#setHttpService(burp.IHttpService)">setHttpService</a>(<a href="https://portswigger.net/burp/extender/api/burp/IHttpService.html">IHttpService</a> httpService) This method is used to update the HTTP service for this request / response.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#setRequest(byte%5B%5D)">setRequest</a>(byte[] message) This method is used to update the request message.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#setResponse(byte%5B%5D)">setResponse</a>(byte[] message) This method is used to update the response message.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps98.jpg" alt="img"></p>
+<p>IHttpRequestResponsePersisted是 IHttpRequestResponse 接口的一个子接口，该接口用于使用 IBurpExtenderCallbacks.saveBuffersToTempFiles() 将一个IHttpRequestResponse 对象的请求和响应消息保存到临时文件。</p>
+<p>但是在后面的详细信息中可以看到该方法已经过时了</p>
+<p><img src="../ksohtml20628/wps99.jpg" alt="img"></p>
+<p><img src="../ksohtml20628/wps100.jpg" alt="img"></p>
+<p>IHttpService用于提供关于 HTTP 服务信息的细节。常用方法获取服务器相关信息</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getHost()">getHost</a>() This method returns the hostname or IP address for the service.</td>
+      </tr>
+      <tr>
+          <td>int</td>
+          <td><a href="#getPort()">getPort</a>() This method returns the port number for the service.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getProtocol()">getProtocol</a>() This method returns the protocol for the service.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps101.jpg" alt="img"></p>
+<p>IInterceptedProxyMessage不能被扩展实现，它表示了已被 Burp 代理拦截的 HTTP 消息。扩展可以利用此接口注册一个 IProxyListener 以便接收代理消息的细节。</p>
+<p><img src="../ksohtml20628/wps102.jpg" alt="img"></p>
+<p>IIntruderAttack用于操控 Intruder 工具的攻击详情。，只有两个方法来获取HTTP服务信息和请求模板。</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IHttpService.html">IHttpService</a></td>
+          <td><a href="#getHttpService()">getHttpService</a>() This method is used to retrieve the HTTP service for the attack.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td><a href="#getRequestTemplate()">getRequestTemplate</a>() This method is used to retrieve the request template for the attack.</td>
+      </tr>
+  </tbody>
+</table>
+<p>此外还提供了三个接口用于payload生成</p>
+<p><img src="../ksohtml20628/wps103.jpg" alt="img"></p>
+<p><img src="../ksohtml20628/wps104.jpg" alt="img"></p>
+<p>IMessageEditor用于为扩展程序提供Burp HTTP消息编辑器的实例，以便在其自己的UI中使用该扩展程序。方法主要用于获取数据。</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>java.awt.Component</td>
+          <td><a href="#getComponent()">getComponent</a>() This method returns the UI component of the editor, for extensions to add to their own UI.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td><a href="#getMessage()">getMessage</a>() This method is used to retrieve the currently displayed message, which may have been modified by the user.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td><a href="#getSelectedData()">getSelectedData</a>() This method returns the data that is currently selected by the user.</td>
+      </tr>
+      <tr>
+          <td>int[]</td>
+          <td><a href="#getSelectionBounds()">getSelectionBounds</a>() This method can be used to retrieve the bounds of the user&rsquo;s selection into the displayed message, if applicable.</td>
+      </tr>
+      <tr>
+          <td>boolean</td>
+          <td><a href="#isMessageModified()">isMessageModified</a>() This method is used to determine whether the current message has been modified by the user.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td>[setMessage](#setMessage(byte[], boolean))(byte[] message, boolean isRequest) This method is used to display an HTTP message in the editor.</td>
+      </tr>
+  </tbody>
+</table>
+<p>同样也有一些接口用于支持该接口的功能实现</p>
+<p><img src="../ksohtml20628/wps105.jpg" alt="img"></p>
+<p><img src="../ksohtml20628/wps106.jpg" alt="img"></p>
+<p>IParameter用于获取HTTP请求中的参数，方法能用来提取cookie，body内容，还能解析JSON，XML等</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Field and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>static byte</td>
+          <td><a href="#PARAM_BODY">PARAM_BODY</a> Used to indicate a parameter within the message body.</td>
+      </tr>
+      <tr>
+          <td>static byte</td>
+          <td><a href="#PARAM_COOKIE">PARAM_COOKIE</a> Used to indicate an HTTP cookie.</td>
+      </tr>
+      <tr>
+          <td>static byte</td>
+          <td><a href="#PARAM_JSON">PARAM_JSON</a> Used to indicate an item of data within a JSON structure.</td>
+      </tr>
+      <tr>
+          <td>static byte</td>
+          <td><a href="#PARAM_MULTIPART_ATTR">PARAM_MULTIPART_ATTR</a> Used to indicate the value of a parameter attribute within a multi-part message body (such as the name of an uploaded file).</td>
+      </tr>
+      <tr>
+          <td>static byte</td>
+          <td><a href="#PARAM_URL">PARAM_URL</a> Used to indicate a parameter within the URL query string.</td>
+      </tr>
+      <tr>
+          <td>static byte</td>
+          <td><a href="#PARAM_XML">PARAM_XML</a> Used to indicate an item of data within an XML structure.</td>
+      </tr>
+      <tr>
+          <td>static byte</td>
+          <td><a href="#PARAM_XML_ATTR">PARAM_XML_ATTR</a> Used to indicate the value of a tag attribute within an XML structure.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps107.jpg" alt="img"></p>
+<p>IScanIssue用于检索的扫描漏洞的详细信息。 扩展可以通过注册IScannerListener或调用IBurpExtenderCallbacks.getScanIssues（）来获取漏洞的详细信息。 扩展程序还可以通过注册IScannerCheck或调用IBurpExtenderCallbacks.addScanIssue（）并提供此接口的自己的实现来实现自定义扫描。（这里放个预告，下一篇文章中会有关于特定漏洞扫描的插件开发教程）</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getConfidence()">getConfidence</a>() This method returns the issue confidence level.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IHttpRequestResponse.html">IHttpRequestResponse</a>[]</td>
+          <td><a href="#getHttpMessages()">getHttpMessages</a>() This method returns the HTTP messages on the basis of which the issue was generated.</td>
+      </tr>
+      <tr>
+          <td><a href="https://portswigger.net/burp/extender/api/burp/IHttpService.html">IHttpService</a></td>
+          <td><a href="#getHttpService()">getHttpService</a>() This method returns the HTTP service for which the issue was generated.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getIssueBackground()">getIssueBackground</a>() This method returns a background description for this type of issue.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getIssueDetail()">getIssueDetail</a>() This method returns detailed information about this specific instance of the issue.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getIssueName()">getIssueName</a>() This method returns the name of the issue type.</td>
+      </tr>
+      <tr>
+          <td>int</td>
+          <td><a href="#getIssueType()">getIssueType</a>() This method returns a numeric identifier of the issue type.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getRemediationBackground()">getRemediationBackground</a>() This method returns a background description of the remediation for this type of issue.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getRemediationDetail()">getRemediationDetail</a>() This method returns detailed information about the remediation for this specific instance of the issue.</td>
+      </tr>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getSeverity()">getSeverity</a>() This method returns the issue severity level.</td>
+      </tr>
+      <tr>
+          <td>java.net.URL</td>
+          <td><a href="#getUrl()">getUrl</a>() This method returns the URL for which the issue was generated.</td>
+      </tr>
+  </tbody>
+</table>
+<p>在Scan部分的接口还是挺多的</p>
+<p><img src="../ksohtml20628/wps108.jpg" alt="img"></p>
+<p><img src="../ksohtml20628/wps109.jpg" alt="img"></p>
+<p>IScanQueueItem用于检索Burp Scanner活动扫描队列中的项目详细信息。</p>
+<p><img src="../ksohtml20628/wps110.jpg" alt="img"></p>
+<p>IScopeChangeListener可以在每次Scope发生变化时捕捉变化并通知Listener防止增加无用功。只有一个捕捉变化的方法，有点像触发器。</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>void</td>
+          <td><a href="#scopeChanged()">scopeChanged</a>() This method is invoked whenever a change occurs to Burp&rsquo;s suite-wide target scope.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps111.jpg" alt="img"></p>
+<p>Interface ITab用于创建一个自定义的选项卡，就和之前见到的多数插件一样。</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>java.lang.String</td>
+          <td><a href="#getTabCaption()">getTabCaption</a>() Burp uses this method to obtain the caption that should appear on the custom tab when it is displayed.</td>
+      </tr>
+      <tr>
+          <td>java.awt.Component</td>
+          <td><a href="#getUiComponent()">getUiComponent</a>() Burp uses this method to obtain the component that should be used as the contents of the custom tab when it is displayed.</td>
+      </tr>
+  </tbody>
+</table>
+<p><img src="../ksohtml20628/wps112.jpg" alt="img"></p>
+<p>ITextEditor用于提供文本编辑相关操作，主要方法如下：</p>
+<table>
+  <thead>
+      <tr>
+          <th>Modifier and Type</th>
+          <th>Method and Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>java.awt.Component</td>
+          <td><a href="#getComponent()">getComponent</a>() This method returns the UI component of the editor, for extensions to add to their own UI.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td><a href="#getSelectedText()">getSelectedText</a>() This method is used to obtain the currently selected text.</td>
+      </tr>
+      <tr>
+          <td>int[]</td>
+          <td><a href="#getSelectionBounds()">getSelectionBounds</a>() This method can be used to retrieve the bounds of the user&rsquo;s selection into the displayed text, if applicable.</td>
+      </tr>
+      <tr>
+          <td>byte[]</td>
+          <td><a href="#getText()">getText</a>() This method is used to retrieve the currently displayed text.</td>
+      </tr>
+      <tr>
+          <td>boolean</td>
+          <td><a href="#isTextModified()">isTextModified</a>() This method is used to determine whether the user has modified the contents of the editor.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#setEditable(boolean)">setEditable</a>(boolean editable) This method is used to control whether the editor is currently editable.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#setSearchExpression(java.lang.String)">setSearchExpression</a>(java.lang.String expression) This method is used to update the search expression that is shown in the search bar below the editor.</td>
+      </tr>
+      <tr>
+          <td>void</td>
+          <td><a href="#setText(byte%5B%5D)">setText</a>(byte[] text) This method is used to update the currently displayed text in the editor.</td>
+      </tr>
+  </tbody>
+</table>
+<p>可能上面主要是翻译官方文档的东西大家看的比较枯燥，因此在本篇文末放出重磅入门教程之</p>
+<p>输出HelloWorld！</p>
+<p>首先在Burpsuite中导出接口文件Extender-&gt;API-&gt;Save interface files</p>
+<p><img src="../ksohtml20628/wps113.jpg" alt="img"></p>
+<p>导出后可以看到导出的java文件</p>
+<p><img src="../ksohtml20628/wps114.jpg" alt="img"></p>
+<p>找一个你用的顺手的IDE新建一个项目，这里以IDEA为例，将burp的API导入项目，然后新建BurpExtender.java</p>
+<p><img src="../ksohtml20628/wps115.jpg" alt="img"></p>
+<p>开始写代码</p>
+<p>package burp;
+import java.io.PrintWriter;
+public class BurpExtender implements IBurpExtender {
+@Override
+public void registerExtenderCallbacks(IBurpExtenderCallbacks callbacks)
+{
+//设置拓展名
+callbacks.setExtensionName(&ldquo;Hello World test&rdquo;);
+//设置输出流和错误输出流对象
+PrintWriter stdout = new PrintWriter(callbacks.getStdout(),true);
+PrintWriter stderr = new PrintWriter(callbacks.getStdout(),true);
+//推送消息到输出流
+stdout.println(&ldquo;Hello World!&rdquo;);
+//推送错误消息到输出流
+stderr.println(&ldquo;Error!&rdquo;);
+//推送消息到Burp提醒面板
+callbacks.issueAlert(&ldquo;Alerts!&rdquo;);
+//推送异常
+throw new RuntimeException(&ldquo;Exception occured!&rdquo;);
+}
+}</p>
+<p><img src="../ksohtml20628/wps116.jpg" alt="img"></p>
+<p>写完后打包成jar</p>
+<p><img src="../ksohtml20628/wps117.jpg" alt="img"></p>
+<p>打包后的jar文件</p>
+<p><img src="../ksohtml20628/wps118.jpg" alt="img"></p>
+<p>将该jar以Extender的形式导入Burpsuite</p>
+<p><img src="../ksohtml20628/wps119.jpg" alt="img"></p>
+<p>可以看到已经成功加载，但是有个错误，解决过程会写在下一篇文章中</p>
+<p><img src="../ksohtml20628/wps120.jpg" alt="img"></p>
+<p><img src="../ksohtml20628/wps121.jpg" alt="img"></p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+  </body>
+</html>

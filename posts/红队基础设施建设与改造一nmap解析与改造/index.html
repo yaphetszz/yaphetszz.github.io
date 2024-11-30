@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>红队基础设施建设与改造（一）——Nmap解析与改造 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="红队基础设施建设与改造（一）——Nmap解析与改造">
+  <meta name="twitter:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+所谓工欲善其事必先利其器，渗透过程同样如此，虽然大部分人的目标并不是想当一个脚本小子，甚至身边有不少朋友“不屑”用别人的工具非要自己写。然后就是各种抱怨：
+“我X，扫描器又挂了！”“这个注入为什么我这个工具跑不出来”“怎么TM又超时了”“日，我IP又被ban了”这时候就开始真香了，自己写的全丢了，简历开头阿D明小子样样精通，实际项目里上来就是nmap，sqlmap一把梭，上了shell就是菜刀蚁剑直接连。
+但是实际渗透过程当中，在针对大型目标的测试中可能并不一定好使，目标系统部署着IPS，IDS直接就可以识别常规扫描器，攻击工具的连接。
+今天的第一篇基础设施的改造，就是我们非常常见的Nmap，nmap是一款优秀的端口扫描工具，同时内部集成了非常多的NSE脚本，在全球开源贡献者和安全人员的努力下集成的脚本越来越多，可以实现的特定设备扫描方式也越来越多，支持的漏洞种类也越来越全面，甚至有的漏洞可以实现端口扫描-&gt;服务探测-&gt;漏洞验证-&gt;漏洞利用-&gt;提权一条龙的操作，是一款非常优秀的工具。在官方wiki中的解释如下：
+Nmap (Network Mapper) is a free and open-source network scanner created by Gordon Lyon (also known by his pseudonym Fyodor Vaskovich).[3] Nmap is used to discover hosts and services on a computer network by sending packets and analyzing the responses. Nmap provides a number of features for probing computer networks, including host discovery and service and operating system detection. These features are extensible by scripts that provide more advanced service detection,[4] vulnerability detection,[4] and other features. Nmap can adapt to network conditions including latency and congestion during a scan. Nmap started as a Linux utility[5] and was ported to other systems including Windows, macOS, and BSD.[6] It is most popular on Linux, followed by Windows.[7] 毕竟树大招风，现在越来越多的流量审计，IDS等设备都已经将Nmap的流量特征列入了重点监测对象。因此对流量的改造问题亟待解决，其中互联网上就有一份公开的流量特征检测规则样例，地址为：https://doc.emergingthreats.net/">
+
+    <meta property="og:url" content="http://127.0.0.1:1313/posts/%E7%BA%A2%E9%98%9F%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E5%BB%BA%E8%AE%BE%E4%B8%8E%E6%94%B9%E9%80%A0%E4%B8%80nmap%E8%A7%A3%E6%9E%90%E4%B8%8E%E6%94%B9%E9%80%A0/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="红队基础设施建设与改造（一）——Nmap解析与改造">
+  <meta property="og:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+所谓工欲善其事必先利其器，渗透过程同样如此，虽然大部分人的目标并不是想当一个脚本小子，甚至身边有不少朋友“不屑”用别人的工具非要自己写。然后就是各种抱怨：
+“我X，扫描器又挂了！”“这个注入为什么我这个工具跑不出来”“怎么TM又超时了”“日，我IP又被ban了”这时候就开始真香了，自己写的全丢了，简历开头阿D明小子样样精通，实际项目里上来就是nmap，sqlmap一把梭，上了shell就是菜刀蚁剑直接连。
+但是实际渗透过程当中，在针对大型目标的测试中可能并不一定好使，目标系统部署着IPS，IDS直接就可以识别常规扫描器，攻击工具的连接。
+今天的第一篇基础设施的改造，就是我们非常常见的Nmap，nmap是一款优秀的端口扫描工具，同时内部集成了非常多的NSE脚本，在全球开源贡献者和安全人员的努力下集成的脚本越来越多，可以实现的特定设备扫描方式也越来越多，支持的漏洞种类也越来越全面，甚至有的漏洞可以实现端口扫描-&gt;服务探测-&gt;漏洞验证-&gt;漏洞利用-&gt;提权一条龙的操作，是一款非常优秀的工具。在官方wiki中的解释如下：
+Nmap (Network Mapper) is a free and open-source network scanner created by Gordon Lyon (also known by his pseudonym Fyodor Vaskovich).[3] Nmap is used to discover hosts and services on a computer network by sending packets and analyzing the responses. Nmap provides a number of features for probing computer networks, including host discovery and service and operating system detection. These features are extensible by scripts that provide more advanced service detection,[4] vulnerability detection,[4] and other features. Nmap can adapt to network conditions including latency and congestion during a scan. Nmap started as a Linux utility[5] and was ported to other systems including Windows, macOS, and BSD.[6] It is most popular on Linux, followed by Windows.[7] 毕竟树大招风，现在越来越多的流量审计，IDS等设备都已经将Nmap的流量特征列入了重点监测对象。因此对流量的改造问题亟待解决，其中互联网上就有一份公开的流量特征检测规则样例，地址为：https://doc.emergingthreats.net/">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-11-27T01:30:09+08:00">
+    <meta property="article:modified_time" content="2020-11-27T01:30:09+08:00">
+    <meta property="article:tag" content="红队技术">
+    <meta property="article:tag" content="红队武器研究">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://127.0.0.1:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">Home</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/posts/">posts</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">Tags</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">About</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://yaphetszz.github.com" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">红队基础设施建设与改造（一）——Nmap解析与改造</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Nov 27, 2020
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          7179 Words - 
+          
+          14 min read
+        </div>
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%BA%A2%E9%98%9F%E6%AD%A6%E5%99%A8%E7%A0%94%E7%A9%B6/">红队武器研究</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！</strong></p>
+<p>所谓工欲善其事必先利其器，渗透过程同样如此，虽然大部分人的目标并不是想当一个脚本小子，甚至身边有不少朋友“不屑”用别人的工具非要自己写。然后就是各种抱怨：</p>
+<p>“我X，扫描器又挂了！”“这个注入为什么我这个工具跑不出来”“怎么TM又超时了”“日，我IP又被ban了”这时候就开始真香了，自己写的全丢了，简历开头阿D明小子样样精通，实际项目里上来就是nmap，sqlmap一把梭，上了shell就是菜刀蚁剑直接连。</p>
+<p>但是实际渗透过程当中，在针对大型目标的测试中可能并不一定好使，目标系统部署着IPS，IDS直接就可以识别常规扫描器，攻击工具的连接。</p>
+<p>今天的第一篇基础设施的改造，就是我们非常常见的Nmap，nmap是一款优秀的端口扫描工具，同时内部集成了非常多的NSE脚本，在全球开源贡献者和安全人员的努力下集成的脚本越来越多，可以实现的特定设备扫描方式也越来越多，支持的漏洞种类也越来越全面，甚至有的漏洞可以实现端口扫描-&gt;服务探测-&gt;漏洞验证-&gt;漏洞利用-&gt;提权一条龙的操作，是一款非常优秀的工具。在官方wiki中的解释如下：</p>
+<pre tabindex="0"><code>Nmap (Network Mapper) is a free and open-source network scanner created by Gordon Lyon (also known by his pseudonym Fyodor Vaskovich).[3] Nmap is used to discover hosts and services on a computer network by sending packets and analyzing the responses. 
+Nmap provides a number of features for probing computer networks, including host discovery and service and operating system detection. These features are extensible by scripts that provide more advanced service detection,[4] vulnerability detection,[4] and other features. Nmap can adapt to network conditions including latency and congestion during a scan. 
+Nmap started as a Linux utility[5] and was ported to other systems including Windows, macOS, and BSD.[6] It is most popular on Linux, followed by Windows.[7] 
+</code></pre><p>毕竟树大招风，现在越来越多的流量审计，IDS等设备都已经将Nmap的流量特征列入了重点监测对象。因此对流量的改造问题亟待解决，其中互联网上就有一份公开的流量特征检测规则样例，地址为：https://doc.emergingthreats.net/</p>
+<p>本文主要针对nmap的常见扫描方式和数据包进行分析，进而从源码层面修改后重新编译达到降低针对特征扫描的发现概率。</p>
+<p>我们先来看看具体的流量特征，我们的测试环境如下</p>
+<p>扫描机：192.168.233.1 Windows10 Nmap7.60（今天写文章的时候发现7.9都发布了，别问为什么版本这么老，只是懒得更新）</p>
+<p>目标机：192.168.233.129 Kali Linux2020.4 Wireshark</p>
+<p>首先使用最简单的-p命令进行端口扫描，默认为全连接扫描，此时相当于带上了-sT参数</p>
+<p><img src="../ksohtml1788/wps55.jpg" alt="img"></p>
+<p>然后在目标机上进行流量截取，流量信息如下图所示：</p>
+<p><img src="../ksohtml1788/wps56.jpg" alt="img"></p>
+<p>可以很明显的看到扫描的流量包，先来追踪一下扫描22端口的流量包，可以看到首先进行了ARP广播确认目标是否存活，在收到回包后开始发送探测数据包，第一个发过来包的源地址，目的端口以及包类型，是通过SYN/FIN的形式进行扫描</p>
+<p><img src="../ksohtml1788/wps57.jpg" alt="img"></p>
+<p>回包中我们可以看到目的地址，即扫描机的地址，对回包的判断端口是否开启只检查标志位。</p>
+<p>而这时，如果我们扫一个没有开放的端口，例如3389，对应地可以看到回包为RST</p>
+<p><img src="../ksohtml1788/wps58.jpg" alt="img"></p>
+<p>此时说明被过滤或端口关闭。这是基本的端口扫描原理，由于该种方式扫描会建立完整的TCP三次握手流程，容易在目标服务器上留下大量记录，因此在平时的扫描过程中通常不使用该方法。</p>
+<p>实战中最常用的扫描方式为SYN扫描，发送一个SYN报文， 就像您真的要打开一个连接，然后等待响应。 SYN/ACK表示端口在监听 (开放)，而 RST (复位)表示没有监听者。如果数次重发后仍没响应， 该端口就被标记为被过滤。如果收到ICMP不可到达错误 (类型3，代码1，2，3，9，10，或者13)，该端口也被标记为被过滤。</p>
+<p>此时易暴露的关键数据为Win字段，该字段用于指定TCP窗口大小，在SYN扫描时固定值为1024，定位到的源码位于tcpip.cc的665行如下图所示，还有一句很灵性的注释Who cares</p>
+<p><img src="../ksohtml1788/wps59.jpg" alt="img"></p>
+<p>这时候改个值就行了，我改成了3306</p>
+<p>再来看看nmap 常用的-sV参数判断服务时的发包情况</p>
+<p><img src="../ksohtml1788/wps60.jpg" alt="img"></p>
+<p>可以看到在加入了-sV参数后出现了很多其他的包</p>
+<p><img src="../ksohtml1788/wps61.jpg" alt="img"></p>
+<p>其中就有返回的SSH版本信息</p>
+<p><img src="../ksohtml1788/wps62.jpg" alt="img"></p>
+<p>追踪数据流后发现多了几个参数</p>
+<p><img src="../ksohtml1788/wps63.jpg" alt="img"></p>
+<p>seq:包中第一个字节的序号</p>
+<p>ACK：希望下次收到的seq序号</p>
+<p>Tsval：字段</p>
+<p>Tsecr：回显应答字段，用于回显接收到的Tsval字段</p>
+<p>通过这几个参数，目标服务器在接受到来自nmap的探测包后会返回一些内容，例如此处的SSH版本号，我们可以再来看看通过Python2启动的HTTP服务，可以看到nmap成功判断了目标Python版本信息</p>
+<p><img src="../ksohtml1788/wps64.jpg" alt="img"></p>
+<p>而在我们Python起的服务端上也看到了nmap 的请求方式：</p>
+<p><img src="../ksohtml1788/wps65.jpg" alt="img"></p>
+<p>GET请求根目录，/nmaplowercheck1606372178，/HNAP1，以及POST请求/sdk目录，对应的数据包之多，一页放不下。</p>
+<p><img src="../ksohtml1788/wps66.jpg" alt="img"></p>
+<p>服务扫描的相关代码可以在nmap的源码部分的servicescan中找到，此处不做具体分析（主要是没找到特征较为明显的字符串），感兴趣的同学可以自行研究。</p>
+<p><img src="../ksohtml1788/wps67.jpg" alt="img"></p>
+<p>还有一大功能就是nmap的操作系统探测，我们直接使用-O参数就能实现操作系统探测，可以看到探测结果如下图所示：</p>
+<p><img src="../ksohtml1788/wps68.jpg" alt="img"></p>
+<p>数据包非常多，20秒的时间就有了两千多个，因为我们在没有指定端口的情况下nmap悄悄地扫了很多端口</p>
+<p><img src="../ksohtml1788/wps69.jpg" alt="img"></p>
+<p>如果指定端口再看就少了很多：</p>
+<p><img src="../ksohtml1788/wps70.jpg" alt="img"></p>
+<p><img src="../ksohtml1788/wps71.jpg" alt="img"></p>
+<p>我们定位到关键数据包，即下图中追踪的UDP流，可以看到一串C填充的字符</p>
+<p><img src="../ksohtml1788/wps72.jpg" alt="img"></p>
+<p>定位到源代码中，可以看到在osscan2.cc中在发包探测时用字符C来填充了ICMP数据包，为了避免某些规则检测，我们就可以考虑替换字符</p>
+<p><img src="../ksohtml1788/wps73.jpg" alt="img"></p>
+<p>而在上面一行中，可以看到注释中带有随机生成字符的部分</p>
+<p><img src="../ksohtml1788/wps74.jpg" alt="img"></p>
+<p>那就直接修改，将patternbyte改为随机生成即可，不会因为过于明显的特征而被防火墙等拦截</p>
+<p><img src="../ksohtml1788/wps75.jpg" alt="img"></p>
+<p>其他几种常见的扫描方法我也没看到啥明显特征&hellip;</p>
+<p>经过进一步的资料查询和收集，发现在NSE脚本中可能也有大量的nmap关键字，例如nmap，nm@p，nm，nm2等，在实际使用时可以根据需要进行替换</p>
+<p><img src="../ksohtml1788/wps76.jpg" alt="img"></p>
+<p>修改完成后即可进行编译，编译指令官方文档已经给出了，在ubuntu下进行编译</p>
+<p><img src="../ksohtml1788/wps77.jpg" alt="img"></p>
+<p>确认配置完成后有个炫酷的字符画</p>
+<p><img src="../ksohtml1788/wps78.jpg" alt="img"></p>
+<p>接下来开始make和make install，完成后可以看到我们的nmap已经变成7.91版本了</p>
+<p><img src="../ksohtml1788/wps79.jpg" alt="img"></p>
+<p>针对刚刚修改的点再来进行一波扫描，可以看到带上-O参数时已经变成了F填充</p>
+<p><img src="../ksohtml1788/wps80.jpg" alt="img"></p>
+<p>我们在进行SYN扫描时的Win值也变成了3306</p>
+<p><img src="../ksohtml1788/wps81.jpg" alt="img"></p>
+<p>同样此处也可以写一个函数对Win值进行随机化，能够规避部分具有进阶检测功能的安全防护设备</p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+  </body>
+</html>

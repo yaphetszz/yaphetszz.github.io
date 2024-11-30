@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>红队基础设施建设与改造（三）——武装你的Burpsuite（上） // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="红队基础设施建设与改造（三）——武装你的Burpsuite（上）">
+  <meta name="twitter:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+Burpsuite作为抓包利器，深受安全人员的喜爱。免费的community版本只有非常少的一些功能，而很多功能都在Pro版中，虽然基础功能都能实现，但是Burpsuite就是以强大的模块化拓展功能著称，就像常见的Goby, CS 和蚁剑等工具都非常适合模块化的拓展开发。如此强大的神器在不同版本究竟有什么差异呢，我们先来官网看一看。
+可以看到企业版卖到了3999刀一年，而正常情况下的专业版也是399刀一年。其中专业版的功能支持多了Web vulnerability scanner、Advanced manual tools和Essential manual tools。
+下面是官网给出的功能解释截图，大家自己看一下就好，我懒得翻译了，顺便说一句：一定要好好学英语。我是不会告诉你们我是好几个技术项目的翻译支持的（有合作意向的大佬除外，兼职翻译欢迎小窗。）
+破解方法网上一搜一大堆，在这里就不多BB了，当然你也可以选择支持正版。下面我们进入正题，开始本篇的重点部分：武装Burpsuite。
+本篇的介绍环境如下：
+Burpsuite Pro 2020.7
+Java 14.0.2 2020-07-14
+因为新版的Burp好像不支持Java8了，之前用的BP1.7版本还是用的Java8。新版本的Burpsuite反正我觉得界面长的还可以。主界面如下：
+新增的功能是内置的浏览器，不用再像以前一样测试的时候浏览器和Burp疯狂切换了。
+Burpsuite的武装主要是支持拓展的部分也就是模块化的拓展，在Extender模块部分可以看到当前已安装的拓展，为了演示需要我这边找了一个白板Burp
+Burp的插件支持本地加载和商店直接下载，我们先来看看商店中的实用拓展：
+以第一个插件为例，讲讲如何从商店中安装插件，首先选中插件，将右侧栏的滚动条拖到底可以看到install按钮
+点击install后就开始了安装
+安装成功后可看到installed栏下勾上了
+不过这玩意的效果好像比较难演示，效果演示我们就放到后面的内容中去。知道了插件的基础安装过程，接下来就是武装的过程了。
+以下介绍的插件为我自己Burp中安装的一些常用插件，在渗透测试或挖洞时能让工作方便不少。
+HaE 2024补充，Key师傅开发的插件，有非常多的策略可以用于各种测试，总之就是非常牛逼！！！牛逼！！还有不断更新的规则库， 使用效果如下（图是网上偷的，自己挖的洞太牛逼了就不放了）：
+Autorize 这是一款强大的自动化越权测试工具，在商店中就可以下载。但是这款工具在安装过程中就要开始踩坑了，并不是直接安装就可以的，为了演示还特地起了一台没环境的虚拟机。
+在这款工具的安装中我们可以看到需要安装Jython，因为该插件通过Python来进行支持，
+首先去https://www.jython.org/download.html下载jython并安装
+然后在Option选项中选择刚刚安装的jython路径
+这时候在进入商店。刷新列表后即可进行安装
+安装成功后即可在选项卡中看到Autorize
+在拦截数据包部分可以看到右键选项多了发送到Autorize
+测试成功的项会变绿，即存在越权
+AutoRepeater 这款工具和上述的差不多，都可以直接在Burp的插件商店里找到。安装完成后的效果和之前的差不多，会多一个选项卡
+可以把这个插件当做高级版的Repeater
+同样通过右键发送到插件
+可以在右边自定义一些过滤规则，在大批量发包的时候就不用一个个手工替换会方便很多。
+并且在多样化的规则中，这个工具同样可以测试越权，支持替换的cookie部分很多">
+
+    <meta property="og:url" content="http://127.0.0.1:1313/posts/%E7%BA%A2%E9%98%9F%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E5%BB%BA%E8%AE%BE%E4%B8%8E%E6%94%B9%E9%80%A0%E4%B8%89%E6%AD%A6%E8%A3%85%E4%BD%A0%E7%9A%84burpsuite%E4%B8%8A/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="红队基础设施建设与改造（三）——武装你的Burpsuite（上）">
+  <meta property="og:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+Burpsuite作为抓包利器，深受安全人员的喜爱。免费的community版本只有非常少的一些功能，而很多功能都在Pro版中，虽然基础功能都能实现，但是Burpsuite就是以强大的模块化拓展功能著称，就像常见的Goby, CS 和蚁剑等工具都非常适合模块化的拓展开发。如此强大的神器在不同版本究竟有什么差异呢，我们先来官网看一看。
+可以看到企业版卖到了3999刀一年，而正常情况下的专业版也是399刀一年。其中专业版的功能支持多了Web vulnerability scanner、Advanced manual tools和Essential manual tools。
+下面是官网给出的功能解释截图，大家自己看一下就好，我懒得翻译了，顺便说一句：一定要好好学英语。我是不会告诉你们我是好几个技术项目的翻译支持的（有合作意向的大佬除外，兼职翻译欢迎小窗。）
+破解方法网上一搜一大堆，在这里就不多BB了，当然你也可以选择支持正版。下面我们进入正题，开始本篇的重点部分：武装Burpsuite。
+本篇的介绍环境如下：
+Burpsuite Pro 2020.7
+Java 14.0.2 2020-07-14
+因为新版的Burp好像不支持Java8了，之前用的BP1.7版本还是用的Java8。新版本的Burpsuite反正我觉得界面长的还可以。主界面如下：
+新增的功能是内置的浏览器，不用再像以前一样测试的时候浏览器和Burp疯狂切换了。
+Burpsuite的武装主要是支持拓展的部分也就是模块化的拓展，在Extender模块部分可以看到当前已安装的拓展，为了演示需要我这边找了一个白板Burp
+Burp的插件支持本地加载和商店直接下载，我们先来看看商店中的实用拓展：
+以第一个插件为例，讲讲如何从商店中安装插件，首先选中插件，将右侧栏的滚动条拖到底可以看到install按钮
+点击install后就开始了安装
+安装成功后可看到installed栏下勾上了
+不过这玩意的效果好像比较难演示，效果演示我们就放到后面的内容中去。知道了插件的基础安装过程，接下来就是武装的过程了。
+以下介绍的插件为我自己Burp中安装的一些常用插件，在渗透测试或挖洞时能让工作方便不少。
+HaE 2024补充，Key师傅开发的插件，有非常多的策略可以用于各种测试，总之就是非常牛逼！！！牛逼！！还有不断更新的规则库， 使用效果如下（图是网上偷的，自己挖的洞太牛逼了就不放了）：
+Autorize 这是一款强大的自动化越权测试工具，在商店中就可以下载。但是这款工具在安装过程中就要开始踩坑了，并不是直接安装就可以的，为了演示还特地起了一台没环境的虚拟机。
+在这款工具的安装中我们可以看到需要安装Jython，因为该插件通过Python来进行支持，
+首先去https://www.jython.org/download.html下载jython并安装
+然后在Option选项中选择刚刚安装的jython路径
+这时候在进入商店。刷新列表后即可进行安装
+安装成功后即可在选项卡中看到Autorize
+在拦截数据包部分可以看到右键选项多了发送到Autorize
+测试成功的项会变绿，即存在越权
+AutoRepeater 这款工具和上述的差不多，都可以直接在Burp的插件商店里找到。安装完成后的效果和之前的差不多，会多一个选项卡
+可以把这个插件当做高级版的Repeater
+同样通过右键发送到插件
+可以在右边自定义一些过滤规则，在大批量发包的时候就不用一个个手工替换会方便很多。
+并且在多样化的规则中，这个工具同样可以测试越权，支持替换的cookie部分很多">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-12-16T11:04:32+08:00">
+    <meta property="article:modified_time" content="2020-12-16T11:04:32+08:00">
+    <meta property="article:tag" content="红队技术">
+    <meta property="article:tag" content="红队武器研究">
+    <meta property="article:tag" content="Burpsuite">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="http://127.0.0.1:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">Home</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/posts/">posts</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">Tags</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">About</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://yaphetszz.github.com" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">红队基础设施建设与改造（三）——武装你的Burpsuite（上）</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Dec 16, 2020
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          8345 Words - 
+          
+          17 min read
+        </div>
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
+              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%BA%A2%E9%98%9F%E6%AD%A6%E5%99%A8%E7%A0%94%E7%A9%B6/">红队武器研究</a>
+              <a class="tag" href="http://127.0.0.1:1313/tags/burpsuite/">Burpsuite</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！</strong></p>
+<p>Burpsuite作为抓包利器，深受安全人员的喜爱。免费的community版本只有非常少的一些功能，而很多功能都在Pro版中，虽然基础功能都能实现，但是Burpsuite就是以强大的模块化拓展功能著称，就像常见的Goby, CS 和蚁剑等工具都非常适合模块化的拓展开发。如此强大的神器在不同版本究竟有什么差异呢，我们先来官网看一看。</p>
+<p><img src="../ksohtml20628/wps38.jpg" alt="img"></p>
+<p>可以看到企业版卖到了3999刀一年，而正常情况下的专业版也是399刀一年。其中专业版的功能支持多了Web vulnerability scanner、Advanced manual tools和Essential manual tools。</p>
+<p>下面是官网给出的功能解释截图，大家自己看一下就好，我懒得翻译了，顺便说一句：一定要好好学英语。我是不会告诉你们我是好几个技术项目的翻译支持的（有合作意向的大佬除外，兼职翻译欢迎小窗。）</p>
+<p><img src="../ksohtml20628/wps39.jpg" alt="img"></p>
+<p><img src="../ksohtml20628/wps40.jpg" alt="img"></p>
+<p><img src="../ksohtml20628/wps41.jpg" alt="img"></p>
+<p>破解方法网上一搜一大堆，在这里就不多BB了，当然你也可以选择支持正版。下面我们进入正题，开始本篇的重点部分：武装Burpsuite。</p>
+<p>本篇的介绍环境如下：</p>
+<p>Burpsuite Pro 2020.7</p>
+<p>Java 14.0.2 2020-07-14</p>
+<p>因为新版的Burp好像不支持Java8了，之前用的BP1.7版本还是用的Java8。新版本的Burpsuite反正我觉得界面长的还可以。主界面如下：</p>
+<p><img src="../ksohtml20628/wps42.jpg" alt="img"></p>
+<p>新增的功能是内置的浏览器，不用再像以前一样测试的时候浏览器和Burp疯狂切换了。</p>
+<p><img src="../ksohtml20628/wps43.jpg" alt="img"></p>
+<p>Burpsuite的武装主要是支持拓展的部分也就是模块化的拓展，在Extender模块部分可以看到当前已安装的拓展，为了演示需要我这边找了一个白板Burp</p>
+<p><img src="../ksohtml20628/wps44.jpg" alt="img"></p>
+<p>Burp的插件支持本地加载和商店直接下载，我们先来看看商店中的实用拓展：</p>
+<p><img src="../ksohtml20628/wps45.jpg" alt="img"></p>
+<p>以第一个插件为例，讲讲如何从商店中安装插件，首先选中插件，将右侧栏的滚动条拖到底可以看到install按钮</p>
+<p><img src="../ksohtml20628/wps46.jpg" alt="img"></p>
+<p>点击install后就开始了安装</p>
+<p><img src="../ksohtml20628/wps47.jpg" alt="img"></p>
+<p>安装成功后可看到installed栏下勾上了</p>
+<p><img src="../ksohtml20628/wps48.jpg" alt="img"></p>
+<p>不过这玩意的效果好像比较难演示，效果演示我们就放到后面的内容中去。知道了插件的基础安装过程，接下来就是武装的过程了。</p>
+<p>以下介绍的插件为我自己Burp中安装的一些常用插件，在渗透测试或挖洞时能让工作方便不少。</p>
+<h2 id="hae"><em>HaE</em></h2>
+<p>2024补充，Key师傅开发的插件，<del>有非常多的策略可以用于各种测试</del>，总之就是非常牛逼！！！牛逼！！还有不断更新的<a href="https://raw.githubusercontent.com/gh0stkey/HaE/gh-pages/Rules.yml">规则库</a>，
+使用效果如下（图是网上偷的，自己挖的洞太牛逼了就不放了）：</p>
+<p><img src="../ksohtml20628/1362876-20240520150051446-910956326.png" alt="img"></p>
+<h2 id="autorize"><em>Autorize</em></h2>
+<p>这是一款强大的自动化越权测试工具，在商店中就可以下载。但是这款工具在安装过程中就要开始踩坑了，并不是直接安装就可以的，为了演示还特地起了一台没环境的虚拟机。</p>
+<p>在这款工具的安装中我们可以看到需要安装Jython，因为该插件通过Python来进行支持，</p>
+<p><img src="../ksohtml20628/wps49.jpg" alt="img"></p>
+<p>首先去https://www.jython.org/download.html下载jython并安装</p>
+<p><img src="../ksohtml20628/wps50.jpg" alt="img"></p>
+<p>然后在Option选项中选择刚刚安装的jython路径</p>
+<p><img src="../ksohtml20628/wps51.jpg" alt="img"></p>
+<p>这时候在进入商店。刷新列表后即可进行安装</p>
+<p><img src="../ksohtml20628/wps52.jpg" alt="img"></p>
+<p>安装成功后即可在选项卡中看到Autorize</p>
+<p><img src="../ksohtml20628/wps53.jpg" alt="img"></p>
+<p>在拦截数据包部分可以看到右键选项多了发送到Autorize</p>
+<p><img src="../ksohtml20628/wps54.jpg" alt="img"></p>
+<p>测试成功的项会变绿，即存在越权</p>
+<p><img src="../ksohtml20628/wps55.jpg" alt="img"></p>
+<h2 id="autorepeater"><em>AutoRepeater</em></h2>
+<p>这款工具和上述的差不多，都可以直接在Burp的插件商店里找到。安装完成后的效果和之前的差不多，会多一个选项卡</p>
+<p>可以把这个插件当做高级版的Repeater</p>
+<p><img src="../ksohtml20628/wps56.jpg" alt="img"></p>
+<p>同样通过右键发送到插件</p>
+<p><img src="../ksohtml20628/wps57.jpg" alt="img"></p>
+<p>可以在右边自定义一些过滤规则，在大批量发包的时候就不用一个个手工替换会方便很多。</p>
+<p><img src="../ksohtml20628/wps58.jpg" alt="img"></p>
+<p>并且在多样化的规则中，这个工具同样可以测试越权，支持替换的cookie部分很多</p>
+<p><img src="../ksohtml20628/wps59.jpg" alt="img"></p>
+<h2 id="turbo-intruder"><em>Turbo Intruder</em></h2>
+<p>这个工具一看就和Intruder有关，当目标服务器性能足够强并且没有限制你的发包速度的时候，可以超高速的进行爆破。首先进行插件安装，直接在Burp中就能找到。</p>
+<p><img src="../ksohtml20628/wps60.jpg" alt="img"></p>
+<p>安装完成后在需要爆破的页面处选择发送</p>
+<p><img src="../ksohtml20628/wps61.jpg" alt="img"></p>
+<p>这时候会弹出一个新窗口</p>
+<p><img src="../ksohtml20628/wps62.jpg" alt="img"></p>
+<p>配置相关参数即可进行爆破（脚本可以自己写）在需要爆破的地方填上%s就行了，这时候我们找一个8k的字典测试一下</p>
+<p><img src="../ksohtml20628/wps63.jpg" alt="img"></p>
+<p>啪的一下就完成了，很快啊</p>
+<p><img src="../ksohtml20628/wps64.jpg" alt="img"></p>
+<p>听说某大佬跑了个20多w的字典只跑了两分钟(假的)，但是在测试条件竞争漏洞上这个插件真的非常好用</p>
+<h2 id="logger"><em>Logger++</em></h2>
+<p>这个插件是一个增强型的历史记录显示工具，同样也在商店中</p>
+<p><img src="../ksohtml20628/wps65.jpg" alt="img"></p>
+<p>在这个插件中可以检测到大部分模块的发包，并且进行记录和筛选</p>
+<p><img src="../ksohtml20628/wps66.jpg" alt="img"></p>
+<p>记录类型还是非常详细的</p>
+<p><img src="../ksohtml20628/wps67.jpg" alt="img"></p>
+<p>还能看到哪些包走了代理哪些没走</p>
+<h2 id="jsonbeautifier"><em>JSONbeautifier</em></h2>
+<p>这玩意可以不装，我在老版本的BP上才装，2020.7版本的BP中自带的Pretty功能已经可以实现美化JSON了</p>
+<p>例如以下为某项目中遇到的JSON请求在Pretty和非Pretty中的对比（这个版本中美化自动开启）</p>
+<p><img src="../ksohtml20628/wps68.jpg" alt="img"></p>
+<p><img src="../ksohtml20628/wps69.jpg" alt="img"></p>
+<p>这时候可能感觉并没有明显区别，但是在包含大量数据的回包中就很明显了，如果在用老版本的小伙伴可以用这个插件实现美化。</p>
+<h2 id="sqlmap4burp">sqlmap4burp++</h2>
+<p>上面介绍的都是BAPP里的插件，接下来讲讲怎么手动安装插件，毕竟还是有很多优秀的插件都是在Github上的。</p>
+<p>第一个插件地址是https://github.com/c0ny1/sqlmap4burp-plus-plus</p>
+<p>可以在release中下载作者已经编译好的版本，当然喜欢动手的大佬也可以选择自己编译</p>
+<p>下载完成后，首先在BP的Extender中点击Add添加</p>
+<p><img src="../ksohtml20628/wps70.jpg" alt="img"></p>
+<p>选择插件路径并添加</p>
+<p><img src="../ksohtml20628/wps71.jpg" alt="img"></p>
+<p>之后burp会给一个反馈</p>
+<p><img src="../ksohtml20628/wps72.jpg" alt="img"></p>
+<p>使用时将包发送到对应模块</p>
+<p><img src="../ksohtml20628/wps73.jpg" alt="img"></p>
+<p>第一次使用时需要配置sqlmap 的路径和参数</p>
+<p><img src="../ksohtml20628/wps74.jpg" alt="img"></p>
+<p>然后点击OK就可以看到直接调用sqlmap开始了测试</p>
+<p><img src="../ksohtml20628/wps75.jpg" alt="img"></p>
+<h2 id="knife"><em>Knife</em></h2>
+<p>正如插件名一样，该工具为刀，可以说是瑞士军刀，毕竟有不少实用的小工具，项目地址为：</p>
+<p><a href="https://github.com/bit4woo/knife">https://github.com/bit4woo/knife</a></p>
+<p>还是和之前一样进行导入</p>
+<p><img src="../ksohtml20628/wps76.jpg" alt="img"></p>
+<p>安装完成后可以看到我们的右键菜单中多了不少小工具</p>
+<p><img src="../ksohtml20628/wps77.jpg" alt="img"></p>
+<h2 id="captcha-killer"><em>captcha-ki<strong>l</strong>ler</em></h2>
+<p>这个工具是用来爆破验证码的，通过AI识别验证码的方式进行爆破，项目地址如下：</p>
+<p><a href="https://github.com/c0ny1/captcha-killer">https://github.com/c0ny1/captcha-killer</a></p>
+<p>安装过程就不截图了，和之前一样。</p>
+<p>这边找了朋友的一个网站来进行测试，虽然他已经给了我账号密码，但是我们假装不知道（反正写文章的测试里也不会写真的密码），登陆页如下，可以看到带有验证码</p>
+<p><img src="../ksohtml20628/wps78.jpg" alt="img"></p>
+<p>首先进行验证码接口配置和调试，可以看到抓到的包里有验证码字段</p>
+<p><img src="../ksohtml20628/wps79.jpg" alt="img"></p>
+<p>右键发送到插件</p>
+<p><img src="../ksohtml20628/wps80.jpg" alt="img"></p>
+<p>点击获取可以收到图形验证码</p>
+<p>在模板处点击选择模板，可以自己配置，这里以百度OCR为例进行演示</p>
+<p><img src="../ksohtml20628/wps81.jpg" alt="img"></p>
+<p>需要将识别地址替换为个人中心的API地址以及请求道的TOKEN点击识别就能在右侧栏看到相关的结果了，不过百度毕竟每天免费次数这么多，识别率不是很高，有需要的话可以购买高级识别接口</p>
+<p><img src="../ksohtml20628/wps82.jpg" alt="img"></p>
+<h2 id="403bypasser"><em>4<strong>03</strong>Bypasser</em></h2>
+<p>这个插件是用来绕过403的，地址如下</p>
+<p><a href="https://github.com/sting8k/BurpSuite_403Bypasser">https://github.com/sting8k/BurpSuite_403Bypasser</a></p>
+<p>有时候可能对方策略配置不严格导致某目录403但是你可以请求到下面具体的文件，不截图了直接安装就行。</p>
+<p>能被绕过的网页将在Dashboard页显示</p>
+<p><img src="../ksohtml20628/wps83.jpg" alt="img"></p>
+<h2 id="unexpected_information-extensions"><em>Unexpected_information Extensions</em></h2>
+<p>信息泄露检测插件，支持身份证信息，手机号信息，IP信息，邮箱信息，JS文件API接口路径，JS文件URL，特殊字段(password、method: &ldquo;post&rdquo;&hellip;#57)，JSON Web Token，Shiro(rememberMe=delete)，双向检测，高亮显示</p>
+<p>下载地址：</p>
+<p><a href="https://github.com/ScriptKid-Beta/Unexpected_information">https://github.com/ScriptKid-Beta/Unexpected_information</a></p>
+<p>可以看到在疑似泄露数据中标出了不同的颜色</p>
+<p><img src="../ksohtml20628/wps84.jpg" alt="img"></p>
+<p>而在选项卡中也能看到</p>
+<p><img src="../ksohtml20628/wps85.jpg" alt="img"></p>
+<h2 id="passive-scan-client"><em>passive-scan-client</em></h2>
+<p>这款插件可以转发burp的被动流量，因为虽然burp内置了扫描功能，但是可能并不是特别强大，可以搭配XRAY等强大的扫描器进行扫描，地址如下：</p>
+<p><a href="https://github.com/c0ny1/passive-scan-client">https://github.com/c0ny1/passive-scan-client</a></p>
+<p>除此之外还有大量优秀的插件，在这里就不列举了，主要是很多扫描插件都不更新了，上面主要为我自己的BP所装的一些插件，可以让平时的工作效率更高。上篇的内容就介绍到这边，下篇会给大家带来自己动手开发BP插件的教程。</p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+  </body>
+</html>
