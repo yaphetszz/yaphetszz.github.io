@@ -15,7 +15,8 @@
     
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="kali linux下PM3环境配置">
-  <meta name="twitter:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！ 前段时间入手了proxmark3 rdv4，好像目前还是最新版本，不过听说马上又要有新版本了(2024更新：4.1早就出了，听说又有新版本了)，这次买的是官方标配加蓝牙拓展模块
+  <meta name="twitter:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+前段时间入手了proxmark3 rdv4，好像目前还是最新版本，不过听说马上又要有新版本了(2024更新：4.1早就出了，听说又有新版本了)，这次买的是官方标配加蓝牙拓展模块
 看起来研制还阔以，迫不及待开始搭环境准备下手
 首先看到了官方文档的官方wiki
 直接在kali上开搞，毕竟kali也是常用系统么
@@ -36,10 +37,11 @@ sudo apt install git build-essential libreadline5 libreadline-dev gcc-arm-none-e
 让我们来看看读卡效果，
 读卡也读到了，简直完美！入门环境搭建教程就到这边，后续会根据实际情况写一些其他的教程。（其实这是一次救砖教程，之前因为一番神奇的操作导致我的PM3变砖，想想这400美刀买回来的东西就这么变砖了是真的难受！还好又在一番神器的操作下救了回来，果然电子产品出问题解决问题三部曲：重启重装重买）">
 
-    <meta property="og:url" content="http://127.0.0.1:1313/posts/kali-linux%E4%B8%8Bpm3%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/kali-linux%E4%B8%8Bpm3%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">
   <meta property="og:site_name" content="Y4ph3tS blog">
   <meta property="og:title" content="kali linux下PM3环境配置">
-  <meta property="og:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！ 前段时间入手了proxmark3 rdv4，好像目前还是最新版本，不过听说马上又要有新版本了(2024更新：4.1早就出了，听说又有新版本了)，这次买的是官方标配加蓝牙拓展模块
+  <meta property="og:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+前段时间入手了proxmark3 rdv4，好像目前还是最新版本，不过听说马上又要有新版本了(2024更新：4.1早就出了，听说又有新版本了)，这次买的是官方标配加蓝牙拓展模块
 看起来研制还阔以，迫不及待开始搭环境准备下手
 首先看到了官方文档的官方wiki
 直接在kali上开搞，毕竟kali也是常用系统么
@@ -72,7 +74,7 @@ sudo apt install git build-essential libreadline5 libreadline-dev gcc-arm-none-e
   </head>
   <body>
     <header class="app-header">
-      <a href="http://127.0.0.1:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
       <span class="app-header-title">Y4ph3tS blog</span>
       <nav class="app-header-menu">
           <a class="app-header-menu-item" href="/">Home</a>
@@ -114,15 +116,15 @@ sudo apt install git build-essential libreadline5 libreadline-dev gcc-arm-none-e
         </div>
         <div>
           <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a>
-              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%A1%AC%E4%BB%B6/">硬件</a>
-              <a class="tag" href="http://127.0.0.1:1313/tags/%E8%BF%91%E6%BA%90%E6%B8%97%E9%80%8F/">近源渗透</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%A1%AC%E4%BB%B6/">硬件</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E8%BF%91%E6%BA%90%E6%B8%97%E9%80%8F/">近源渗透</a>
         </div>
       </div>
     </header>
     <div class="post-content">
-      <p><strong>本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！</strong>
-前段时间入手了proxmark3 rdv4，好像目前还是最新版本，不过听说马上又要有新版本了(2024更新：4.1早就出了，听说又有新版本了)，这次买的是官方标配加蓝牙拓展模块</p>
+      <p><strong>本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！</strong></p>
+<p>前段时间入手了proxmark3 rdv4，好像目前还是最新版本，不过听说马上又要有新版本了(2024更新：4.1早就出了，听说又有新版本了)，这次买的是官方标配加蓝牙拓展模块</p>
 <p><img src="../index_files/048a3de0-c49a-45df-9084-ee5698a7ddbd.jpg" alt="img"></p>
 <p><img src="../index_files/4193f5e1-a708-4e06-84d5-05d8a9f2bdce.jpg" alt="img"></p>
 <p><img src="../index_files/772761cc-d7e1-4c8b-98c1-feb7da22a43a.jpg" alt="img"></p>

