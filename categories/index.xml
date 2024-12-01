@@ -2,31 +2,31 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on Y4ph3tS blog</title>
-    <link>http://localhost:1313/categories/</link>
+    <link>https://yaphetszz.github.io/categories/</link>
     <description>Recent content in Categories on Y4ph3tS blog</description>
     <generator>Hugo</generator>
     <language>en</language>
     <lastBuildDate>Tue, 26 Apr 2022 06:14:00 +0800</lastBuildDate>
-    <atom:link href="http://localhost:1313/categories/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://yaphetszz.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>安卓</title>
-      <link>http://localhost:1313/categories/%E5%AE%89%E5%8D%93/</link>
+      <link>https://yaphetszz.github.io/categories/%E5%AE%89%E5%8D%93/</link>
       <pubDate>Tue, 26 Apr 2022 06:14:00 +0800</pubDate>
-      <guid>http://localhost:1313/categories/%E5%AE%89%E5%8D%93/</guid>
+      <guid>https://yaphetszz.github.io/categories/%E5%AE%89%E5%8D%93/</guid>
       <description></description>
     </item>
     <item>
       <title>攻防渗透</title>
-      <link>http://localhost:1313/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/</link>
+      <link>https://yaphetszz.github.io/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/</link>
       <pubDate>Mon, 15 Mar 2021 09:08:11 +0800</pubDate>
-      <guid>http://localhost:1313/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/</guid>
+      <guid>https://yaphetszz.github.io/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/</guid>
       <description></description>
     </item>
     <item>
       <title>IoT</title>
-      <link>http://localhost:1313/categories/iot/</link>
+      <link>https://yaphetszz.github.io/categories/iot/</link>
       <pubDate>Thu, 26 Nov 2020 07:20:13 +0800</pubDate>
-      <guid>http://localhost:1313/categories/iot/</guid>
+      <guid>https://yaphetszz.github.io/categories/iot/</guid>
       <description></description>
     </item>
   </channel>
