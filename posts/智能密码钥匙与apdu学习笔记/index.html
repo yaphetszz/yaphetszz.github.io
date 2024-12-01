@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>智能密码钥匙与APDU学习笔记 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="智能密码钥匙与APDU学习笔记">
+  <meta name="twitter:description" content="智能密码钥匙 智能密码钥匙是一种终端密码设备，具备密码运算、密钥管理功能，主要用于存储用户秘密信息（如私钥、数字证书），并完成数据加解密、数据完整性校验、数字签名、访问控制等功能。
+智能密码钥匙应用数据接口数据格式位于智能密码钥匙应用程序和设备之间，如下图所示：
+智能密码钥匙应用数据接口与设备之间的数据交换以APDU的形式进行编码。APDU可包含有命令报文或响应报文，它从设备接口发送到密码钥匙，或者相反地由密码钥匙发送到设备接口。
+命令APDU 如图所示，本部分所定义的命令APDU由下列内容组成：
+——必备的4字节命令头（CLA INS P1P2）；
+——有条件的可变长度主体。
+在命令APDU的数据字段中出现的字节数用Lc来表示。
+在响应APDU的数据字段中期望的字节最大数用Le（期望数据的长度）来表示。当Le字段只包含0时，则要求有效数据字节的最大数。命令APDU有以下四种结构
+在情况1时，长度Lc为0，因此Lc字段和数据字段都为空。长度Le也为0，因此Le字段为空。从而，命令体为空。
+在情况2时，长度Lc为0，因此Lc字段和数据字段都为空。长度Le不为0，因此Le字段存在。从而，命令体由Le字段组成。
+在情况3时，长度Lc不为0，因此Lc字段存在，并且数据字段由Lc后续字节组成。长度Le为0，因此Le字段为空。从而命令体由Lc字段后紧跟着数据字段组成。
+在情况4时，长度Lc不为0，因此Lc字段存在，并且数据字段由Lc后续字节组成。长度Le也不为0，因此Le字段也存在。从而命令体由Lc字段后紧跟着数据字段和Le字段组成。
+响应APDU 响应APDU由以下部分组成：
+——有条件的可变长度主体；
+——必备的2字节状态字（SW1—SW2）。
+在响应APDU的数据字段中呈现的字节数用Lr来表示。
+状态字对“命令响应对”之后的接收实体的状态进行了编码。
+注：如果该命令被放弃，则响应APDU是一个状态字，它按2个状态字节来编码出错条件。
+命令头、数据字段和响应状态字的编码约定 l CLA（类别）字节
+l INS（指令）字节
+状态字节 响应的状态字节SWI-SW2表示了密码钥匙内的处理状态。下图示出了标准定义的值的结构方案。
+实操中重点关注APDU报文部分，报文可用Bushound进行抓取，报文分析参考标准GM/T 0017-2012《智能密码钥匙 密码应用接口数据格式规范》
+以某段模拟数据为例进行分析，文件包含有设备、长度、命令、数据、描述等信息
+签名报文 分析时首先寻找签名部分，如下图
+解题依据：ECC签名命令报文在标准中定义以8074开头，其他内容为P1、P2、Lc、Data、Le
+根据响应长度即可解构出报文数据，8074为报文头，P1字段为02，P2为00，Lc字段为000024，DATA中的应用ID为1000，容器ID为3001，之后36比特为数据，最后2比特0000为Le值
+响应报文 签名报文完成后寻找响应报文，响应报文状态码在标准中定义如下：
+9000为正确执行，因此在数据包中寻找签名报文后响应为9000的数据，往前数32位即为签名数据，由于数据格式问题，需要排除签名第二行开头的5e，其实需排除每段响应报文的第一个字节（但是标准中并没有找到，和大佬交流后默认所有数据进行排除）
+提取证书 在APDU中有导出证书操作，根据GM/T 0017中的规定，在导出证书操作中的命令报文编码如下：
+因此在寻找报文时主要先看命令头，以上述APDU报文为例进行分析，筛选804E即可找到导出证书部分的报文，其中包含证书，且证书为加密证书。
+此时直接提取会发现证书无法解析，因为在证书以6A 9E为结尾时表明还未传输完毕，需继续寻找下一个804E字段，直至到9000正确响应，但是其中的数据需进行区分，从第一个3082证书头开始，到6A 9E为证书有效内容，另外第二个包则需要按照签名值长度往前数对应字节数进行拼接，最终有效部分如下：
+取出相应内容后证书即可解析
+因一些原因，该段报文的数据包无法给出，建议有条件的朋友自行抓取">
+
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/%E6%99%BA%E8%83%BD%E5%AF%86%E7%A0%81%E9%92%A5%E5%8C%99%E4%B8%8Eapdu%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="智能密码钥匙与APDU学习笔记">
+  <meta property="og:description" content="智能密码钥匙 智能密码钥匙是一种终端密码设备，具备密码运算、密钥管理功能，主要用于存储用户秘密信息（如私钥、数字证书），并完成数据加解密、数据完整性校验、数字签名、访问控制等功能。
+智能密码钥匙应用数据接口数据格式位于智能密码钥匙应用程序和设备之间，如下图所示：
+智能密码钥匙应用数据接口与设备之间的数据交换以APDU的形式进行编码。APDU可包含有命令报文或响应报文，它从设备接口发送到密码钥匙，或者相反地由密码钥匙发送到设备接口。
+命令APDU 如图所示，本部分所定义的命令APDU由下列内容组成：
+——必备的4字节命令头（CLA INS P1P2）；
+——有条件的可变长度主体。
+在命令APDU的数据字段中出现的字节数用Lc来表示。
+在响应APDU的数据字段中期望的字节最大数用Le（期望数据的长度）来表示。当Le字段只包含0时，则要求有效数据字节的最大数。命令APDU有以下四种结构
+在情况1时，长度Lc为0，因此Lc字段和数据字段都为空。长度Le也为0，因此Le字段为空。从而，命令体为空。
+在情况2时，长度Lc为0，因此Lc字段和数据字段都为空。长度Le不为0，因此Le字段存在。从而，命令体由Le字段组成。
+在情况3时，长度Lc不为0，因此Lc字段存在，并且数据字段由Lc后续字节组成。长度Le为0，因此Le字段为空。从而命令体由Lc字段后紧跟着数据字段组成。
+在情况4时，长度Lc不为0，因此Lc字段存在，并且数据字段由Lc后续字节组成。长度Le也不为0，因此Le字段也存在。从而命令体由Lc字段后紧跟着数据字段和Le字段组成。
+响应APDU 响应APDU由以下部分组成：
+——有条件的可变长度主体；
+——必备的2字节状态字（SW1—SW2）。
+在响应APDU的数据字段中呈现的字节数用Lr来表示。
+状态字对“命令响应对”之后的接收实体的状态进行了编码。
+注：如果该命令被放弃，则响应APDU是一个状态字，它按2个状态字节来编码出错条件。
+命令头、数据字段和响应状态字的编码约定 l CLA（类别）字节
+l INS（指令）字节
+状态字节 响应的状态字节SWI-SW2表示了密码钥匙内的处理状态。下图示出了标准定义的值的结构方案。
+实操中重点关注APDU报文部分，报文可用Bushound进行抓取，报文分析参考标准GM/T 0017-2012《智能密码钥匙 密码应用接口数据格式规范》
+以某段模拟数据为例进行分析，文件包含有设备、长度、命令、数据、描述等信息
+签名报文 分析时首先寻找签名部分，如下图
+解题依据：ECC签名命令报文在标准中定义以8074开头，其他内容为P1、P2、Lc、Data、Le
+根据响应长度即可解构出报文数据，8074为报文头，P1字段为02，P2为00，Lc字段为000024，DATA中的应用ID为1000，容器ID为3001，之后36比特为数据，最后2比特0000为Le值
+响应报文 签名报文完成后寻找响应报文，响应报文状态码在标准中定义如下：
+9000为正确执行，因此在数据包中寻找签名报文后响应为9000的数据，往前数32位即为签名数据，由于数据格式问题，需要排除签名第二行开头的5e，其实需排除每段响应报文的第一个字节（但是标准中并没有找到，和大佬交流后默认所有数据进行排除）
+提取证书 在APDU中有导出证书操作，根据GM/T 0017中的规定，在导出证书操作中的命令报文编码如下：
+因此在寻找报文时主要先看命令头，以上述APDU报文为例进行分析，筛选804E即可找到导出证书部分的报文，其中包含证书，且证书为加密证书。
+此时直接提取会发现证书无法解析，因为在证书以6A 9E为结尾时表明还未传输完毕，需继续寻找下一个804E字段，直至到9000正确响应，但是其中的数据需进行区分，从第一个3082证书头开始，到6A 9E为证书有效内容，另外第二个包则需要按照签名值长度往前数对应字节数进行拼接，最终有效部分如下：
+取出相应内容后证书即可解析
+因一些原因，该段报文的数据包无法给出，建议有条件的朋友自行抓取">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2024-08-05T08:33:21+08:00">
+    <meta property="article:modified_time" content="2024-08-05T08:33:21+08:00">
+    <meta property="article:tag" content="密码学">
+    <meta property="article:tag" content="商用密码测评">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">主页</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/categories/">分类</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">标签</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">关于</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/links/">友链</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/atta/">附件</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://yaphetszz.github.com" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">智能密码钥匙与APDU学习笔记</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Aug 5, 2024
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          4372 Words - 
+          
+          9 min read
+        </div>
+          <p>创建时间: 2024-08-05 08:33</p>
+        
+           
+          
+          <p></p>
+          
+        
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E5%95%86%E7%94%A8%E5%AF%86%E7%A0%81%E6%B5%8B%E8%AF%84/">商用密码测评</a>
+        </div>
+        <div>
+          <p></p>
+          <p>文章分类:    </p>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <h4 id="智能密码钥匙">智能密码钥匙</h4>
+<p>智能密码钥匙是一种终端密码设备，具备密码运算、密钥管理功能，主要用于存储用户秘密信息（如私钥、数字证书），并完成数据加解密、数据完整性校验、数字签名、访问控制等功能。</p>
+<p>智能密码钥匙应用数据接口数据格式位于智能密码钥匙应用程序和设备之间，如下图所示：</p>
+<p><img src="../ksohtml1312/wps1.jpg" alt="img"></p>
+<p>智能密码钥匙应用数据接口与设备之间的数据交换以APDU的形式进行编码。APDU可包含有命令报文或响应报文，它从设备接口发送到密码钥匙，或者相反地由密码钥匙发送到设备接口。</p>
+<h4 id="命令apdu"><strong>命令APDU</strong></h4>
+<p>如图所示，本部分所定义的命令APDU由下列内容组成：</p>
+<p>——必备的4字节命令头（CLA INS P1P2）；</p>
+<p>——有条件的可变长度主体。</p>
+<p><img src="../ksohtml1312/wps2.jpg" alt="img"></p>
+<p>在命令APDU的数据字段中出现的字节数用Lc来表示。</p>
+<p>在响应APDU的数据字段中期望的字节最大数用Le（期望数据的长度）来表示。当Le字段只包含0时，则要求有效数据字节的最大数。命令APDU有以下四种结构</p>
+<p><img src="../ksohtml1312/wps3.jpg" alt="img"></p>
+<p>在情况1时，长度Lc为0，因此Lc字段和数据字段都为空。长度Le也为0，因此Le字段为空。从而，命令体为空。</p>
+<p>在情况2时，长度Lc为0，因此Lc字段和数据字段都为空。长度Le不为0，因此Le字段存在。从而，命令体由Le字段组成。</p>
+<p>在情况3时，长度Lc不为0，因此Lc字段存在，并且数据字段由Lc后续字节组成。长度Le为0，因此Le字段为空。从而命令体由Lc字段后紧跟着数据字段组成。</p>
+<p>在情况4时，长度Lc不为0，因此Lc字段存在，并且数据字段由Lc后续字节组成。长度Le也不为0，因此Le字段也存在。从而命令体由Lc字段后紧跟着数据字段和Le字段组成。</p>
+<h4 id="响应apdu"><strong>响应APDU</strong></h4>
+<p>响应APDU由以下部分组成：</p>
+<p>——有条件的可变长度主体；</p>
+<p>——必备的2字节状态字（SW1—SW2）。</p>
+<p><img src="../ksohtml1312/wps4.jpg" alt="img"></p>
+<p>在响应APDU的数据字段中呈现的字节数用Lr来表示。</p>
+<p>状态字对“命令响应对”之后的接收实体的状态进行了编码。</p>
+<p>注：如果该命令被放弃，则响应APDU是一个状态字，它按2个状态字节来编码出错条件。</p>
+<h4 id="命令头数据字段和响应状态字的编码约定"><strong>命令头、数据字段和响应状态字的编码约定</strong></h4>
+<p><img src="../ksohtml1312/wps5.jpg" alt="img"></p>
+<p>l CLA（类别）字节</p>
+<p><img src="../ksohtml1312/wps6.jpg" alt="img"></p>
+<p>l INS（指令）字节</p>
+<p><img src="../ksohtml1312/wps7.jpg" alt="img"></p>
+<p><img src="../ksohtml1312/wps8.jpg" alt="img"></p>
+<h4 id="状态字节"><strong>状态字节</strong></h4>
+<p>响应的状态字节SWI-SW2表示了密码钥匙内的处理状态。下图示出了标准定义的值的结构方案。</p>
+<p><img src="../ksohtml1312/wps9.jpg" alt="img"></p>
+<p><img src="../ksohtml1312/wps10.jpg" alt="img"></p>
+<p><img src="../ksohtml1312/wps11.jpg" alt="img"></p>
+<p><img src="../ksohtml1312/wps12.jpg" alt="img"></p>
+<p>实操中重点关注APDU报文部分，报文可用Bushound进行抓取，报文分析参考标准GM/T 0017-2012《智能密码钥匙 密码应用接口数据格式规范》</p>
+<p>以某段模拟数据为例进行分析，文件包含有设备、长度、命令、数据、描述等信息</p>
+<h4 id="签名报文"><strong>签名报文</strong></h4>
+<p>分析时首先寻找签名部分，如下图</p>
+<p><img src="../ksohtml1312/wps14.jpg" alt="img"></p>
+<p>解题依据：ECC签名命令报文在标准中定义以8074开头，其他内容为P1、P2、Lc、Data、Le</p>
+<p><img src="../ksohtml1312/wps15.jpg" alt="img"></p>
+<p>根据响应长度即可解构出报文数据，8074为报文头，P1字段为02，P2为00，Lc字段为000024，DATA中的应用ID为1000，容器ID为3001，之后36比特为数据，最后2比特0000为Le值</p>
+<h4 id="响应报文"><strong>响应报文</strong></h4>
+<p>签名报文完成后寻找响应报文，响应报文状态码在标准中定义如下：</p>
+<p><img src="../ksohtml1312/wps16.jpg" alt="img"></p>
+<p>9000为正确执行，因此在数据包中寻找签名报文后响应为9000的数据，往前数32位即为签名数据，由于数据格式问题，需要排除签名第二行开头的5e，其实需排除每段响应报文的第一个字节（但是标准中并没有找到，和大佬交流后默认所有数据进行排除）</p>
+<p><img src="../ksohtml1312/wps17.jpg" alt="img"></p>
+<h4 id="提取证书"><strong>提取证书</strong></h4>
+<p>在APDU中有导出证书操作，根据GM/T 0017中的规定，在导出证书操作中的命令报文编码如下：</p>
+<p><img src="../ksohtml1312/wps18.jpg" alt="img"></p>
+<p>因此在寻找报文时主要先看命令头，以上述APDU报文为例进行分析，筛选804E即可找到导出证书部分的报文，其中包含证书，且证书为加密证书。</p>
+<p><img src="../ksohtml1312/wps19.jpg" alt="img"></p>
+<p>此时直接提取会发现证书无法解析，因为在证书以6A 9E为结尾时表明还未传输完毕，需继续寻找下一个804E字段，直至到9000正确响应，但是其中的数据需进行区分，从第一个3082证书头开始，到6A 9E为证书有效内容，另外第二个包则需要按照签名值长度往前数对应字节数进行拼接，最终有效部分如下：</p>
+<p><img src="../ksohtml1312/wps20.jpg" alt="img"></p>
+<p>取出相应内容后证书即可解析</p>
+<p><img src="../ksohtml1312/wps21.jpg" alt="img"></p>
+<p>因一些原因，该段报文的数据包无法给出，建议有条件的朋友自行抓取</p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+  </body>
+</html>

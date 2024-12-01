@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>SM2与KDF学习笔记 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="SM2与KDF学习笔记">
+  <meta name="twitter:description" content="SM2加密算法 SM2算法是一种基于椭圆曲线密码的公钥密码算法，其安全性主要基于椭圆曲线离散对数难题。该算法由国家密码管理局设计并公开，是我国自主创新的一种密码算法，可应用于数据加密、解密、数字签名等操作。SM2算法包括密钥生成算法、加密算法、解密算法和数字签名算法等部分。
+SM2加密算法过程如下：
+用户A的原始数据为椭圆曲线系统参数、长度为klen比特的消息M、公钥PB
+产生随机数k∈[1,n-1]
+计算椭圆曲线点C1=[k]G=(x1,y1)
+计算椭圆曲线点S=[h]PB
+计算[k]PB=(x2,y2)
+计算t=KDF(x2||y2,klen)
+计算C2=M⊕t
+计算C3=Hash(x2||M||y2)
+输出密文C=C1||C2||C3
+其中椭圆曲线方程为
+密钥派生函数KDF KDF密钥派生函数在标准GB/T 32918.4 《信息安全技术 SM2椭圆曲线公钥密码算法 第4部分：公钥加密算法》中定义，本质上是进行哈希运算扩展长度，再截取相应长度字段，如下所示：
+使用Python代码实现SM2中的KDF函数如下：
+from math import ceil from gmssl.sm3 import sm3_hash Z=&#34;57E7B63623FAE5F08CDA468E872A20AFA03DED41BF1403770E040DC83AF31A67991F2B01EBF9EFD8881F0A0493000603&#34; def hex2byte(msg): ml = len(msg) if ml % 2 != 0: ​ msg = &#39;0&#39;&#43; msg ml = int(len(msg)/2) msg_byte = [] for i in range(ml): ​ # print(msg[i*2:i*2&#43;2]) ​ msg_byte.append(int(msg[i*2:i*2&#43;2],16)) return msg_byte def KDF(Z,klen): klen = int(klen) ct = 0x00000001 rcnt = ceil(klen/32) Zin = hex2byte(Z) Ha = &#34;&#34; for i in range(rcnt): ​ msg = Zin &#43; hex2byte(&#39;%08x&#39;% ct) ​ # print(msg) ​ Ha = Ha &#43; sm3_hash(msg) ​ # print(Ha) ​ ct &#43;= 1 return Ha[0: klen * 2] print(KDF(Z,19).upper()) 其实KDF就是一个使用SM3算法不断拓展长度的过程，对上述脚本进行分析">
+
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/sm2%E5%92%8Ckdf/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="SM2与KDF学习笔记">
+  <meta property="og:description" content="SM2加密算法 SM2算法是一种基于椭圆曲线密码的公钥密码算法，其安全性主要基于椭圆曲线离散对数难题。该算法由国家密码管理局设计并公开，是我国自主创新的一种密码算法，可应用于数据加密、解密、数字签名等操作。SM2算法包括密钥生成算法、加密算法、解密算法和数字签名算法等部分。
+SM2加密算法过程如下：
+用户A的原始数据为椭圆曲线系统参数、长度为klen比特的消息M、公钥PB
+产生随机数k∈[1,n-1]
+计算椭圆曲线点C1=[k]G=(x1,y1)
+计算椭圆曲线点S=[h]PB
+计算[k]PB=(x2,y2)
+计算t=KDF(x2||y2,klen)
+计算C2=M⊕t
+计算C3=Hash(x2||M||y2)
+输出密文C=C1||C2||C3
+其中椭圆曲线方程为
+密钥派生函数KDF KDF密钥派生函数在标准GB/T 32918.4 《信息安全技术 SM2椭圆曲线公钥密码算法 第4部分：公钥加密算法》中定义，本质上是进行哈希运算扩展长度，再截取相应长度字段，如下所示：
+使用Python代码实现SM2中的KDF函数如下：
+from math import ceil from gmssl.sm3 import sm3_hash Z=&#34;57E7B63623FAE5F08CDA468E872A20AFA03DED41BF1403770E040DC83AF31A67991F2B01EBF9EFD8881F0A0493000603&#34; def hex2byte(msg): ml = len(msg) if ml % 2 != 0: ​ msg = &#39;0&#39;&#43; msg ml = int(len(msg)/2) msg_byte = [] for i in range(ml): ​ # print(msg[i*2:i*2&#43;2]) ​ msg_byte.append(int(msg[i*2:i*2&#43;2],16)) return msg_byte def KDF(Z,klen): klen = int(klen) ct = 0x00000001 rcnt = ceil(klen/32) Zin = hex2byte(Z) Ha = &#34;&#34; for i in range(rcnt): ​ msg = Zin &#43; hex2byte(&#39;%08x&#39;% ct) ​ # print(msg) ​ Ha = Ha &#43; sm3_hash(msg) ​ # print(Ha) ​ ct &#43;= 1 return Ha[0: klen * 2] print(KDF(Z,19).upper()) 其实KDF就是一个使用SM3算法不断拓展长度的过程，对上述脚本进行分析">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2024-06-12T05:12:49+08:00">
+    <meta property="article:modified_time" content="2024-06-12T05:12:49+08:00">
+    <meta property="article:tag" content="密码学">
+    <meta property="article:tag" content="商用密码测评">
+    <meta property="article:tag" content="SM2密码算法">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">主页</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/categories/">分类</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">标签</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">关于</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/links/">友链</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/atta/">附件</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://yaphetszz.github.com" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">SM2与KDF学习笔记</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Jun 12, 2024
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          2775 Words - 
+          
+          5 min read
+        </div>
+          <p>创建时间: 2024-06-12 05:12</p>
+        
+           
+          
+          <p></p>
+          
+        
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E5%95%86%E7%94%A8%E5%AF%86%E7%A0%81%E6%B5%8B%E8%AF%84/">商用密码测评</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/sm2%E5%AF%86%E7%A0%81%E7%AE%97%E6%B3%95/">SM2密码算法</a>
+        </div>
+        <div>
+          <p></p>
+          <p>文章分类:    </p>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <h2 id="sm2加密算法">SM2加密算法</h2>
+<p>SM2算法是一种基于椭圆曲线密码的公钥密码算法，其安全性主要基于椭圆曲线离散对数难题。该算法由国家密码管理局设计并公开，是我国自主创新的一种密码算法，可应用于数据加密、解密、数字签名等操作。SM2算法包括密钥生成算法、加密算法、解密算法和数字签名算法等部分。</p>
+<p>SM2加密算法过程如下：</p>
+<p>用户A的原始数据为椭圆曲线系统参数、长度为klen比特的消息M、公钥PB</p>
+<ol>
+<li>
+<p>产生随机数k∈[1,n-1]</p>
+</li>
+<li>
+<p>计算椭圆曲线点C1=[k]G=(x1,y1)</p>
+</li>
+<li>
+<p>计算椭圆曲线点S=[h]PB</p>
+</li>
+<li>
+<p>计算[k]PB=(x2,y2)</p>
+</li>
+<li>
+<p>计算t=KDF(x2||y2,klen)</p>
+</li>
+<li>
+<p>计算C2=M⊕t</p>
+</li>
+<li>
+<p>计算C3=Hash(x2||M||y2)</p>
+</li>
+<li>
+<p>输出密文C=C1||C2||C3</p>
+</li>
+</ol>
+<p><img src="../index_files/image-20241201151129640.png" alt="image-20241201151129640"></p>
+<p>其中椭圆曲线方程为</p>
+<p><img src="../index_files/wps22.jpg" alt="img"></p>
+<h2 id="密钥派生函数kdf">密钥派生函数KDF</h2>
+<p>KDF密钥派生函数在标准GB/T 32918.4 《信息安全技术 SM2椭圆曲线公钥密码算法 第4部分：公钥加密算法》中定义，本质上是进行哈希运算扩展长度，再截取相应长度字段，如下所示：</p>
+<p><img src="../index_files/image-20241201151216812.png" alt="image-20241201151216812"></p>
+<p>使用Python代码实现SM2中的KDF函数如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> math <span style="color:#f92672">import</span> ceil
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> gmssl.sm3 <span style="color:#f92672">import</span> sm3_hash
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Z<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;57E7B63623FAE5F08CDA468E872A20AFA03DED41BF1403770E040DC83AF31A67991F2B01EBF9EFD8881F0A0493000603&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">hex2byte</span>(msg): 
+</span></span><span style="display:flex;"><span>  ml <span style="color:#f92672">=</span> len(msg)
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> ml <span style="color:#f92672">%</span> <span style="color:#ae81ff">2</span> <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0</span>:
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    msg <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;0&#39;</span><span style="color:#f92672">+</span> msg
+</span></span><span style="display:flex;"><span>  ml <span style="color:#f92672">=</span> int(len(msg)<span style="color:#f92672">/</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>  msg_byte <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(ml):
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    <span style="color:#75715e"># print(msg[i*2:i*2+2])</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    msg_byte<span style="color:#f92672">.</span>append(int(msg[i<span style="color:#f92672">*</span><span style="color:#ae81ff">2</span>:i<span style="color:#f92672">*</span><span style="color:#ae81ff">2</span><span style="color:#f92672">+</span><span style="color:#ae81ff">2</span>],<span style="color:#ae81ff">16</span>))
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> msg_byte
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">KDF</span>(Z,klen): 
+</span></span><span style="display:flex;"><span>  klen <span style="color:#f92672">=</span> int(klen)
+</span></span><span style="display:flex;"><span>  ct <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x00000001</span>
+</span></span><span style="display:flex;"><span>  rcnt <span style="color:#f92672">=</span> ceil(klen<span style="color:#f92672">/</span><span style="color:#ae81ff">32</span>)
+</span></span><span style="display:flex;"><span>  Zin <span style="color:#f92672">=</span> hex2byte(Z)
+</span></span><span style="display:flex;"><span>  Ha <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(rcnt):
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    msg <span style="color:#f92672">=</span> Zin  <span style="color:#f92672">+</span> hex2byte(<span style="color:#e6db74">&#39;</span><span style="color:#e6db74">%08x</span><span style="color:#e6db74">&#39;</span><span style="color:#f92672">%</span> ct)
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    <span style="color:#75715e"># print(msg)</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    Ha <span style="color:#f92672">=</span> Ha <span style="color:#f92672">+</span> sm3_hash(msg)
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    <span style="color:#75715e"># print(Ha)</span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">​</span>    ct <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> Ha[<span style="color:#ae81ff">0</span>: klen <span style="color:#f92672">*</span> <span style="color:#ae81ff">2</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(KDF(Z,<span style="color:#ae81ff">19</span>)<span style="color:#f92672">.</span>upper())
+</span></span></code></pre></div><p>其实KDF就是一个使用SM3算法不断拓展长度的过程，对上述脚本进行分析</p>
+<ol>
+<li><strong><code>hex2byte</code> 函数</strong>:
+<ul>
+<li><strong>目的</strong>: 将 16 进制字符串转换为字节数组。</li>
+<li>流程:
+<ul>
+<li>检查输入字符串的长度是否为偶数。如果不是，前面补零以确保每两个字符组成一个字节。</li>
+<li>将字符串的每两个字符作为 16 进制数解析成一个字节，并将其加入字节数组。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong><code>KDF</code> 函数</strong>:
+<ul>
+<li><strong>目的</strong>: 从输入数据 <code>Z</code> 派生出指定长度 <code>klen</code> 的密钥。</li>
+<li>参数:
+<ul>
+<li><code>Z</code>: 16 进制表示的比特串。</li>
+<li><code>klen</code>: 希望生成的密钥长度（以字节为单位）。</li>
+</ul>
+</li>
+<li>流程:
+<ul>
+<li><code>ct</code> 初始化为 1，表示计数器。</li>
+<li>计算需要多少次哈希运算，即 <code>rcnt = ceil(klen / 32)</code>。</li>
+<li>将 <code>Z</code> 转换为字节数组。</li>
+<li>循环 <code>rcnt</code> 次，每次将 <code>Z</code> 和当前 <code>ct</code> 组合，计算其 SM3 哈希值，并将结果累积到 <code>Ha</code> 中。</li>
+<li><code>ct</code> 在每次循环之后递增。</li>
+<li>最终，返回派生出的密钥（<code>Ha</code> 的前 <code>klen * 2</code> 个十六进制字符）。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>SM3 哈希</strong>:
+<ul>
+<li>使用 <code>sm3_hash</code> 函数进行哈希计算，该函数来自 <code>gmssl</code> 库的实现。</li>
+</ul>
+</li>
+</ol>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+  </body>
+</html>
