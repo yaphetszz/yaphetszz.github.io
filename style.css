@@ -1,0 +1,15 @@
+.toc {
+    position: fixed; /* 固定位置 */
+    top: 100px; /* 距离顶部的距离 */
+    right: 20px; /* 距离右边的距离 */
+    background-color: white; /* 背景颜色 */
+    border: 1px solid #ccc; /* 边框 */
+    padding: 10px; /* 内边距 */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+    z-index: 1000; /* 确保悬浮窗在其他元素之上 */
+    display: none; /* 默认隐藏 */
+}
+
+.toc.active {
+    display: block; /* 显示悬浮窗 */
+}
