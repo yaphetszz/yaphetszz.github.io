@@ -22,7 +22,7 @@
 今天的第一篇基础设施的改造，就是我们非常常见的Nmap，nmap是一款优秀的端口扫描工具，同时内部集成了非常多的NSE脚本，在全球开源贡献者和安全人员的努力下集成的脚本越来越多，可以实现的特定设备扫描方式也越来越多，支持的漏洞种类也越来越全面，甚至有的漏洞可以实现端口扫描-&gt;服务探测-&gt;漏洞验证-&gt;漏洞利用-&gt;提权一条龙的操作，是一款非常优秀的工具。在官方wiki中的解释如下：
 Nmap (Network Mapper) is a free and open-source network scanner created by Gordon Lyon (also known by his pseudonym Fyodor Vaskovich).[3] Nmap is used to discover hosts and services on a computer network by sending packets and analyzing the responses. Nmap provides a number of features for probing computer networks, including host discovery and service and operating system detection. These features are extensible by scripts that provide more advanced service detection,[4] vulnerability detection,[4] and other features. Nmap can adapt to network conditions including latency and congestion during a scan. Nmap started as a Linux utility[5] and was ported to other systems including Windows, macOS, and BSD.[6] It is most popular on Linux, followed by Windows.[7] 毕竟树大招风，现在越来越多的流量审计，IDS等设备都已经将Nmap的流量特征列入了重点监测对象。因此对流量的改造问题亟待解决，其中互联网上就有一份公开的流量特征检测规则样例，地址为：https://doc.emergingthreats.net/">
 
-    <meta property="og:url" content="https://yaphetszz.github.io/posts/%E7%BA%A2%E9%98%9F%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E5%BB%BA%E8%AE%BE%E4%B8%8E%E6%94%B9%E9%80%A0%E4%B8%80nmap%E8%A7%A3%E6%9E%90%E4%B8%8E%E6%94%B9%E9%80%A0/">
+    <meta property="og:url" content="http://localhost:1313/posts/%E7%BA%A2%E9%98%9F%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E5%BB%BA%E8%AE%BE%E4%B8%8E%E6%94%B9%E9%80%A0%E4%B8%80nmap%E8%A7%A3%E6%9E%90%E4%B8%8E%E6%94%B9%E9%80%A0/">
   <meta property="og:site_name" content="Y4ph3tS blog">
   <meta property="og:title" content="红队基础设施建设与改造（一）——Nmap解析与改造">
   <meta property="og:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
@@ -43,22 +43,25 @@ Nmap (Network Mapper) is a free and open-source network scanner created by Gordo
   </head>
   <body>
     <header class="app-header">
-      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <a href="http://localhost:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
       <span class="app-header-title">Y4ph3tS blog</span>
       <nav class="app-header-menu">
-          <a class="app-header-menu-item" href="/">Home</a>
+          <a class="app-header-menu-item" href="/">主页</a>
              - 
           
-          <a class="app-header-menu-item" href="/posts/">Posts</a>
+          <a class="app-header-menu-item" href="/posts/">文章</a>
              - 
           
-          <a class="app-header-menu-item" href="/tags/">Tags</a>
+          <a class="app-header-menu-item" href="/tags/">标签</a>
              - 
           
-          <a class="app-header-menu-item" href="/about/">About</a>
+          <a class="app-header-menu-item" href="/about/">关于</a>
              - 
           
-          <a class="app-header-menu-item" href="/links/">Links</a>
+          <a class="app-header-menu-item" href="/links/">友链</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/atta/">附件</a>
       </nav>
       <p>Valar Morghulis</p>
       <div class="app-header-social">
@@ -86,10 +89,16 @@ Nmap (Network Mapper) is a free and open-source network scanner created by Gordo
           
           14 min read
         </div>
+        <p>创建时间: 2020-11-27 01:30</p>
+
+         
+        
+        <p></p>
+        
         <div>
           <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
-              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%BA%A2%E9%98%9F%E6%AD%A6%E5%99%A8%E7%A0%94%E7%A9%B6/">红队武器研究</a>
+              <a class="tag" href="http://localhost:1313/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
+              <a class="tag" href="http://localhost:1313/tags/%E7%BA%A2%E9%98%9F%E6%AD%A6%E5%99%A8%E7%A0%94%E7%A9%B6/">红队武器研究</a>
         </div>
       </div>
     </header>
