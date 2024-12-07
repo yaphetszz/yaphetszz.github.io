@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>keytool 生成证书链 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="keytool 生成证书链">
+  <meta name="twitter:description" content="数字证书基本概念 数字证书‌是一种由受信任的第三方机构（称为证书颁发机构，CA）颁发的电子文档，用于证明公钥的所有权。数字证书包含了证书持有者的信息（如名称和电子邮件地址）、证书持有者的公钥、证书有效期以及CA的签名等信息。其主要作用包括：
+‌身份验证‌：帮助用户验证对方的身份，确保通信双方是合法的。 ‌数据加密‌：通过公钥和私钥配对，保证数据传输的安全性。 ‌数据完整性‌：通过数字签名确认数据在传输过程中未被篡改‌。 ‌证书链‌是一系列数字证书的集合，用于建立一个信任路径，从而验证证书的有效性。证书链从一个受信任的根证书颁发机构（Root CA）开始，经过一个或多个中间证书颁发机构（Intermediate CAs），最终到达目标证书（如服务器或个人证书）。每个中间CA的证书都由上一级CA签名。证书链的工作原理基于信任传递机制，即如果你信任根证书颁发机构，那么你也可以信任它所签发的所有证书，包括中间CA证书和最终的服务器或个人证书。这种机制确保了数字证书体系的安全性和可扩展性‌。
+数字证书和证书链的重要性 ‌建立信任关系‌：通过验证证书链，用户可以确认一个网站的真实性和安全性，防止钓鱼攻击和确保网站身份的真实性‌。 ‌加强数据安全‌：数字证书链确保了公钥的真实来源，使得数据加密和数字签名过程更加安全可靠‌。 生成根证书 安装好java，确保keytool可以正常使用，开始配置证书链
+keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 12345678 -dname &#34;CN=y4,C=CN,OU=y4&#34; -alias rootca -keystore root.jks 此命令使用椭圆曲线secp256r1算法，产生一个256位的EC密钥对，并保存到njhx_root.jks中。使用以下命令查看密钥库的信息，会发现发布者与所有者都是y4
+keytool -list -keystore root.jks -keypass 12345678 -storepass 12345678 -v 从根证书密钥库导出根证书 使用keytool的导出功能，从密钥库中导出根证书，输入密钥库的密码，导出的证书文件为rootca.cer命令如下：
+keytool -exportcert -validity 36500 -alias rootca -file root.cer -keystore root.jks -keypass 12345678 -storepass 12345678 生成二级证书密钥库 二级证书需要由根证书签发。
+首先使用keytool生成二级证书的密钥库，但是此时还是自签的，我们需要从中生成一个二级证书请求（其中包含了二级证书的公钥）；
+然后将证书请求发送到rootca签发二级证书；
+最后，我们将rootca签发的二级证书导入到证书密钥库中，完成二级证书的生成。
+下面命令是生成二级证书密钥库，密钥库的名称为spky4，此时仍是自签的，证书颁发者和使用者都是自已：
+keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 12345678 -dname &#34;CN=y4.com,C=CN,OU=y4&#34; -alias spky4 -keystore sub.jks">
+
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/keytool%E7%94%9F%E6%88%90%E8%AF%81%E4%B9%A6%E9%93%BE/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="keytool 生成证书链">
+  <meta property="og:description" content="数字证书基本概念 数字证书‌是一种由受信任的第三方机构（称为证书颁发机构，CA）颁发的电子文档，用于证明公钥的所有权。数字证书包含了证书持有者的信息（如名称和电子邮件地址）、证书持有者的公钥、证书有效期以及CA的签名等信息。其主要作用包括：
+‌身份验证‌：帮助用户验证对方的身份，确保通信双方是合法的。 ‌数据加密‌：通过公钥和私钥配对，保证数据传输的安全性。 ‌数据完整性‌：通过数字签名确认数据在传输过程中未被篡改‌。 ‌证书链‌是一系列数字证书的集合，用于建立一个信任路径，从而验证证书的有效性。证书链从一个受信任的根证书颁发机构（Root CA）开始，经过一个或多个中间证书颁发机构（Intermediate CAs），最终到达目标证书（如服务器或个人证书）。每个中间CA的证书都由上一级CA签名。证书链的工作原理基于信任传递机制，即如果你信任根证书颁发机构，那么你也可以信任它所签发的所有证书，包括中间CA证书和最终的服务器或个人证书。这种机制确保了数字证书体系的安全性和可扩展性‌。
+数字证书和证书链的重要性 ‌建立信任关系‌：通过验证证书链，用户可以确认一个网站的真实性和安全性，防止钓鱼攻击和确保网站身份的真实性‌。 ‌加强数据安全‌：数字证书链确保了公钥的真实来源，使得数据加密和数字签名过程更加安全可靠‌。 生成根证书 安装好java，确保keytool可以正常使用，开始配置证书链
+keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 12345678 -dname &#34;CN=y4,C=CN,OU=y4&#34; -alias rootca -keystore root.jks 此命令使用椭圆曲线secp256r1算法，产生一个256位的EC密钥对，并保存到njhx_root.jks中。使用以下命令查看密钥库的信息，会发现发布者与所有者都是y4
+keytool -list -keystore root.jks -keypass 12345678 -storepass 12345678 -v 从根证书密钥库导出根证书 使用keytool的导出功能，从密钥库中导出根证书，输入密钥库的密码，导出的证书文件为rootca.cer命令如下：
+keytool -exportcert -validity 36500 -alias rootca -file root.cer -keystore root.jks -keypass 12345678 -storepass 12345678 生成二级证书密钥库 二级证书需要由根证书签发。
+首先使用keytool生成二级证书的密钥库，但是此时还是自签的，我们需要从中生成一个二级证书请求（其中包含了二级证书的公钥）；
+然后将证书请求发送到rootca签发二级证书；
+最后，我们将rootca签发的二级证书导入到证书密钥库中，完成二级证书的生成。
+下面命令是生成二级证书密钥库，密钥库的名称为spky4，此时仍是自签的，证书颁发者和使用者都是自已：
+keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 12345678 -dname &#34;CN=y4.com,C=CN,OU=y4&#34; -alias spky4 -keystore sub.jks">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2023-02-14T01:21:09+08:00">
+    <meta property="article:modified_time" content="2023-02-14T01:21:09+08:00">
+    <meta property="article:tag" content="环境配置">
+    <meta property="article:tag" content="密码学">
+    <meta property="article:tag" content="数字证书">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">主页</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/categories/">分类</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">标签</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">关于</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/links/">友链</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/atta/">附件</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/yaphetszz" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">keytool 生成证书链</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Feb 14, 2023
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          5350 Words - 
+          
+          11 min read
+        </div>
+          <p>创建时间: 2023-02-14 01:21</p>
+        
+           
+          
+          <p></p>
+          
+        
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E6%95%B0%E5%AD%97%E8%AF%81%E4%B9%A6/">数字证书</a>
+        </div>
+        <div>
+          <p></p>
+          <p>文章分类:    </p>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <h2 id="数字证书基本概念">数字证书基本概念</h2>
+<p>数字证书‌是一种由受信任的第三方机构（称为证书颁发机构，CA）颁发的电子文档，用于证明公钥的所有权。数字证书包含了证书持有者的信息（如名称和电子邮件地址）、证书持有者的公钥、证书有效期以及CA的签名等信息。其主要作用包括：</p>
+<ol>
+<li>‌<strong>身份验证</strong>‌：帮助用户验证对方的身份，确保通信双方是合法的。</li>
+<li>‌<strong>数据加密</strong>‌：通过公钥和私钥配对，保证数据传输的安全性。</li>
+<li>‌<strong>数据完整性</strong>‌：通过数字签名确认数据在传输过程中未被篡改‌。</li>
+</ol>
+<p>‌证书链‌是一系列数字证书的集合，用于建立一个信任路径，从而验证证书的有效性。证书链从一个受信任的根证书颁发机构（Root CA）开始，经过一个或多个中间证书颁发机构（Intermediate  CAs），最终到达目标证书（如服务器或个人证书）。每个中间CA的证书都由上一级CA签名。证书链的工作原理基于信任传递机制，即如果你信任根证书颁发机构，那么你也可以信任它所签发的所有证书，包括中间CA证书和最终的服务器或个人证书。这种机制确保了数字证书体系的安全性和可扩展性‌。</p>
+<h3 id="数字证书和证书链的重要性">数字证书和证书链的重要性</h3>
+<ol>
+<li>‌<strong>建立信任关系</strong>‌：通过验证证书链，用户可以确认一个网站的真实性和安全性，防止钓鱼攻击和确保网站身份的真实性‌。</li>
+<li>‌<strong>加强数据安全</strong>‌：数字证书链确保了公钥的真实来源，使得数据加密和数字签名过程更加安全可靠‌。</li>
+</ol>
+<h2 id="生成根证书">生成根证书</h2>
+<p>安装好java，确保keytool可以正常使用，开始配置证书链</p>
+<pre tabindex="0"><code>keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 12345678 -dname &#34;CN=y4,C=CN,OU=y4&#34; -alias rootca -keystore root.jks
+</code></pre><p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cindex_files%5Cimage-20241207102750805.png" alt="image-20241207102750805"></p>
+<p>此命令使用椭圆曲线secp256r1算法，产生一个256位的EC密钥对，并保存到njhx_root.jks中。使用以下命令查看密钥库的信息，会发现发布者与所有者都是y4</p>
+<pre tabindex="0"><code> keytool -list -keystore root.jks -keypass 12345678 -storepass 12345678 -v
+</code></pre><p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cindex_files%5Cimage-20241207103012129.png" alt="image-20241207103012129"></p>
+<h2 id="从根证书密钥库导出根证书">从根证书密钥库导出根证书</h2>
+<p>使用keytool的导出功能，从密钥库中导出根证书，输入密钥库的密码，导出的证书文件为rootca.cer命令如下：</p>
+<pre tabindex="0"><code>keytool -exportcert -validity 36500 -alias rootca -file root.cer -keystore root.jks -keypass 12345678 -storepass 12345678
+</code></pre><p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cindex_files%5Cimage-20241207103217902.png" alt="image-20241207103217902"></p>
+<h2 id="生成二级证书密钥库">生成二级证书密钥库</h2>
+<p>二级证书需要由根证书签发。</p>
+<p>首先使用keytool生成二级证书的密钥库，但是此时还是自签的，我们需要从中生成一个二级证书请求（其中包含了二级证书的公钥）；</p>
+<p>然后将证书请求发送到rootca签发二级证书；</p>
+<p>最后，我们将rootca签发的二级证书导入到证书密钥库中，完成二级证书的生成。</p>
+<p>下面命令是生成二级证书密钥库，密钥库的名称为spky4，此时仍是自签的，证书颁发者和使用者都是自已：</p>
+<pre tabindex="0"><code>keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 12345678 -dname &#34;CN=y4.com,C=CN,OU=y4&#34; -alias spky4 -keystore sub.jks
+</code></pre><p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cindex_files%5Cimage-20241207103421561.png" alt="image-20241207103421561"></p>
+<h2 id="从二级证书密钥库中生成证书请求"><strong>从二级证书密钥库中生成证书请求</strong></h2>
+<p>从二级CA密钥库中导出证书请求，下面是导出证书请求的命令，spky4是上面生成的二级CA密钥库的名字，最终导出证书请求文件为spky4.csr：</p>
+<pre tabindex="0"><code>keytool -certreq -alias spky4 -file sub.csr -keystore sub.jks -keypass 12345678 -storepass 12345678
+</code></pre><h3 id="使用根证书签发证书"><strong>使用根证书签发证书</strong></h3>
+<p>通过keytool工具的签发证书功能，使用rootca对二级证书请求（subca.csr）签发一张二级证书。命令如下，alias指定证书的颁发者，infile指定证书请求文件，outfile是二级证书的文件名：</p>
+<pre tabindex="0"><code>keytool -gencert -validity 36500 -alias rootca -infile sub.csr -outfile sub.cer -keystore root.jks -keypass 12345678 -storepass 12345678
+</code></pre><h2 id="导入二级证书到密钥库中"><strong>导入二级证书到密钥库中</strong></h2>
+<p>因为本地生成的密钥库仍然是自签名的，此时需要将根证书签发的二级证书导入密钥库中，导入前，要先将自签名的根证书导入密钥库，这点非常重要，否则会报“无法从回复中建立链”，命令如下：</p>
+<pre tabindex="0"><code>keytool -importcert -alias rootca -file root.cer -keystore sub.jks -storepass 12345678 -keypass 12345678
+</code></pre><h1 id="使用二级证书签发用户证书"><strong>使用二级证书签发用户证书</strong></h1>
+<p>签发用户CA的流程与产生二级CA的过程是一样的。下面我们产生用户user的CA，将生成二级证书操作中的rootca改为二级证书的subca，将alias都变为user。</p>
+<h2 id="生成用户证书密钥库">生成用户证书密钥库</h2>
+<p>先生成userca 的密钥库，命令如下：</p>
+<pre tabindex="0"><code>keytool -genkeypair -alias userca -keyalg EC -validity 36500 -keystore user.jks -keypass 12345678 -storepass 12345678 -dname &#34;CN=*.test.y4.com,C=CN,OU=y4&#34;
+</code></pre><h2 id="生成用户证书请求">生成用户证书请求</h2>
+<pre tabindex="0"><code>keytool -certreq -alias userca -file user.csr -keystore user.jks -keypass 12345678 -storepass 12345678
+</code></pre><h2 id="用二级证书签发用户证书">用二级证书签发用户证书</h2>
+<pre tabindex="0"><code>keytool -gencert -alias spky4 -infile user.csr -outfile user.cer -keystore sub.jks -keypass 12345678 -storepass 12345678
+</code></pre><h2 id="导入用户证书到密钥库中">导入用户证书到密钥库中</h2>
+<p>导入用户证书时，<strong>还需要将rootca也导入</strong>，否则在客户端使用时，会导致校验失败。</p>
+<pre tabindex="0"><code>keytool -importcert -alias userca -file user.cer -keystore user.jks -storepass 12345678
+keytool -importcert -alias rootca -file root.cer -keystore user.jks -storepass 12345678
+</code></pre><p>最终目录下文件如下</p>
+<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cindex_files%5Cimage-20241207110325284.png" alt="image-20241207110325284"></p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+
+  </article>
+
+    </main>
+  </body>
+</html>
