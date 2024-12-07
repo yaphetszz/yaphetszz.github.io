@@ -138,14 +138,14 @@ keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 1234
 <h2 id="生成根证书">生成根证书</h2>
 <p>安装好java，确保keytool可以正常使用，开始配置证书链</p>
 <pre tabindex="0"><code>keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 12345678 -dname &#34;CN=y4,C=CN,OU=y4&#34; -alias rootca -keystore root.jks
-</code></pre><p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cindex_files%5Cimage-20241207102750805.png" alt="image-20241207102750805"></p>
+</code></pre><p><img src="../index_files/image-20241207102750805.png" alt="image-20241207102750805"></p>
 <p>此命令使用椭圆曲线secp256r1算法，产生一个256位的EC密钥对，并保存到njhx_root.jks中。使用以下命令查看密钥库的信息，会发现发布者与所有者都是y4</p>
 <pre tabindex="0"><code> keytool -list -keystore root.jks -keypass 12345678 -storepass 12345678 -v
-</code></pre><p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cindex_files%5Cimage-20241207103012129.png" alt="image-20241207103012129"></p>
+</code></pre><p><img src="../index_files/image-20241207103012129.png" alt="image-20241207103012129"></p>
 <h2 id="从根证书密钥库导出根证书">从根证书密钥库导出根证书</h2>
 <p>使用keytool的导出功能，从密钥库中导出根证书，输入密钥库的密码，导出的证书文件为rootca.cer命令如下：</p>
 <pre tabindex="0"><code>keytool -exportcert -validity 36500 -alias rootca -file root.cer -keystore root.jks -keypass 12345678 -storepass 12345678
-</code></pre><p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cindex_files%5Cimage-20241207103217902.png" alt="image-20241207103217902"></p>
+</code></pre><p><img src="../index_files/image-20241207103217902.png" alt="image-20241207103217902"></p>
 <h2 id="生成二级证书密钥库">生成二级证书密钥库</h2>
 <p>二级证书需要由根证书签发。</p>
 <p>首先使用keytool生成二级证书的密钥库，但是此时还是自签的，我们需要从中生成一个二级证书请求（其中包含了二级证书的公钥）；</p>
@@ -153,7 +153,7 @@ keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 1234
 <p>最后，我们将rootca签发的二级证书导入到证书密钥库中，完成二级证书的生成。</p>
 <p>下面命令是生成二级证书密钥库，密钥库的名称为spky4，此时仍是自签的，证书颁发者和使用者都是自已：</p>
 <pre tabindex="0"><code>keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 12345678 -dname &#34;CN=y4.com,C=CN,OU=y4&#34; -alias spky4 -keystore sub.jks
-</code></pre><p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cindex_files%5Cimage-20241207103421561.png" alt="image-20241207103421561"></p>
+</code></pre><p><img src="../index_files/image-20241207103421561.png" alt="image-20241207103421561"></p>
 <h2 id="从二级证书密钥库中生成证书请求"><strong>从二级证书密钥库中生成证书请求</strong></h2>
 <p>从二级CA密钥库中导出证书请求，下面是导出证书请求的命令，spky4是上面生成的二级CA密钥库的名字，最终导出证书请求文件为spky4.csr：</p>
 <pre tabindex="0"><code>keytool -certreq -alias spky4 -file sub.csr -keystore sub.jks -keypass 12345678 -storepass 12345678
@@ -177,7 +177,7 @@ keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 1234
 <pre tabindex="0"><code>keytool -importcert -alias userca -file user.cer -keystore user.jks -storepass 12345678
 keytool -importcert -alias rootca -file root.cer -keystore user.jks -storepass 12345678
 </code></pre><p>最终目录下文件如下</p>
-<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cindex_files%5Cimage-20241207110325284.png" alt="image-20241207110325284"></p>
+<p><img src="../index_files/image-20241207110325284.png" alt="image-20241207110325284"></p>
 
     </div>
     <div class="post-footer">
