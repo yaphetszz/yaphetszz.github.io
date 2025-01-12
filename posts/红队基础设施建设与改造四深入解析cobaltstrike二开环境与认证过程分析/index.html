@@ -111,9 +111,9 @@ public AuthCrypto() { try { this.A = Cipher.getInstance(&#34;RSA/ECB/PKCS1Paddin
         <div>
           <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
           
-          16345 Words - 
+          19312 Words - 
           
-          33 min read
+          38 min read
         </div>
           <p>创建时间: 2022-08-06 19:47</p>
         
@@ -522,6 +522,59 @@ extc2.x64.dll
 <p><img src="../C2reborn/image-20250111142141686.png" alt="image-20250111143716036"></p>
 <p>打包完成后重新测试连接性(很重要)，此时对Beacon重新分析时原分析工具已经失效</p>
 <p><img src="../C2reborn/image-20250111155723752.png" alt="image-20250111155723752"></p>
+<h2 id="beacon内存特征分析与绕过">Beacon内存特征分析与绕过</h2>
+<p>其实光改这些东西还是有些问题，因为CS在内存中还是暴露的状态，因此有很多查内存的杀软还是能够检测出来，来分析一下具体负责上线的DLL，也就是上面修改过的Beacon.dll，在程序入口点处，调用了sub_1000A63E</p>
+<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5CC2reborn%5Cimage-20250112150154114.png" alt="image-20250112150154114"></p>
+<p>跟进sub_1000A63E，该函数的主要结构如下，其实这个函数就是我们之前修改的涉及到异或部分的函数，也就是修改xor key的部分</p>
+<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5CC2reborn%5Cimage-20250112150252219.png" alt="image-20250112150252219"></p>
+<p>用IDA反编译成伪代码来具体分析</p>
+<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5CC2reborn%5Cimage-20250112151057558.png" alt="image-20250112151057558"></p>
+<p>联系到源码中生成可执行PE文件中，就是将beacon.dll嵌入了PE中</p>
+<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5CC2reborn%5Cimage-20250112151738973.png" alt="image-20250112151738973"></p>
+<p>而在解析Beacon的时候，上文也已经写了Settings()函数用于读取配置，结合伪代码中的switch函数，分析一下就不难对应到Settings里的操作，对应的四个patch操作为index，type，length、value</p>
+<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5CC2reborn%5Cimage-20250112153214391.png" alt="image-20250112153214391"></p>
+<p>此时再来对应伪代码中的switch语句就能知道对应Settings里的部分，type有三个值：1 short；2 int；3 data。首先分配内存空间，然后根据类型判断写入数据value，然后根据不同类型写入Value值</p>
+<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5CC2reborn%5Cimage-20250112160100722.png" alt="image-20250112160100722"></p>
+<p>对内存中的CSBeacon扫描时的一个很好用的工具为BeaconEye，下载地址：https://github.com/CCob/BeaconEye</p>
+<p>实际使用时发现即使经过上述修改，仍无法躲过Beaconeye的扫描</p>
+<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5CC2reborn%5Cimage-20250112120402398.png" alt="image-20250112141056629"></p>
+<p>来深入分析BeaconEye的代码，主要有以下功能：</p>
+<ol>
+<li>YARA 规则</li>
+</ol>
+<ul>
+<li>代码中定义了两个 YARA 规则（cobaltStrikeRule64和cobaltStrikeRule32），用于匹配 64 位和 32 位进程中的 Beacon 配置。</li>
+<li>这些规则通过 libyaraNET库编译并应用于进程内存的扫描。</li>
+</ul>
+<ol start="2">
+<li>内存扫描</li>
+</ol>
+<ul>
+<li>ProcessHasConfig方法负责扫描进程的堆内存，查找 Beacon 的配置信息。</li>
+<li>使用 ProcessReader 类读取进程内存，并通过 YARA 规则匹配 Beacon 的配置。</li>
+<li>如果找到匹配的配置，返回 Configuration对象，其中包含 Beacon 的配置地址和内容。</li>
+</ul>
+<ol start="3">
+<li>密钥和 IV 地址提取</li>
+</ol>
+<ul>
+<li>GetKeyIVAddress方法通过反汇编技术从内存中提取 Beacon 的加密密钥和初始化向量（IV）。</li>
+<li>对于 64 位进程，查找特定的指令模式（如 <code>movups</code> 和 <code>movdqu</code>）来定位密钥和 IV 的地址。</li>
+<li>对于 32 位进程，查找特定的字节序列（如 <code>0xa5, 0xa5, 0xa5, 0xa5, 0xe8</code>）来定位密钥和 IV 的地址。</li>
+<li>如果成功找到密钥和 IV 的地址，返回它们的地址值。</li>
+</ul>
+<ol start="4">
+<li>Beacon 监控</li>
+</ol>
+<ul>
+<li>如果启用了监控模式（<code>monitor</code> 参数），代码会为每个找到的 Beacon 启动一个监控线程。</li>
+<li>MonitorThread 方法负责监控 Beacon 的网络流量。</li>
+<li>使用 ManualResetEvent来控制监控线程的启动和停止。</li>
+</ul>
+<p>分析其中主要部分yara规则，对应的部分与上图搜索到的部分如下：</p>
+<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5CC2reborn%5Cimage-20250112162337953.png" alt="image-20250112162337953"></p>
+<p>绕过也不难，此处用了个小trick，思路是只要让这个规则匹配不到就行了，patch一下字节码中对应部分（具体不说了，也就涉及到一个push和xor的操作，只要前面的文章认真看了自己发掘一下就行），修改完成后不命中规则即无法扫描到</p>
+<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5CC2reborn%5Cimage-20250112173815872.png" alt="image-20250112173815872"></p>
 <p>CS的东西有点多，第一篇先写到这里吧&hellip;之前写了一篇C2Profile的还没发</p>
 <p>后面计划对CS的其他部分进行分析，比如内存特征、ArsenalKit、CNA脚本&hellip;</p>
 
