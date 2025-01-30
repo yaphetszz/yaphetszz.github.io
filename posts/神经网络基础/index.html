@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>神经网络基础 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="神经网络基础">
+  <meta name="twitter:description" content="最近AI挺火的，重新开始学习一下神经网络并且整理一些东西，简单写点笔记记录一下。
+神经网络是一种模仿生物神经系统结构和功能的计算模型，主要用于机器学习和人工智能领域。它由大量相互连接的节点（称为“神经元”）组成，这些节点通过加权连接传递信息。神经网络的核心思想是通过调整这些连接的权重来学习数据中的模式。
+主要组成部分 输入层：接收外部输入数据。 隐藏层：位于输入层和输出层之间，负责处理数据。可以有多个隐藏层。 输出层：生成最终的输出结果。 工作原理 前向传播：输入数据通过各层传递，每层对数据进行加权和激活函数处理，最终生成输出。 激活函数：引入非线性，使网络能够学习复杂模式，常用函数包括ReLU、Sigmoid和Tanh。 损失函数：衡量预测结果与实际结果的差距。 反向传播：通过梯度下降法调整权重，最小化损失函数。 优化算法：如SGD、Adam，用于更新权重。 主要类型
+前馈神经网络（FNN）：信息单向传递，无循环。 卷积神经网络（CNN）：适用于图像处理，通过卷积层提取特征。 循环神经网络（RNN）：处理序列数据，具有记忆功能。 长短期记忆网络（LSTM）：RNN的改进，解决长序列依赖问题。 生成对抗网络（GAN）：由生成器和判别器组成，用于生成数据。 网上搜了些文章资料，大致总结出的学习内容，数学基础：了解线性代数、微积分和概率论，特别是矩阵运算、导数和梯度等概念。编程基础：熟悉Python，掌握NumPy、Pandas等数据处理库。
+神经网络中的数学基础 1. 线性代数 向量：一维数组，可以表示输入数据或权重。 矩阵：二维数组，常用于表示权重矩阵或输入数据。 例子： 假设有一个简单的神经网络，输入层有2个神经元，隐藏层有3个神经元。输入数据可以表示为一个向量：
+![image-20250130231136971](D:\研究文章\Neural Network\image-20250130231136971.png) 隐藏层的权重可以表示为一个矩阵：
+![image-20250130231301044](D:\研究文章\Neural Network\image-20250130231301044.png)
+矩阵乘法 矩阵乘法用于前向传播中计算神经元的加权输入。
+例子： 计算隐藏层的输入：
+![image-20250130231310393](D:\研究文章\Neural Network\image-20250130231310393.png)
+2. 微积分 导数 导数用于计算损失函数对权重的梯度。
+例子： 假设损失函数为均方误差（MSE）：
+![image-20250130231330044](D:\研究文章\Neural Network\image-20250130231330044.png) 其中，y^是预测值，y是真实值。损失函数对预测值的导数为：
+![image-20250130231355084](D:\研究文章\Neural Network\image-20250130231355084.png)
+链式法则 链式法则用于反向传播中计算梯度。
+例子： 假设有一个简单的神经网络，隐藏层的输出为 z，激活函数为 a=σ(z)，损失函数为 L。根据链式法则，损失函数对权重的导数为：
+![image-20250130233912421](D:\研究文章\Neural Network\image-20250130233912421.png)
+3. 概率与统计 概率分布 理解数据分布有助于设计损失函数和评估模型。
+例子： 假设我们有一个二分类问题，输出层的激活函数为Sigmoid函数，输出值可以解释为概率：
+P(y=1∣x)=σ(z)P(y=1∣x)=σ(z)
+最大似然估计 最大似然估计用于定义损失函数。
+例子： 对于二分类问题，常用的损失函数为交叉熵损失：
+![image-20250130233929606](D:\研究文章\Neural Network\image-20250130233929606.png)">
+
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="神经网络基础">
+  <meta property="og:description" content="最近AI挺火的，重新开始学习一下神经网络并且整理一些东西，简单写点笔记记录一下。
+神经网络是一种模仿生物神经系统结构和功能的计算模型，主要用于机器学习和人工智能领域。它由大量相互连接的节点（称为“神经元”）组成，这些节点通过加权连接传递信息。神经网络的核心思想是通过调整这些连接的权重来学习数据中的模式。
+主要组成部分 输入层：接收外部输入数据。 隐藏层：位于输入层和输出层之间，负责处理数据。可以有多个隐藏层。 输出层：生成最终的输出结果。 工作原理 前向传播：输入数据通过各层传递，每层对数据进行加权和激活函数处理，最终生成输出。 激活函数：引入非线性，使网络能够学习复杂模式，常用函数包括ReLU、Sigmoid和Tanh。 损失函数：衡量预测结果与实际结果的差距。 反向传播：通过梯度下降法调整权重，最小化损失函数。 优化算法：如SGD、Adam，用于更新权重。 主要类型
+前馈神经网络（FNN）：信息单向传递，无循环。 卷积神经网络（CNN）：适用于图像处理，通过卷积层提取特征。 循环神经网络（RNN）：处理序列数据，具有记忆功能。 长短期记忆网络（LSTM）：RNN的改进，解决长序列依赖问题。 生成对抗网络（GAN）：由生成器和判别器组成，用于生成数据。 网上搜了些文章资料，大致总结出的学习内容，数学基础：了解线性代数、微积分和概率论，特别是矩阵运算、导数和梯度等概念。编程基础：熟悉Python，掌握NumPy、Pandas等数据处理库。
+神经网络中的数学基础 1. 线性代数 向量：一维数组，可以表示输入数据或权重。 矩阵：二维数组，常用于表示权重矩阵或输入数据。 例子： 假设有一个简单的神经网络，输入层有2个神经元，隐藏层有3个神经元。输入数据可以表示为一个向量：
+![image-20250130231136971](D:\研究文章\Neural Network\image-20250130231136971.png) 隐藏层的权重可以表示为一个矩阵：
+![image-20250130231301044](D:\研究文章\Neural Network\image-20250130231301044.png)
+矩阵乘法 矩阵乘法用于前向传播中计算神经元的加权输入。
+例子： 计算隐藏层的输入：
+![image-20250130231310393](D:\研究文章\Neural Network\image-20250130231310393.png)
+2. 微积分 导数 导数用于计算损失函数对权重的梯度。
+例子： 假设损失函数为均方误差（MSE）：
+![image-20250130231330044](D:\研究文章\Neural Network\image-20250130231330044.png) 其中，y^是预测值，y是真实值。损失函数对预测值的导数为：
+![image-20250130231355084](D:\研究文章\Neural Network\image-20250130231355084.png)
+链式法则 链式法则用于反向传播中计算梯度。
+例子： 假设有一个简单的神经网络，隐藏层的输出为 z，激活函数为 a=σ(z)，损失函数为 L。根据链式法则，损失函数对权重的导数为：
+![image-20250130233912421](D:\研究文章\Neural Network\image-20250130233912421.png)
+3. 概率与统计 概率分布 理解数据分布有助于设计损失函数和评估模型。
+例子： 假设我们有一个二分类问题，输出层的激活函数为Sigmoid函数，输出值可以解释为概率：
+P(y=1∣x)=σ(z)P(y=1∣x)=σ(z)
+最大似然估计 最大似然估计用于定义损失函数。
+例子： 对于二分类问题，常用的损失函数为交叉熵损失：
+![image-20250130233929606](D:\研究文章\Neural Network\image-20250130233929606.png)">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-01-30T16:08:36+08:00">
+    <meta property="article:modified_time" content="2025-01-30T16:08:36+08:00">
+    <meta property="article:tag" content="神经网络">
+    <meta property="article:tag" content="人工智能">
+    <meta property="article:tag" content="机器学习">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">主页</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/categories/">分类</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">标签</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">关于</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/links/">友链</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/atta/">附件</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/yaphetszz" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">神经网络基础</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Jan 30, 2025
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          14924 Words - 
+          
+          30 min read
+        </div>
+          <p>创建时间: 2025-01-30 16:08</p>
+        
+           
+          
+          <p></p>
+          
+        
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/">神经网络</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/">人工智能</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+        </div>
+        <div>
+          <p></p>
+          <p>文章分类:    </p>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/">人工智能</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p>最近AI挺火的，重新开始学习一下神经网络并且整理一些东西，简单写点笔记记录一下。</p>
+<p>神经网络是一种模仿生物神经系统结构和功能的计算模型，主要用于机器学习和人工智能领域。它由大量相互连接的节点（称为“神经元”）组成，这些节点通过加权连接传递信息。神经网络的核心思想是通过调整这些连接的权重来学习数据中的模式。</p>
+<h3 id="主要组成部分">主要组成部分</h3>
+<ol>
+<li><strong>输入层</strong>：接收外部输入数据。</li>
+<li><strong>隐藏层</strong>：位于输入层和输出层之间，负责处理数据。可以有多个隐藏层。</li>
+<li><strong>输出层</strong>：生成最终的输出结果。</li>
+</ol>
+<h3 id="工作原理">工作原理</h3>
+<ol>
+<li><strong>前向传播</strong>：输入数据通过各层传递，每层对数据进行加权和激活函数处理，最终生成输出。</li>
+<li><strong>激活函数</strong>：引入非线性，使网络能够学习复杂模式，常用函数包括ReLU、Sigmoid和Tanh。</li>
+<li><strong>损失函数</strong>：衡量预测结果与实际结果的差距。</li>
+<li><strong>反向传播</strong>：通过梯度下降法调整权重，最小化损失函数。</li>
+<li><strong>优化算法</strong>：如SGD、Adam，用于更新权重。</li>
+</ol>
+<p>主要类型</p>
+<ol>
+<li><strong>前馈神经网络（FNN）</strong>：信息单向传递，无循环。</li>
+<li><strong>卷积神经网络（CNN）</strong>：适用于图像处理，通过卷积层提取特征。</li>
+<li><strong>循环神经网络（RNN）</strong>：处理序列数据，具有记忆功能。</li>
+<li><strong>长短期记忆网络（LSTM）</strong>：RNN的改进，解决长序列依赖问题。</li>
+<li><strong>生成对抗网络（GAN）</strong>：由生成器和判别器组成，用于生成数据。</li>
+</ol>
+<p>网上搜了些文章资料，大致总结出的学习内容，数学基础：了解线性代数、微积分和概率论，特别是矩阵运算、导数和梯度等概念。编程基础：熟悉Python，掌握NumPy、Pandas等数据处理库。</p>
+<h3 id="神经网络中的数学基础">神经网络中的数学基础</h3>
+<h3 id="1-线性代数">1. 线性代数</h3>
+<ul>
+<li><strong>向量</strong>：一维数组，可以表示输入数据或权重。</li>
+<li><strong>矩阵</strong>：二维数组，常用于表示权重矩阵或输入数据。</li>
+</ul>
+<p><strong>例子</strong>：
+假设有一个简单的神经网络，输入层有2个神经元，隐藏层有3个神经元。输入数据可以表示为一个向量：</p>
+<p>![image-20250130231136971](D:\研究文章\Neural Network\image-20250130231136971.png)
+隐藏层的权重可以表示为一个矩阵：</p>
+<p>![image-20250130231301044](D:\研究文章\Neural Network\image-20250130231301044.png)</p>
+<h4 id="矩阵乘法">矩阵乘法</h4>
+<p>矩阵乘法用于前向传播中计算神经元的加权输入。</p>
+<p><strong>例子</strong>：
+计算隐藏层的输入：</p>
+<p>![image-20250130231310393](D:\研究文章\Neural Network\image-20250130231310393.png)</p>
+<h3 id="2-微积分">2. <strong>微积分</strong></h3>
+<h4 id="导数">导数</h4>
+<p>导数用于计算损失函数对权重的梯度。</p>
+<p><strong>例子</strong>：
+假设损失函数为均方误差（MSE）：</p>
+<p>![image-20250130231330044](D:\研究文章\Neural Network\image-20250130231330044.png)
+其中，y^是预测值，y是真实值。损失函数对预测值的导数为：</p>
+<p>![image-20250130231355084](D:\研究文章\Neural Network\image-20250130231355084.png)</p>
+<h4 id="链式法则">链式法则</h4>
+<p>链式法则用于反向传播中计算梯度。</p>
+<p><strong>例子</strong>：
+假设有一个简单的神经网络，隐藏层的输出为 z，激活函数为 a=σ(z)，损失函数为 L。根据链式法则，损失函数对权重的导数为：</p>
+<p>![image-20250130233912421](D:\研究文章\Neural Network\image-20250130233912421.png)</p>
+<h3 id="3-概率与统计">3. <strong>概率与统计</strong></h3>
+<h4 id="概率分布">概率分布</h4>
+<p>理解数据分布有助于设计损失函数和评估模型。</p>
+<p><strong>例子</strong>：
+假设我们有一个二分类问题，输出层的激活函数为Sigmoid函数，输出值可以解释为概率：</p>
+<p>P(y=1∣x)=σ(z)P(y=1∣x)=σ(z)</p>
+<h4 id="最大似然估计">最大似然估计</h4>
+<p>最大似然估计用于定义损失函数。</p>
+<p><strong>例子</strong>：
+对于二分类问题，常用的损失函数为交叉熵损失：</p>
+<p>![image-20250130233929606](D:\研究文章\Neural Network\image-20250130233929606.png)</p>
+<h3 id="4-优化">4. <strong>优化</strong></h3>
+<h4 id="梯度下降">梯度下降</h4>
+<p>梯度下降通过计算损失函数的梯度并更新权重来最小化损失。</p>
+<p><strong>例子</strong>：
+假设损失函数对权重的梯度为![image-20250130233953350](D:\研究文章\Neural Network\image-20250130233953350.png)，学习率为 η，则权重的更新公式为：</p>
+<p>![image-20250130234005211](D:\研究文章\Neural Network\image-20250130234005211.png)</p>
+<h4 id="随机梯度下降sgd">随机梯度下降（SGD）</h4>
+<p>随机梯度下降每次更新使用一个样本或小批量样本。</p>
+<p><strong>例子</strong>：
+假设我们有一个小批量样本，损失函数对权重的梯度为 ![image-20250130234024948](D:\研究文章\Neural Network\image-20250130234024948.png)，学习率为 ηη，则权重的更新公式为：</p>
+<p>![image-20250130234035602](D:\研究文章\Neural Network\image-20250130234035602.png)</p>
+<h3 id="5-激活函数">5. <strong>激活函数</strong></h3>
+<h4 id="sigmoid">Sigmoid</h4>
+<p>Sigmoid函数将输入映射到(0,1)区间。</p>
+<p><strong>例子</strong>：</p>
+<p>![image-20250130234050650](D:\研究文章\Neural Network\image-20250130234050650.png)</p>
+<h4 id="relu">ReLU</h4>
+<p>ReLU函数简单且常用。</p>
+<p><strong>例子</strong>：</p>
+<p>![image-20250130234110385](D:\研究文章\Neural Network\image-20250130234110385.png)</p>
+<h3 id="6-损失函数">6. <strong>损失函数</strong></h3>
+<h4 id="均方误差mse">均方误差（MSE）</h4>
+<p>均方误差用于回归问题。</p>
+<p><strong>例子</strong>：</p>
+<p>![image-20250130234122777](D:\研究文章\Neural Network\image-20250130234122777.png)</p>
+<h4 id="交叉熵损失">交叉熵损失</h4>
+<p>交叉熵损失用于分类问题。</p>
+<p><strong>例子</strong>：</p>
+<p>![image-20250130234132825](D:\研究文章\Neural Network\image-20250130234132825.png)</p>
+<h3 id="7-反向传播">7. <strong>反向传播</strong></h3>
+<h4 id="链式法则-1">链式法则</h4>
+<p>链式法则用于计算损失函数对每个权重的梯度。</p>
+<p><strong>例子</strong>：
+假设有一个简单的神经网络，隐藏层的输出为 zz，激活函数为 a=σ(z)a=σ(z)，损失函数为 LL。根据链式法则，损失函数对权重的导数为：</p>
+<p>![image-20250130234145412](D:\研究文章\Neural Network\image-20250130234145412.png)</p>
+<h3 id="8-正则化">8. <strong>正则化</strong></h3>
+<h4 id="l2正则化">L2正则化</h4>
+<p>L2正则化通过在损失函数中加入权重平方和防止过拟合。</p>
+<p><strong>例子</strong>：</p>
+<p>![image-20250130234158190](D:\研究文章\Neural Network\image-20250130234158190.png)</p>
+<h4 id="dropout">Dropout</h4>
+<p>Dropout在训练时随机丢弃部分神经元，防止过拟合。</p>
+<p><strong>例子</strong>：
+在训练时，每个神经元以概率 pp 被丢弃，以概率 1−p1−p 被保留。</p>
+<h3 id="numpy和pandas">Numpy和Pandas</h3>
+<p>NumPy (Numerical Python) 是一个用于科学计算的库，提供了多维数组对象（<code>ndarray</code>）以及丰富的数组运算功能。它在数值计算和数据处理方面非常高效。</p>
+<p>基本操作如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 创建数组</span>
+</span></span><span style="display:flex;"><span>array <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>array([<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">4</span>])  <span style="color:#75715e"># 一维数组</span>
+</span></span><span style="display:flex;"><span>matrix <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>array([[<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>], [<span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">4</span>]])  <span style="color:#75715e"># 二维数组</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 数组属性</span>
+</span></span><span style="display:flex;"><span>print(array<span style="color:#f92672">.</span>shape)  <span style="color:#75715e"># 查看数组形状</span>
+</span></span><span style="display:flex;"><span>print(array<span style="color:#f92672">.</span>ndim)   <span style="color:#75715e"># 查看数组维度</span>
+</span></span><span style="display:flex;"><span>print(array<span style="color:#f92672">.</span>dtype)  <span style="color:#75715e"># 查看数据类型</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 常用操作</span>
+</span></span><span style="display:flex;"><span>zeros <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>zeros((<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>))  <span style="color:#75715e"># 创建全零数组</span>
+</span></span><span style="display:flex;"><span>ones <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>ones((<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>))    <span style="color:#75715e"># 创建全一数组</span>
+</span></span><span style="display:flex;"><span>arange <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>arange(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">2</span>)  <span style="color:#75715e"># 创建等差序列</span>
+</span></span><span style="display:flex;"><span>linspace <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>linspace(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">5</span>)  <span style="color:#75715e"># 创建线性等分点</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 数学运算</span>
+</span></span><span style="display:flex;"><span>array <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>array([<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>])
+</span></span><span style="display:flex;"><span>print(array <span style="color:#f92672">+</span> <span style="color:#ae81ff">10</span>)        <span style="color:#75715e"># 数组加法（广播机制）</span>
+</span></span><span style="display:flex;"><span>print(array <span style="color:#f92672">*</span> <span style="color:#ae81ff">2</span>)         <span style="color:#75715e"># 数组乘法</span>
+</span></span><span style="display:flex;"><span>print(np<span style="color:#f92672">.</span>mean(array))    <span style="color:#75715e"># 平均值</span>
+</span></span><span style="display:flex;"><span>print(np<span style="color:#f92672">.</span>sum(array))     <span style="color:#75715e"># 求和</span>
+</span></span><span style="display:flex;"><span>print(np<span style="color:#f92672">.</span>dot(array, array))  <span style="color:#75715e"># 点积</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 数组索引和切片</span>
+</span></span><span style="display:flex;"><span>print(array[<span style="color:#ae81ff">1</span>])  <span style="color:#75715e"># 索引第2个元素</span>
+</span></span><span style="display:flex;"><span>print(matrix[:, <span style="color:#ae81ff">1</span>])  <span style="color:#75715e"># 切片：取二维数组每行的第2列</span>
+</span></span></code></pre></div><p>Pandas 是一个用于数据操作和分析的库，提供了强大的数据结构 Series 和 DataFrame，专门处理表格和时间序列数据。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> pandas <span style="color:#66d9ef">as</span> pd
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 创建 Series</span>
+</span></span><span style="display:flex;"><span>series <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>Series([<span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">20</span>, <span style="color:#ae81ff">30</span>], index<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#39;a&#39;</span>, <span style="color:#e6db74">&#39;b&#39;</span>, <span style="color:#e6db74">&#39;c&#39;</span>])  <span style="color:#75715e"># 一维数据</span>
+</span></span><span style="display:flex;"><span>print(series[<span style="color:#e6db74">&#39;a&#39;</span>])  <span style="color:#75715e"># 按索引取值</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 创建 DataFrame</span>
+</span></span><span style="display:flex;"><span>data <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#39;Name&#39;</span>: [<span style="color:#e6db74">&#39;Alice&#39;</span>, <span style="color:#e6db74">&#39;Bob&#39;</span>, <span style="color:#e6db74">&#39;Charlie&#39;</span>], <span style="color:#e6db74">&#39;Age&#39;</span>: [<span style="color:#ae81ff">25</span>, <span style="color:#ae81ff">30</span>, <span style="color:#ae81ff">35</span>], <span style="color:#e6db74">&#39;Score&#39;</span>: [<span style="color:#ae81ff">85</span>, <span style="color:#ae81ff">90</span>, <span style="color:#ae81ff">95</span>]}
+</span></span><span style="display:flex;"><span>df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>DataFrame(data)  <span style="color:#75715e"># 二维表格数据</span>
+</span></span><span style="display:flex;"><span>print(df)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 查看数据</span>
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>head())    <span style="color:#75715e"># 查看前5行</span>
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>info())    <span style="color:#75715e"># 查看数据概要</span>
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>describe())  <span style="color:#75715e"># 查看统计信息</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 数据选择</span>
+</span></span><span style="display:flex;"><span>print(df[<span style="color:#e6db74">&#39;Name&#39;</span>])   <span style="color:#75715e"># 按列选择</span>
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>iloc[<span style="color:#ae81ff">0</span>])   <span style="color:#75715e"># 按行索引选择</span>
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>loc[<span style="color:#ae81ff">0</span>, <span style="color:#e6db74">&#39;Name&#39;</span>])  <span style="color:#75715e"># 按行列标签选择</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 数据筛选</span>
+</span></span><span style="display:flex;"><span>print(df[df[<span style="color:#e6db74">&#39;Age&#39;</span>] <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">25</span>])  <span style="color:#75715e"># 筛选 Age 大于 25 的行</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 数据处理</span>
+</span></span><span style="display:flex;"><span>df[<span style="color:#e6db74">&#39;Age&#39;</span>] <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#39;Age&#39;</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>  <span style="color:#75715e"># 修改列数据</span>
+</span></span><span style="display:flex;"><span>df[<span style="color:#e6db74">&#39;New_Column&#39;</span>] <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#39;Score&#39;</span>] <span style="color:#f92672">/</span> <span style="color:#ae81ff">10</span>  <span style="color:#75715e"># 添加新列</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 处理缺失值</span>
+</span></span><span style="display:flex;"><span>df[<span style="color:#e6db74">&#39;Score&#39;</span>] <span style="color:#f92672">=</span> [<span style="color:#ae81ff">85</span>, <span style="color:#66d9ef">None</span>, <span style="color:#ae81ff">95</span>]
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>dropna())  <span style="color:#75715e"># 删除缺失值行</span>
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>fillna(<span style="color:#ae81ff">0</span>))  <span style="color:#75715e"># 用 0 填充缺失值</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 排序</span>
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>sort_values(by<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Age&#39;</span>, ascending<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>))  <span style="color:#75715e"># 按 Age 列降序排列</span>
+</span></span></code></pre></div><h3 id="numpy-的多维数组"><strong>NumPy 的多维数组</strong></h3>
+<p>NumPy 的核心数据结构是 <code>ndarray</code>，它支持多维数组操作。</p>
+<h4 id="创建多维数组"><strong>创建多维数组</strong></h4>
+<pre tabindex="0"><code>python
+import numpy as np
+
+# 创建二维数组
+matrix = np.array([[1, 2, 3], [4, 5, 6]])
+
+# 查看属性
+print(matrix.shape)  # (2, 3)，表示2行3列
+print(matrix.ndim)   # 2，表示二维数组
+print(matrix.size)   # 6，总元素数量
+print(matrix.dtype)  # 元素类型（如int32, float64等）
+</code></pre><h4 id="数组的重塑reshape"><strong>数组的重塑（reshape）</strong></h4>
+<pre tabindex="0"><code>python
+# 重塑数组
+original = np.array([1, 2, 3, 4, 5, 6])
+reshaped = original.reshape(2, 3)  # 转为2行3列
+print(reshaped)
+</code></pre><h4 id="数组的广播机制"><strong>数组的广播机制</strong></h4>
+<p>NumPy 支持不同形状数组进行运算，这被称为“广播”：</p>
+<pre tabindex="0"><code>python
+a = np.array([[1, 2], [3, 4]])
+b = np.array([10, 20])
+print(a + b)  # 自动将 b 复制到每一行，进行加法
+</code></pre><hr>
+<h3 id="numpy-的常用数学运算"><strong>NumPy 的常用数学运算</strong></h3>
+<p>NumPy 提供了高效的数学运算功能，适用于向量、矩阵操作。</p>
+<pre tabindex="0"><code>python
+# 数学函数
+array = np.array([1, 2, 3, 4])
+print(np.sum(array))  # 求和
+print(np.mean(array))  # 平均值
+print(np.min(array))  # 最小值
+print(np.max(array))  # 最大值
+print(np.sqrt(array))  # 平方根
+
+# 矩阵乘法（点积）
+a = np.array([[1, 2], [3, 4]])
+b = np.array([[5, 6], [7, 8]])
+print(np.dot(a, b))  # 矩阵乘法
+</code></pre><hr>
+<h3 id="numpy-的索引和切片"><strong>NumPy 的索引和切片</strong></h3>
+<p>NumPy 支持灵活的数组切片和索引：</p>
+<pre tabindex="0"><code>python
+array = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+# 单元素索引
+print(array[1, 2])  # 输出6，取第2行第3列
+
+# 切片
+print(array[0:2, 1:3])  # 取前两行的第2列到第3列
+</code></pre><h3 id="numpy-和-pandas-的主要区别"><strong>NumPy 和 Pandas 的主要区别</strong></h3>
+<table>
+  <thead>
+      <tr>
+          <th>特性</th>
+          <th>NumPy</th>
+          <th>Pandas</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>数据结构</td>
+          <td>多维数组（<code>ndarray</code>）</td>
+          <td>一维 <code>Series</code> 和二维 <code>DataFrame</code></td>
+      </tr>
+      <tr>
+          <td>数据类型</td>
+          <td>适合数值运算</td>
+          <td>可处理数值、字符串、时间序列等多样数据</td>
+      </tr>
+      <tr>
+          <td>应用场景</td>
+          <td>数学计算、线性代数、矩阵操作</td>
+          <td>数据清洗、分析、处理表格数据</td>
+      </tr>
+      <tr>
+          <td>操作简便性</td>
+          <td>较低（需要手动维护行列索引）</td>
+          <td>较高（内置丰富的操作方法）</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="series-数据结构"><strong>Series 数据结构</strong></h3>
+<p><code>Series</code> 是一种类似于一维数组的结构，带有索引。</p>
+<h4 id="创建-series"><strong>创建 Series</strong></h4>
+<pre tabindex="0"><code>python
+import pandas as pd
+
+# 创建 Series
+s = pd.Series([10, 20, 30, 40], index=[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;, &#39;d&#39;])
+print(s)
+
+# 索引操作
+print(s[&#39;a&#39;])  # 按标签索引
+print(s[1])    # 按位置索引
+
+# 数学运算
+print(s + 10)  # 每个元素加10
+</code></pre><hr>
+<h3 id="dataframe-数据结构"><strong>DataFrame 数据结构</strong></h3>
+<p><code>DataFrame</code> 是一种二维表格数据结构，类似于 Excel 表。</p>
+<h4 id="创建-dataframe"><strong>创建 DataFrame</strong></h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 创建 DataFrame</span>
+</span></span><span style="display:flex;"><span>data <span style="color:#f92672">=</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;Name&#39;</span>: [<span style="color:#e6db74">&#39;Alice&#39;</span>, <span style="color:#e6db74">&#39;Bob&#39;</span>, <span style="color:#e6db74">&#39;Charlie&#39;</span>],
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;Age&#39;</span>: [<span style="color:#ae81ff">25</span>, <span style="color:#ae81ff">30</span>, <span style="color:#ae81ff">35</span>],
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#39;Score&#39;</span>: [<span style="color:#ae81ff">85</span>, <span style="color:#ae81ff">90</span>, <span style="color:#ae81ff">95</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>DataFrame(data)
+</span></span><span style="display:flex;"><span>print(df)
+</span></span></code></pre></div><h4 id="查看和操作数据"><strong>查看和操作数据</strong></h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 查看数据</span>
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>head())  <span style="color:#75715e"># 查看前5行</span>
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>info())  <span style="color:#75715e"># 查看数据概要</span>
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>describe())  <span style="color:#75715e"># 查看统计信息</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 修改数据</span>
+</span></span><span style="display:flex;"><span>df[<span style="color:#e6db74">&#39;Age&#39;</span>] <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#39;Age&#39;</span>] <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>  <span style="color:#75715e"># 修改 Age 列的值</span>
+</span></span><span style="display:flex;"><span>df[<span style="color:#e6db74">&#39;New_Column&#39;</span>] <span style="color:#f92672">=</span> df[<span style="color:#e6db74">&#39;Score&#39;</span>] <span style="color:#f92672">/</span> <span style="color:#ae81ff">10</span>  <span style="color:#75715e"># 添加新列</span>
+</span></span><span style="display:flex;"><span>print(df)
+</span></span></code></pre></div><hr>
+<h3 id="数据筛选"><strong>数据筛选</strong></h3>
+<p>Pandas 提供了直观的数据筛选功能，支持按条件过滤数据：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 筛选 Age 大于 30 的行</span>
+</span></span><span style="display:flex;"><span>filtered_df <span style="color:#f92672">=</span> df[df[<span style="color:#e6db74">&#39;Age&#39;</span>] <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">30</span>]
+</span></span><span style="display:flex;"><span>print(filtered_df)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 多条件筛选</span>
+</span></span><span style="display:flex;"><span>filtered_df <span style="color:#f92672">=</span> df[(df[<span style="color:#e6db74">&#39;Age&#39;</span>] <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">30</span>) <span style="color:#f92672">&amp;</span> (df[<span style="color:#e6db74">&#39;Score&#39;</span>] <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">90</span>)]
+</span></span><span style="display:flex;"><span>print(filtered_df)
+</span></span></code></pre></div><hr>
+<h3 id="缺失值处理"><strong>缺失值处理</strong></h3>
+<p>数据中常常包含缺失值，Pandas 提供了多种处理方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 创建包含缺失值的数据</span>
+</span></span><span style="display:flex;"><span>data <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#39;Name&#39;</span>: [<span style="color:#e6db74">&#39;Alice&#39;</span>, <span style="color:#e6db74">&#39;Bob&#39;</span>, <span style="color:#e6db74">&#39;Charlie&#39;</span>], <span style="color:#e6db74">&#39;Age&#39;</span>: [<span style="color:#ae81ff">25</span>, <span style="color:#66d9ef">None</span>, <span style="color:#ae81ff">35</span>], <span style="color:#e6db74">&#39;Score&#39;</span>: [<span style="color:#ae81ff">85</span>, <span style="color:#ae81ff">90</span>, <span style="color:#66d9ef">None</span>]}
+</span></span><span style="display:flex;"><span>df <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>DataFrame(data)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 检测缺失值</span>
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>isnull())  <span style="color:#75715e"># 返回布尔值矩阵</span>
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>isnull()<span style="color:#f92672">.</span>sum())  <span style="color:#75715e"># 每列缺失值数量</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 删除缺失值</span>
+</span></span><span style="display:flex;"><span>print(df<span style="color:#f92672">.</span>dropna())  <span style="color:#75715e"># 删除包含缺失值的行</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 填充缺失值</span>
+</span></span><span style="display:flex;"><span>df_filled <span style="color:#f92672">=</span> df<span style="color:#f92672">.</span>fillna(<span style="color:#ae81ff">0</span>)  <span style="color:#75715e"># 用0填充</span>
+</span></span><span style="display:flex;"><span>print(df_filled)
+</span></span></code></pre></div><hr>
+<h3 id="数据排序"><strong>数据排序</strong></h3>
+<p>Pandas 提供了灵活的数据排序功能：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 按 Age 列降序排序</span>
+</span></span><span style="display:flex;"><span>sorted_df <span style="color:#f92672">=</span> df<span style="color:#f92672">.</span>sort_values(by<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Age&#39;</span>, ascending<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span><span style="display:flex;"><span>print(sorted_df)
+</span></span></code></pre></div><p>以下为一个基础示例，这个简单示例用于解决XOR问题</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 定义Sigmoid激活函数及其导数</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">sigmoid</span>(x):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">/</span> (<span style="color:#ae81ff">1</span> <span style="color:#f92672">+</span> np<span style="color:#f92672">.</span>exp(<span style="color:#f92672">-</span>x))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">sigmoid_derivative</span>(x):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> x <span style="color:#f92672">*</span> (<span style="color:#ae81ff">1</span> <span style="color:#f92672">-</span> x)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 定义神经网络类</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">NeuralNetwork</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, input_size, output_size):
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 初始化权重和偏置</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>weights <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>rand(input_size, output_size)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>bias <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>random<span style="color:#f92672">.</span>rand(<span style="color:#ae81ff">1</span>, output_size)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">feedforward</span>(self, X):
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 前向传播</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>z <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>dot(X, self<span style="color:#f92672">.</span>weights) <span style="color:#f92672">+</span> self<span style="color:#f92672">.</span>bias
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>a <span style="color:#f92672">=</span> sigmoid(self<span style="color:#f92672">.</span>z)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>a
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">backpropagation</span>(self, X, y, output, learning_rate):
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 反向传播</span>
+</span></span><span style="display:flex;"><span>        error <span style="color:#f92672">=</span> y <span style="color:#f92672">-</span> output
+</span></span><span style="display:flex;"><span>        d_output <span style="color:#f92672">=</span> error <span style="color:#f92672">*</span> sigmoid_derivative(output)
+</span></span><span style="display:flex;"><span>        d_weights <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>dot(X<span style="color:#f92672">.</span>T, d_output)
+</span></span><span style="display:flex;"><span>        d_bias <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>sum(d_output, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>, keepdims<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># 更新权重和偏置</span>
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>weights <span style="color:#f92672">+=</span> learning_rate <span style="color:#f92672">*</span> d_weights
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>bias <span style="color:#f92672">+=</span> learning_rate <span style="color:#f92672">*</span> d_bias
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">train</span>(self, X, y, epochs, learning_rate):
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> epoch <span style="color:#f92672">in</span> range(epochs):
+</span></span><span style="display:flex;"><span>            output <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>feedforward(X)
+</span></span><span style="display:flex;"><span>            self<span style="color:#f92672">.</span>backpropagation(X, y, output, learning_rate)
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> epoch <span style="color:#f92672">%</span> <span style="color:#ae81ff">1000</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>:
+</span></span><span style="display:flex;"><span>                loss <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>mean(np<span style="color:#f92672">.</span>square(y <span style="color:#f92672">-</span> output))
+</span></span><span style="display:flex;"><span>                print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Epoch </span><span style="color:#e6db74">{</span>epoch<span style="color:#e6db74">}</span><span style="color:#e6db74">, Loss: </span><span style="color:#e6db74">{</span>loss<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 示例数据</span>
+</span></span><span style="display:flex;"><span>X <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>array([[<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>], [<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>], [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>], [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>]])
+</span></span><span style="display:flex;"><span>y <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>array([[<span style="color:#ae81ff">0</span>], [<span style="color:#ae81ff">1</span>], [<span style="color:#ae81ff">1</span>], [<span style="color:#ae81ff">0</span>]])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 创建神经网络实例</span>
+</span></span><span style="display:flex;"><span>input_size <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>output_size <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>nn <span style="color:#f92672">=</span> NeuralNetwork(input_size, output_size)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 训练神经网络</span>
+</span></span><span style="display:flex;"><span>epochs <span style="color:#f92672">=</span> <span style="color:#ae81ff">10000</span>
+</span></span><span style="display:flex;"><span>learning_rate <span style="color:#f92672">=</span> <span style="color:#ae81ff">0.1</span>
+</span></span><span style="display:flex;"><span>nn<span style="color:#f92672">.</span>train(X, y, epochs, learning_rate)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 测试神经网络</span>
+</span></span><span style="display:flex;"><span>test_data <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>array([[<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>], [<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>], [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>], [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>]])
+</span></span><span style="display:flex;"><span>predictions <span style="color:#f92672">=</span> nn<span style="color:#f92672">.</span>feedforward(test_data)
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#34;Predictions:&#34;</span>)
+</span></span><span style="display:flex;"><span>print(predictions)
+</span></span></code></pre></div><p>其中主要有以下几个部分：</p>
+<ol>
+<li><strong>Sigmoid激活函数及其导数</strong>：
+<ul>
+<li><code>sigmoid(x)</code>：将输入映射到(0,1)区间。</li>
+<li><code>sigmoid_derivative(x)</code>：计算Sigmoid函数的导数，用于反向传播。</li>
+</ul>
+</li>
+<li><strong>神经网络类</strong>：
+<ul>
+<li><code>__init__</code>：初始化权重和偏置，随机生成初始值。</li>
+<li><code>feedforward</code>：前向传播，计算输出。</li>
+<li><code>backpropagation</code>：反向传播，计算梯度并更新权重和偏置。</li>
+<li><code>train</code>：训练神经网络，迭代多次进行前向传播和反向传播。</li>
+</ul>
+</li>
+<li><strong>示例数据</strong>：
+<ul>
+<li><code>X</code>：输入数据，表示逻辑门的输入。</li>
+<li><code>y</code>：目标输出，表示逻辑门的输出。</li>
+</ul>
+</li>
+<li><strong>创建神经网络实例</strong>：
+<ul>
+<li><code>input_size</code>：输入层的大小。</li>
+<li><code>output_size</code>：输出层的大小。</li>
+</ul>
+</li>
+<li><strong>训练神经网络</strong>：
+<ul>
+<li><code>epochs</code>：训练次数。</li>
+<li><code>learning_rate</code>：学习率，控制每次更新的步长。</li>
+</ul>
+</li>
+<li><strong>测试神经网络</strong>：
+<ul>
+<li><code>test_data</code>：测试数据，与训练数据相同。</li>
+<li><code>predictions</code>：神经网络的预测输出。</li>
+</ul>
+</li>
+</ol>
+<p>运行代码后，每个epoch的损失值逐渐减小，最终输出的预测值接近目标值。这个简单的神经网络模型可以解决XOR问题，尽管它是一个单层感知机，但通过训练可以学习到正确的权重和偏置。最终执行后的结果如下：</p>
+<p>![image-20250131000528516](D:\研究文章\Neural Network\image-20250131000528516.png)</p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+
+  </article>
+
+    </main>
+  </body>
+</html>
