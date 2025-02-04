@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Deepseek-R1本地部署过程 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Deepseek-R1本地部署过程">
+  <meta name="twitter:description" content="最近很多人都在研究本地大模型的部署，我也来踩个坑，其实部署方式很简单，本篇主要记录了本地部署和本地图形化UI工具的部署过程
+访问https://ollama.com/download下载ollama
+下载完成后进行默认安装，之后任务栏里会出现托盘图标
+起一个新的CMD窗口看看是否已经自动配好了环境变量
+接下来确定一下本地的GPU版本，可以用一些工具如GPU-z等，我用了MATLAB自带的gpuinfo进行查看，我的GPU型号为NVIDIA RTX 3080Ti，有点老了，毕竟电脑用了好多年了已经
+以下为网上找的一个适配版本的图，可以参考一下自己的GPU能够跑哪些版本的模型
+如果已经可以正常使用，就可以通过以下命令进行安装，稳妥起见用了1.5b，如果用7B其实也问题不大，经测试如果让显卡能烤地瓜的话8B也能跑，别说是我说的
+ollama run deepseek-r1:1.5b 安装完成后如下图，可以直接提问，且响应速度还挺快的
+接下来配置一下本地UI，使用chatbox这个工具进行，地址为https://chatboxai.app/zh
+安装完成后进行配置，首先创建OLLAMA的环境变量，确保能够访问到服务
+然后再chatbox中进行配置
+选择ollama的API
+选择本地模型
+此时已经成功连接了本地的ollama
+这时候一些简单的东西在无互联网连接的情况下也能正常回答，非常流畅可以说是">
+
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/%E6%9C%AC%E5%9C%B0%E9%83%A8%E7%BD%B2deepseek/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="Deepseek-R1本地部署过程">
+  <meta property="og:description" content="最近很多人都在研究本地大模型的部署，我也来踩个坑，其实部署方式很简单，本篇主要记录了本地部署和本地图形化UI工具的部署过程
+访问https://ollama.com/download下载ollama
+下载完成后进行默认安装，之后任务栏里会出现托盘图标
+起一个新的CMD窗口看看是否已经自动配好了环境变量
+接下来确定一下本地的GPU版本，可以用一些工具如GPU-z等，我用了MATLAB自带的gpuinfo进行查看，我的GPU型号为NVIDIA RTX 3080Ti，有点老了，毕竟电脑用了好多年了已经
+以下为网上找的一个适配版本的图，可以参考一下自己的GPU能够跑哪些版本的模型
+如果已经可以正常使用，就可以通过以下命令进行安装，稳妥起见用了1.5b，如果用7B其实也问题不大，经测试如果让显卡能烤地瓜的话8B也能跑，别说是我说的
+ollama run deepseek-r1:1.5b 安装完成后如下图，可以直接提问，且响应速度还挺快的
+接下来配置一下本地UI，使用chatbox这个工具进行，地址为https://chatboxai.app/zh
+安装完成后进行配置，首先创建OLLAMA的环境变量，确保能够访问到服务
+然后再chatbox中进行配置
+选择ollama的API
+选择本地模型
+此时已经成功连接了本地的ollama
+这时候一些简单的东西在无互联网连接的情况下也能正常回答，非常流畅可以说是">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-04T22:30:00+00:00">
+    <meta property="article:modified_time" content="2025-02-04T22:30:00+00:00">
+    <meta property="article:tag" content="人工智能">
+    <meta property="article:tag" content="机器学习">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">主页</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/categories/">分类</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">标签</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">关于</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/links/">友链</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/atta/">附件</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/yaphetszz" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">Deepseek-R1本地部署过程</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Feb 4, 2025
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          1424 Words - 
+          
+          3 min read
+        </div>
+          <p>创建时间: 2025-02-04 22:30</p>
+        
+           
+          
+          <p></p>
+          
+        
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/">人工智能</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+        </div>
+        <div>
+          <p></p>
+          <p>文章分类:    </p>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/">人工智能</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p>最近很多人都在研究本地大模型的部署，我也来踩个坑，其实部署方式很简单，本篇主要记录了本地部署和本地图形化UI工具的部署过程</p>
+<p>访问https://ollama.com/download下载ollama</p>
+<p><img src="../ollma/image-20250204213106554.png" alt="image-20250204213106554"></p>
+<p>下载完成后进行默认安装，之后任务栏里会出现托盘图标</p>
+<p><img src="../ollma/image-20250204213654426.png" alt="image-20250204213654426"></p>
+<p>起一个新的CMD窗口看看是否已经自动配好了环境变量</p>
+<p><img src="../ollma/image-20250204213747881.png" alt="image-20250204213747881"></p>
+<p>接下来确定一下本地的GPU版本，可以用一些工具如GPU-z等，我用了MATLAB自带的gpuinfo进行查看，我的GPU型号为NVIDIA RTX 3080Ti，有点老了，毕竟电脑用了好多年了已经</p>
+<p><img src="../ollma/image-20250204214042149.png" alt="image-20250204214042149"></p>
+<p>以下为网上找的一个适配版本的图，可以参考一下自己的GPU能够跑哪些版本的模型</p>
+<p><img src="../ollma/image-20250204214334125.png" alt="image-20250204214334125"></p>
+<p>如果已经可以正常使用，就可以通过以下命令进行安装，稳妥起见用了1.5b，如果用7B其实也问题不大，<del>经测试如果让显卡能烤地瓜的话8B也能跑，别说是我说的</del></p>
+<pre tabindex="0"><code>ollama run deepseek-r1:1.5b
+</code></pre><p>安装完成后如下图，可以直接提问，且响应速度还挺快的</p>
+<p><img src="../ollma/image-20250204220121827.png" alt="image-20250204220207394"></p>
+<p>接下来配置一下本地UI，使用chatbox这个工具进行，地址为https://chatboxai.app/zh</p>
+<p><img src="../ollma/image-20250204215303052.png" alt="image-20250204215303052"></p>
+<p>安装完成后进行配置，首先创建OLLAMA的环境变量，确保能够访问到服务</p>
+<p><img src="../ollma/image-20250204220417911.png" alt="image-20250204220417911"></p>
+<p>然后再chatbox中进行配置</p>
+<p><img src="../ollma/image-20250204215412626.png" alt="image-20250204215412626"></p>
+<p>选择ollama的API</p>
+<p><img src="../ollma/image-20250204215453672.png" alt="image-20250204215453672"></p>
+<p>选择本地模型</p>
+<p><img src="../ollma/image-20250204220505613.png" alt="image-20250204220505613"></p>
+<p>此时已经成功连接了本地的ollama</p>
+<p><img src="../ollma/image-20250204220548559.png" alt="image-20250204220548559"></p>
+<p>这时候一些简单的东西在无互联网连接的情况下也能正常回答，非常流畅可以说是</p>
+<p><img src="../ollma/image-20250204221112791.png" alt="image-20250204221112791"></p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+
+  </article>
+
+    </main>
+  </body>
+</html>
