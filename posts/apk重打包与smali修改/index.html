@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>APK重打包与smali修改 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="APK重打包与smali修改">
+  <meta name="twitter:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+APK重打包漏洞是安卓应用开发中一个较为常见的安全问题，主要是指攻击者通过反编译（Reverse Engineering）获取应用的源代码或资源文件，对其进行恶意修改（如嵌入恶意代码或广告模块）后重新打包并发布。这种行为会导致原应用的完整性和安全性被破坏，从而威胁用户和开发者的利益。
+使用工具查壳
+未加壳后用apktools进行反编译
+java -jar apktool_2.9.3.jar d hello_world.apk 反编译后定位到主方法的smali
+在smali中插入弹窗代码
+使用apktool重新编译
+java -jar apktool.jar b hello_world -o unsigned.apk 此时如果直接安装是无法成功的，因为APP未经过签名
+使用命令进行签名，签名先需要先生成jks证书文件
+keytool -genkeypair -v -keystore test.jks -storepass 123456 -keyalg RSA -keysize 2048 -validity 10000 -alias test&#34;C:\Program Files\Java\jdk1.8\bin\java.exe&#34; -jar apksigner.jar sign -verbose --ks test.jks --v1-signing-enabled true --v2-signing-enabled true --ks-pass pass:123456 --ks-k ey-alias test --out signed.apk unsigned.apk 重打包后可以看到之前修改smali弹窗已经成功
+常见问题解决：
+\1. Failed to load signer “signer #1” java.io.IOException: Keystore was tampered with, or password was incorrect">
+
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/apk%E9%87%8D%E6%89%93%E5%8C%85%E4%B8%8Esmali%E4%BF%AE%E6%94%B9/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="APK重打包与smali修改">
+  <meta property="og:description" content="本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！
+APK重打包漏洞是安卓应用开发中一个较为常见的安全问题，主要是指攻击者通过反编译（Reverse Engineering）获取应用的源代码或资源文件，对其进行恶意修改（如嵌入恶意代码或广告模块）后重新打包并发布。这种行为会导致原应用的完整性和安全性被破坏，从而威胁用户和开发者的利益。
+使用工具查壳
+未加壳后用apktools进行反编译
+java -jar apktool_2.9.3.jar d hello_world.apk 反编译后定位到主方法的smali
+在smali中插入弹窗代码
+使用apktool重新编译
+java -jar apktool.jar b hello_world -o unsigned.apk 此时如果直接安装是无法成功的，因为APP未经过签名
+使用命令进行签名，签名先需要先生成jks证书文件
+keytool -genkeypair -v -keystore test.jks -storepass 123456 -keyalg RSA -keysize 2048 -validity 10000 -alias test&#34;C:\Program Files\Java\jdk1.8\bin\java.exe&#34; -jar apksigner.jar sign -verbose --ks test.jks --v1-signing-enabled true --v2-signing-enabled true --ks-pass pass:123456 --ks-k ey-alias test --out signed.apk unsigned.apk 重打包后可以看到之前修改smali弹窗已经成功
+常见问题解决：
+\1. Failed to load signer “signer #1” java.io.IOException: Keystore was tampered with, or password was incorrect">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2020-04-08T09:14:00+08:00">
+    <meta property="article:modified_time" content="2020-04-08T09:14:00+08:00">
+    <meta property="article:tag" content="逆向">
+    <meta property="article:tag" content="安卓">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">主页</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/categories/">分类</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">标签</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">关于</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/links/">友链</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/atta/">附件</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/yaphetszz" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">APK重打包与smali修改</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Apr 8, 2020
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          1876 Words - 
+          
+          4 min read
+        </div>
+          <p>创建时间: 2020-04-08 09:14</p>
+        
+           
+          
+          <p>最后修改时间: 2025-02-10 00:27</p>
+          
+        
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E9%80%86%E5%90%91/">逆向</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E5%AE%89%E5%8D%93/">安卓</a>
+        </div>
+        <div>
+          <p></p>
+          <p>文章分类:    </p>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E5%AE%89%E5%8D%93/">安卓</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <p><strong>本文所述的一切技术仅供网络安全研究学习之用，请勿用于任何的违法用途，否则由此所产生的一切后果自负！</strong></p>
+<p>APK重打包漏洞是安卓应用开发中一个较为常见的安全问题，主要是指攻击者通过反编译（Reverse  Engineering）获取应用的源代码或资源文件，对其进行恶意修改（如嵌入恶意代码或广告模块）后重新打包并发布。这种行为会导致原应用的完整性和安全性被破坏，从而威胁用户和开发者的利益。</p>
+<p>使用工具查壳</p>
+<p><img src="../imgs/6b355b58-90ca-4303-97fd-8f7e827ebe24.png" alt="img"></p>
+<p>未加壳后用apktools进行反编译</p>
+<pre tabindex="0"><code>java -jar apktool_2.9.3.jar d hello_world.apk
+</code></pre><p>反编译后定位到主方法的smali</p>
+<p><img src="../imgs/aed333bb-6467-41d6-a0f8-a08625a9b63b.png" alt="img"></p>
+<p>在smali中插入弹窗代码</p>
+<p><img src="../imgs/da19b082-ace1-408a-a071-8e744fa3de3e.png" alt="img"></p>
+<p>使用apktool重新编译</p>
+<pre tabindex="0"><code>java -jar apktool.jar b hello_world -o unsigned.apk
+</code></pre><p><img src="../imgs/25c573f7-c474-4b8e-aca7-0a4b9b93baef.png" alt="img"></p>
+<p>此时如果直接安装是无法成功的，因为APP未经过签名</p>
+<p><img src="../imgs/c3351e21-959e-40bd-9c41-183ffaec352f.png" alt="img"></p>
+<p>使用命令进行签名，签名先需要先生成jks证书文件</p>
+<pre tabindex="0"><code>keytool -genkeypair -v -keystore test.jks -storepass 123456 -keyalg RSA -keysize 2048 -validity 10000 -alias test
+&#34;C:\Program Files\Java\jdk1.8\bin\java.exe&#34; -jar apksigner.jar sign -verbose --ks test.jks --v1-signing-enabled true --v2-signing-enabled true --ks-pass pass:123456 --ks-k ey-alias test --out signed.apk unsigned.apk
+</code></pre><p><img src="../imgs/5c4b5c06-cc90-4afe-b60a-66a9d9a13deb.png" alt="img"></p>
+<p>重打包后可以看到之前修改smali弹窗已经成功</p>
+<p><img src="../imgs/ada17813-2a42-4020-a22e-13eac976a046.png" alt="img"></p>
+<p>常见问题解决：</p>
+<p>\1. Failed to load signer &ldquo;signer #1&rdquo; java.io.IOException: Keystore was tampered with, or password was incorrect</p>
+<p><img src="../imgs/4117999e-f165-4bb8-ad26-d71d777f2e04.png" alt="img"></p>
+<p>重新生成证书，使用keytool版本和java版本保持一致</p>
+<p>\2. Failed to load signer &ldquo;signer #1&rdquo;: test.jks entry &ldquo;key0&rdquo; does not contain a key</p>
+<p><img src="../imgs/79de4ac9-92a1-4347-b4e5-41d156114751.png" alt="img"></p>
+<p>选择的别名需要和生成证书中的别名对应</p>
+<p>3.Exception in thread &ldquo;main&rdquo; java.io.FileNotFoundException: signed.apk (系统找不到指定的文件。)</p>
+<p><img src="../imgs/dea4f709-052a-4ebf-a707-ea51ce1262b1.png" alt="img"></p>
+<p>命令中out后先跟签名的apk文件名，再跟原文件名</p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+
+  </article>
+
+    </main>
+  </body>
+</html>
