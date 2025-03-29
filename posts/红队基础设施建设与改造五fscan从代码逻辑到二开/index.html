@@ -536,7 +536,7 @@ flag是打印logo和参数的模块，从common中能直接看到相关代码
 <p><img src="../fscan/image-20250323122913639.png" alt="image-20250323122913639"></p>
 <h2 id="二开随机ua">二开——随机UA</h2>
 <p>前面核心代码已经分析了，可以来考虑二开了，二开部分先实现一个简单功能，别的看看以后再写吧，首先定位到config.go文件，看到其中关于UA的定义部分，此时的UA是定值</p>
-<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cpineapple%5Cimage-20250327232026415.png" alt="image-20250327232026415"></p>
+<p><img src="../fscan/image-20250327232026415.png" alt="image-20250327232026415"></p>
 <p>新功能准备使用随机的UA，将UA定义为一个列表，每次请求时从列表中获取UA，并将随机值赋给UA即可</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">RandUAlist</span> = []<span style="color:#66d9ef">string</span>{<span style="color:#e6db74">&#34;UA列表&#34;</span>}
 </span></span><span style="display:flex;"><span>
@@ -547,11 +547,11 @@ flag是打印logo和参数的模块，从common中能直接看到相关代码
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">UserAgent</span>  = <span style="color:#a6e22e">getrandUA</span>()
-</span></span></code></pre></div><p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cpineapple%5Cimage-20250327232138250.png" alt="image-20250327233043196"></p>
+</span></span></code></pre></div><p><img src="../fscan/image-20250327232138250.png" alt="image-20250327233043196"></p>
 <p>重新进行编译，为了方便观察（主要是懒得再用wireshark抓了），重新启动时的参数将代理地址设置为BP的监听端口</p>
-<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cpineapple%5Cimage-20250327232411338.png" alt="image-20250327232411338"></p>
+<p><img src="../fscan/image-20250327232411338.png" alt="image-20250327232411338"></p>
 <p>再进行测试时可以看到UA头已经发生了改变</p>
-<p><img src="D:%5C%E7%A0%94%E7%A9%B6%E6%96%87%E7%AB%A0%5Cpineapple%5Cimage-20250327233212015.png" alt="image-20250327233212015"></p>
+<p><img src="../fscan/image-20250327233212015.png" alt="image-20250327233212015"></p>
 <p>同理，如果觉得发包速度太快了可能容易被发现的话，也可以对PocNum和Thread参数进行随机化，可以控制每次的发包速率和线程等</p>
 
     </div>
