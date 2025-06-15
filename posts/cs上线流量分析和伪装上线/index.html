@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>[蓝队技术]CS上线流量分析和伪装上线 // Y4ph3tS blog</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.139.3">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Y4ph3tS" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="/css/main.min.5b1fcc8902588589c4767187402a3c29f8b8d7a6fdef6d9f8f77045bb0d14fee.css" />
+    
+
+    
+    
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="[蓝队技术]CS上线流量分析和伪装上线">
+  <meta name="twitter:description" content="CS上线流量分析和伪装上线 通过CS上线，抓包并筛选HTTP流量
+定位到上线的包，里面包含cookie，cookie即为加密字段
+分析逆向后的CobaltStrike源码，定位到BeaconHTTP类中的Beacon Entry
+继续跟进到C2Beacon类，BeaconEntry入口点在此处进行定义
+继续跟进AsymmetricCrypto方法后进入AsymmetricCrypto类，其中是一个明显的RSA加密，模式未ECB，填充方式为PKCS1
+继续往下跟到decrypt方法，RSA的解密需要调用私钥
+回到BeaconC2类，其中对asecurity变量的赋值只有再setCrypto方法中存在
+使用IDEA全局搜索功能定位调用的文件，出现在BeaconSetup类中
+继续跟传入的参var2，var2的值来自beacon_asymmetric()方法，这个方法在同个类中定义，这其中的关键就是.cobaltstrike.beacon_keys
+这个文件在cs运行目录下也能找到，是beacon的key文件，通常情况下通过一些工具就可以解析公钥，比如GitHub上的CobaltStrikeParser能解析默认配置下的stage信息
+要取得私钥需要通过一些方法，根据上面的代码，编写一个工具类用于提取私钥，这个代码很多人都写过，直接拿大佬写完的也行
+import java.io.File; import java.util.Base64; import common.CommonUtils; import java.security.KeyPair; class DumpKeys { public static void main(String[] args) { try { File file = new File(&#34;.cobaltstrike.beacon_keys&#34;); if (file.exists()) { KeyPair keyPair = (KeyPair)CommonUtils.readObject(file, null); System.out.printf(&#34;Private Key: %s\n\n&#34;, new String(Base64.getEncoder().encode(keyPair.getPrivate().getEncoded()))); System.out.printf(&#34;Public Key: %s\n\n&#34;, new String(Base64.getEncoder().encode(keyPair.getPublic().getEncoded()))); } else { System.out.println(&#34;Could not find .cobaltstrike.beacon_keys file&#34;); } } catch (Exception exception) { System.out.println(&#34;Could not read asymmetric keys&#34;); } } } 使用此代码读取beacon_keys即可进行解密，运行前需设置classpath为cs的jar包文件">
+
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/cs%E4%B8%8A%E7%BA%BF%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90%E5%92%8C%E4%BC%AA%E8%A3%85%E4%B8%8A%E7%BA%BF/">
+  <meta property="og:site_name" content="Y4ph3tS blog">
+  <meta property="og:title" content="[蓝队技术]CS上线流量分析和伪装上线">
+  <meta property="og:description" content="CS上线流量分析和伪装上线 通过CS上线，抓包并筛选HTTP流量
+定位到上线的包，里面包含cookie，cookie即为加密字段
+分析逆向后的CobaltStrike源码，定位到BeaconHTTP类中的Beacon Entry
+继续跟进到C2Beacon类，BeaconEntry入口点在此处进行定义
+继续跟进AsymmetricCrypto方法后进入AsymmetricCrypto类，其中是一个明显的RSA加密，模式未ECB，填充方式为PKCS1
+继续往下跟到decrypt方法，RSA的解密需要调用私钥
+回到BeaconC2类，其中对asecurity变量的赋值只有再setCrypto方法中存在
+使用IDEA全局搜索功能定位调用的文件，出现在BeaconSetup类中
+继续跟传入的参var2，var2的值来自beacon_asymmetric()方法，这个方法在同个类中定义，这其中的关键就是.cobaltstrike.beacon_keys
+这个文件在cs运行目录下也能找到，是beacon的key文件，通常情况下通过一些工具就可以解析公钥，比如GitHub上的CobaltStrikeParser能解析默认配置下的stage信息
+要取得私钥需要通过一些方法，根据上面的代码，编写一个工具类用于提取私钥，这个代码很多人都写过，直接拿大佬写完的也行
+import java.io.File; import java.util.Base64; import common.CommonUtils; import java.security.KeyPair; class DumpKeys { public static void main(String[] args) { try { File file = new File(&#34;.cobaltstrike.beacon_keys&#34;); if (file.exists()) { KeyPair keyPair = (KeyPair)CommonUtils.readObject(file, null); System.out.printf(&#34;Private Key: %s\n\n&#34;, new String(Base64.getEncoder().encode(keyPair.getPrivate().getEncoded()))); System.out.printf(&#34;Public Key: %s\n\n&#34;, new String(Base64.getEncoder().encode(keyPair.getPublic().getEncoded()))); } else { System.out.println(&#34;Could not find .cobaltstrike.beacon_keys file&#34;); } } catch (Exception exception) { System.out.println(&#34;Could not read asymmetric keys&#34;); } } } 使用此代码读取beacon_keys即可进行解密，运行前需设置classpath为cs的jar包文件">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2021-12-06T02:13:01+08:00">
+    <meta property="article:modified_time" content="2021-12-06T02:13:01+08:00">
+    <meta property="article:tag" content="蓝队技术">
+    <meta property="article:tag" content="Cobaltstrike">
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <span class="app-header-title">Y4ph3tS blog</span>
+      <nav class="app-header-menu">
+          <a class="app-header-menu-item" href="/">主页</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/categories/">分类</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/tags/">标签</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/about/">关于</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/links/">友链</a>
+             - 
+          
+          <a class="app-header-menu-item" href="/atta/">附件</a>
+      </nav>
+      <p>Valar Morghulis</p>
+      <div class="app-header-social">
+        
+          <a href="https://github.com/yaphetszz" target="_blank" rel="noreferrer noopener me">
+            <svg class="icon icon-brand-github" viewBox="0 0 24 24" fill="currentColor"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title">[蓝队技术]CS上线流量分析和伪装上线</h1>
+      <div class="post-meta">
+        <div>
+          <svg class="icon icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Dec 6, 2021
+        </div>
+        <div>
+          <svg class="icon icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>clock</title><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          
+          2860 Words - 
+          
+          6 min read
+        </div>
+          <p>创建时间: 2021-12-06 02:13</p>
+        
+           
+          
+          <p>最后修改时间: 2025-06-15 16:30</p>
+          
+        
+        <div>
+          <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E8%93%9D%E9%98%9F%E6%8A%80%E6%9C%AF/">蓝队技术</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/cobaltstrike/">Cobaltstrike</a>
+        </div>
+        <div>
+          <p></p>
+          <p>文章分类:    </p>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/">攻防渗透</a>
+        </div>
+      </div>
+    </header>
+    <div class="post-content">
+      <h1 id="cs上线流量分析和伪装上线">CS上线流量分析和伪装上线</h1>
+<p>通过CS上线，抓包并筛选HTTP流量</p>
+<p><img src="../fakecs/AI13EcDdLlElcfSviBXNooiZkJbJJasiKdqn-2HoTRU.png" alt="image"></p>
+<p>定位到上线的包，里面包含cookie，cookie即为加密字段</p>
+<p><img src="../fakecs/1HXst4CcPDxnU6oqd4Wd-M4Dtj1wcRAWDk3eCKA4m6I.png" alt="image"></p>
+<p>分析逆向后的CobaltStrike源码，定位到BeaconHTTP类中的Beacon Entry</p>
+<p><img src="../fakecs/skB0MMvnnIK4Hph5Ijv7A-7AB5hsYd4OHqpaND8gB8s.png" alt="image"></p>
+<p>继续跟进到C2Beacon类，BeaconEntry入口点在此处进行定义</p>
+<p><img src="../fakecs/BAT6eLZ2kG7wA-971kccfMEnVRCDX_d7l02dVAI_cFc.png" alt="image"></p>
+<p>继续跟进AsymmetricCrypto方法后进入AsymmetricCrypto类，其中是一个明显的RSA加密，模式未ECB，填充方式为PKCS1</p>
+<p><img src="../fakecs/l8TljA7bgkhS2Myu4n4tpU1PnQF1Pg5JuOAwp-WnDIQ.png" alt="image"></p>
+<p>继续往下跟到decrypt方法，RSA的解密需要调用私钥</p>
+<p><img src="../fakecs/UeXzc4yjPBaJubWXmOwV23B-aBybT1ZBg-zZGHePSdw.png" alt="image"></p>
+<p>回到BeaconC2类，其中对asecurity变量的赋值只有再setCrypto方法中存在</p>
+<p><img src="../fakecs/b-L_P1_7hxEsjsuFefAcNd06zbIzUmmdGVp1iXqCSlo.png" alt="image"></p>
+<p>使用IDEA全局搜索功能定位调用的文件，出现在BeaconSetup类中</p>
+<p><img src="../fakecs/yiqaoFiRAr-tsiLrVmSSCotn9gZohWqsAZEybF0_qwU.png" alt="image"></p>
+<p><img src="../fakecs/QHJj1F5GyqLnL-t4PuYlgKS1SQOZ8WnuQJq3qq9HLqU.png" alt="image"></p>
+<p>继续跟传入的参var2，var2的值来自beacon_asymmetric()方法，这个方法在同个类中定义，这其中的关键就是.cobaltstrike.beacon_keys</p>
+<p><img src="../fakecs/mte_kFVY_Bisq2X6ZYuAvhYYzqTDKQQXj5ysAU0Xkrc.png" alt="image"></p>
+<p>这个文件在cs运行目录下也能找到，是beacon的key文件，通常情况下通过一些工具就可以解析公钥，比如GitHub上的CobaltStrikeParser能解析默认配置下的stage信息</p>
+<p><img src="../fakecs/oug1LIjpBoKssjcuMO7iw4rfVORZzk8PFb1fYUDuUXE.png" alt="image"></p>
+<p>要取得私钥需要通过一些方法，根据上面的代码，编写一个工具类用于提取私钥，这个代码很多人都写过，直接拿大佬写完的也行</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">import</span> java.io.File;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.util.Base64;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> common.CommonUtils;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.security.KeyPair;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DumpKeys</span>
+</span></span><span style="display:flex;"><span>{   
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span>(String<span style="color:#f92672">[]</span> args)
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>            File file <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> File(<span style="color:#e6db74">&#34;.cobaltstrike.beacon_keys&#34;</span>);
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (file.<span style="color:#a6e22e">exists</span>()) {
+</span></span><span style="display:flex;"><span>                KeyPair keyPair <span style="color:#f92672">=</span> (KeyPair)CommonUtils.<span style="color:#a6e22e">readObject</span>(file, <span style="color:#66d9ef">null</span>);
+</span></span><span style="display:flex;"><span>                System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;Private Key: %s\n\n&#34;</span>, <span style="color:#66d9ef">new</span> String(Base64.<span style="color:#a6e22e">getEncoder</span>().<span style="color:#a6e22e">encode</span>(keyPair.<span style="color:#a6e22e">getPrivate</span>().<span style="color:#a6e22e">getEncoded</span>())));
+</span></span><span style="display:flex;"><span>                System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">printf</span>(<span style="color:#e6db74">&#34;Public Key: %s\n\n&#34;</span>, <span style="color:#66d9ef">new</span> String(Base64.<span style="color:#a6e22e">getEncoder</span>().<span style="color:#a6e22e">encode</span>(keyPair.<span style="color:#a6e22e">getPublic</span>().<span style="color:#a6e22e">getEncoded</span>())));
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>                System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(<span style="color:#e6db74">&#34;Could not find .cobaltstrike.beacon_keys file&#34;</span>);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">catch</span> (Exception exception) {
+</span></span><span style="display:flex;"><span>           System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(<span style="color:#e6db74">&#34;Could not read asymmetric keys&#34;</span>);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>使用此代码读取beacon_keys即可进行解密，运行前需设置classpath为cs的jar包文件</p>
+<p><img src="../fakecs/1cwjQPCI3CPhO9ufh5-dGOqwbBEfG_qLMTqWynYvLJk.png" alt="image"></p>
+<p>找个在线工具，将相关字段填入可以直接解密</p>
+<p><img src="../fakecs/vQcWdwG1Q5cB3PWlDoLyP9FM4TD3etleEiNFhQiM8XE.png" alt="image"></p>
+<p>因为前面还有一串不可读字符，因此手动分析再进一步，先将私钥转换为16进制，以3082开头的即为私钥</p>
+<p><img src="../fakecs/_J1sEHbyrWB6gNm8f2tf4GSmWXLaVGLKF0iCqH0VwNM.png" alt="image"></p>
+<p>通过工具解析，解密得到的内容如下，似乎看起来丢了一些字符，从DESKTOP变成了SKTOP</p>
+<p><img src="../fakecs/EZs4VT_2Je-eACyH7iEkQsfqtQ9rTkcSMxlHL127UvE.png" alt="image"></p>
+<p>所以直接将16进制字符串进行解析</p>
+<p><img src="../fakecs/85u0aBF8JDpoMV-qTdIB4eoy9f7IL2FwclAywMlfOC8.png" alt="image"></p>
+<p><img src="../fakecs/izOL2COTfFL3hj0sJ423l-K51XzDN_SOdXCkE4vFhRA.png" alt="image"></p>
+<p>因此最终的metadata格式为：标志头（4）+Size（4）+Rawkey(16)+字体（4）+beacon ID(4)+ 进程ID（4）+port(2)+内核（4）+0x09 +失陷IP +0x09 + 主机名+ 0x09 + 用户名+0x09+进程名</p>
+<p>因此只需要知道了公钥和linster地址就能实现伪造上线，照上面的格式构造包就行，中间还有个小坑，就是长度的问题，如果超过特定长度会报错，按此格式生成数据包即可实现批量虚假上线</p>
+<p><img src="../fakecs/image-20250615163445101.png" alt="image-20250615163445101"></p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+
+  </article>
+
+    </main>
+  </body>
+</html>
