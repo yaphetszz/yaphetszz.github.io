@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-  <head>
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
     <title>SM2与KDF学习笔记 // Y4ph3tS blog</title>
     <link rel="shortcut icon" href="/favicon.ico" />
     <meta charset="utf-8" />
@@ -31,7 +31,7 @@ SM2加密算法过程如下：
 使用Python代码实现SM2中的KDF函数如下：
 from math import ceil from gmssl.sm3 import sm3_hash Z=&#34;57E7B63623FAE5F08CDA468E872A20AFA03DED41BF1403770E040DC83AF31A67991F2B01EBF9EFD8881F0A0493000603&#34; def hex2byte(msg): ml = len(msg) if ml % 2 != 0: ​ msg = &#39;0&#39;&#43; msg ml = int(len(msg)/2) msg_byte = [] for i in range(ml): ​ # print(msg[i*2:i*2&#43;2]) ​ msg_byte.append(int(msg[i*2:i*2&#43;2],16)) return msg_byte def KDF(Z,klen): klen = int(klen) ct = 0x00000001 rcnt = ceil(klen/32) Zin = hex2byte(Z) Ha = &#34;&#34; for i in range(rcnt): ​ msg = Zin &#43; hex2byte(&#39;%08x&#39;% ct) ​ # print(msg) ​ Ha = Ha &#43; sm3_hash(msg) ​ # print(Ha) ​ ct &#43;= 1 return Ha[0: klen * 2] print(KDF(Z,19).upper()) 其实KDF就是一个使用SM3算法不断拓展长度的过程，对上述脚本进行分析">
 
-    <meta property="og:url" content="https://yaphetszz.github.io/posts/sm2%E5%92%8Ckdf/">
+    <meta property="og:url" content="http://localhost:1313/posts/sm2%E5%92%8Ckdf/">
   <meta property="og:site_name" content="Y4ph3tS blog">
   <meta property="og:title" content="SM2与KDF学习笔记">
   <meta property="og:description" content="SM2加密算法 SM2算法是一种基于椭圆曲线密码的公钥密码算法，其安全性主要基于椭圆曲线离散对数难题。该算法由国家密码管理局设计并公开，是我国自主创新的一种密码算法，可应用于数据加密、解密、数字签名等操作。SM2算法包括密钥生成算法、加密算法、解密算法和数字签名算法等部分。
@@ -62,7 +62,7 @@ from math import ceil from gmssl.sm3 import sm3_hash Z=&#34;57E7B63623FAE5F08CDA
   </head>
   <body>
     <header class="app-header">
-      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <a href="http://localhost:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
       <span class="app-header-title">Y4ph3tS blog</span>
       <nav class="app-header-menu">
           <a class="app-header-menu-item" href="/">主页</a>
@@ -117,14 +117,14 @@ from math import ceil from gmssl.sm3 import sm3_hash Z=&#34;57E7B63623FAE5F08CDA
         
         <div>
           <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-              <a class="tag" href="https://yaphetszz.github.io/tags/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
-              <a class="tag" href="https://yaphetszz.github.io/tags/%E5%95%86%E7%94%A8%E5%AF%86%E7%A0%81%E6%B5%8B%E8%AF%84/">商用密码测评</a>
-              <a class="tag" href="https://yaphetszz.github.io/tags/sm2%E5%AF%86%E7%A0%81%E7%AE%97%E6%B3%95/">SM2密码算法</a>
+              <a class="tag" href="http://localhost:1313/tags/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
+              <a class="tag" href="http://localhost:1313/tags/%E5%95%86%E7%94%A8%E5%AF%86%E7%A0%81%E6%B5%8B%E8%AF%84/">商用密码测评</a>
+              <a class="tag" href="http://localhost:1313/tags/sm2%E5%AF%86%E7%A0%81%E7%AE%97%E6%B3%95/">SM2密码算法</a>
         </div>
         <div>
           <p></p>
           <p>文章分类:    </p>
-              <a class="tag" href="https://yaphetszz.github.io/categories/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
+              <a class="tag" href="http://localhost:1313/categories/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
         </div>
       </div>
     </header>
