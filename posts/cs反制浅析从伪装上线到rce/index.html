@@ -223,7 +223,7 @@ import java.io.File; import java.util.Base64; import common.CommonUtils; import 
 <h2 id="rce的前置xss">RCE的前置——XSS</h2>
 <p>在前不久beichen师傅给CS提了一个XSS漏洞，编号为CVE-2022-39197，影响CS&lt;4.7.1的所有版本，用上面的伪装上线修改一下提交payload，效果如下：</p>
 <p><img src="../fakecs/PaPxPZZE5K6hb93u-qt7HOfG2fRwTdQ9QZcFurVC1hg.png" alt="image"></p>
-<p>payload在用户名处，将用户名置为<!-- raw HTML omitted --><!-- raw HTML omitted -->即可加载</p>
+<p>payload在用户名处，将用户名置为<html><img src=http://127.0.0.1/1.png>即可加载</p>
 <p>但是你会发现如果把用户名替换为script标签其实并不会弹窗，直接不显示了，所以不是用file://xxx/cmd.exe这样的方式来实现的RCE</p>
 <p><img src="../fakecs/hWSNg6GT7RjgVx5FIDMvOZm7vdXsz-VgNWOfoYpZwYk.png" alt="image"></p>
 <p>来分析一下，很多人以为直接通过js能够rce，实际上并不是这样，看到很多文章都在写js的问题，但是这个核心根本不是js&hellip;（补充：后来漂亮鼠的文章里也说了），而是swing解析html的问题，先来分析一下swing的解析器，老版本的swing通常在jdk目录的rt.jar下，新的（我用的jdk21）在java.desktop/javax/swing/text/html中</p>
