@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <head>
     <title>红队基础设施建设与改造（五）——Fscan从代码逻辑到二开 // Y4ph3tS blog</title>
     <link rel="shortcut icon" href="/favicon.ico" />
     <meta charset="utf-8" />
@@ -33,7 +33,7 @@ flag是打印logo和参数的模块，从common中能直接看到相关代码
 顺便介绍一下参数
 参数名 参数类型 默认值 描述 -h string &#34;&#34; 要扫描的主机IP地址，例如: 192.168.11.11 -hn string &#34;&#34; 不扫描的主机，例如: -hn 192.168.1.1/24 -p string 默认端口 指定端口，例如: 22 -pa string &#34;&#34; 基于DefaultPorts添加端口，-pa 3389 -usera string &#34;&#34; 基于DefaultUsers添加用户，-usera user -pwda string &#34;&#34; 基于DefaultPasses添加密码，-pwda password -pn string &#34;&#34; 不扫描的端口，例如: -pn 445 -c string &#34;&#34; 执行命令 (ssh和wmi) -sshkey string &#34;&#34; ssh密钥文件 (id_rsa) -domain string &#34;&#34; smb域 -user string &#34;&#34; 用户名 -pwd string &#34;&#34; 密码 -time int64 3 设置超时时间 -m string “all” 选择扫描类型，例如: -m ssh -path string &#34;&#34; fcgi、smb远程文件路径 -t int 600 线程数 -top int 10 显示存活数量前几位 -hf string &#34;&#34; 主机文件，-hf ip.txt -userf string &#34;&#34; 用户名文件 -pwdf string &#34;&#34; 密码文件 -portf string &#34;&#34; 端口文件 -pocpath string &#34;&#34; poc文件路径 -rf string &#34;&#34; 写入sshkey文件的redis文件 (例如: -rf id_rsa.pub) -rs string &#34;&#34; 写入计划任务文件的redis shell (例如: -rs 192.168.1.1:6666) -nopoc bool false 不扫描web漏洞 -nobr bool false 不暴力破解密码 -br int 1 暴力破解线程数 -np bool false 不进行ping扫描 -ping bool false 使用ping替代icmp -o string “result.txt” 输出文件 -no bool false 不保存输出日志 -debug int64 60 每次记录错误日志的时间间隔 -silent bool false 静默扫描 -nocolor bool false 不使用颜色输出 -full bool false poc全面扫描，例如: shiro 100 key -u string &#34;&#34; url -uf string &#34;&#34; url文件 -pocname string &#34;&#34; 使用包含pocname的poc，-pocname weblogic -proxy string &#34;&#34; 设置poc代理，-proxy http://127.0.0.1:8080 -socks5 string &#34;&#34; 设置socks5代理，将在tcp连接中使用，超时设置将不生效 -cookie string &#34;&#34; 设置poc cookie，-cookie rememberMe=login -wt int64 5 设置web超时时间 -dns bool false 使用dnslog poc -num int 20 poc速率 -sc string &#34;&#34; ms17 shellcode，例如 -sc add -wmi bool false 开启wmi -hash string &#34;&#34; hash -noredis bool false 不进行redis安全测试 -json bool false json格式输出 Scanner实现 Parse.go文件用于解析url、密码字典路径、指定用户名等等参数的相关内容，不展开了，感兴趣的可以自己去看一下">
 
-    <meta property="og:url" content="http://localhost:1313/posts/%E7%BA%A2%E9%98%9F%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E5%BB%BA%E8%AE%BE%E4%B8%8E%E6%94%B9%E9%80%A0%E4%BA%94fscan%E4%BB%8E%E4%BB%A3%E7%A0%81%E9%80%BB%E8%BE%91%E5%88%B0%E4%BA%8C%E5%BC%80/">
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/%E7%BA%A2%E9%98%9F%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E5%BB%BA%E8%AE%BE%E4%B8%8E%E6%94%B9%E9%80%A0%E4%BA%94fscan%E4%BB%8E%E4%BB%A3%E7%A0%81%E9%80%BB%E8%BE%91%E5%88%B0%E4%BA%8C%E5%BC%80/">
   <meta property="og:site_name" content="Y4ph3tS blog">
   <meta property="og:title" content="红队基础设施建设与改造（五）——Fscan从代码逻辑到二开">
   <meta property="og:description" content="Fscan简介和基础结构 fscan是用Go语言编写的端口扫描工具，它具有高效、快速的特点，能够对目标主机的端口进行扫描，并识别开放的服务等信息。在内网探测的时候效果挺好，很多攻击队在打点突破拿到边界机之后都会喜欢上传fscan、frp等工具来进行内网探测，辅助横向移动进行下一步攻击
@@ -66,7 +66,7 @@ flag是打印logo和参数的模块，从common中能直接看到相关代码
   </head>
   <body>
     <header class="app-header">
-      <a href="http://localhost:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
       <span class="app-header-title">Y4ph3tS blog</span>
       <nav class="app-header-menu">
           <a class="app-header-menu-item" href="/">主页</a>
@@ -121,14 +121,14 @@ flag是打印logo和参数的模块，从common中能直接看到相关代码
         
         <div>
           <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-              <a class="tag" href="http://localhost:1313/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
-              <a class="tag" href="http://localhost:1313/tags/%E7%BA%A2%E9%98%9F%E6%AD%A6%E5%99%A8%E7%A0%94%E7%A9%B6/">红队武器研究</a>
-              <a class="tag" href="http://localhost:1313/tags/fscan/">Fscan</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%BA%A2%E9%98%9F%E6%AD%A6%E5%99%A8%E7%A0%94%E7%A9%B6/">红队武器研究</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/fscan/">Fscan</a>
         </div>
         <div>
           <p></p>
           <p>文章分类:    </p>
-              <a class="tag" href="http://localhost:1313/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/">攻防渗透</a>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/">攻防渗透</a>
         </div>
       </div>
     </header>

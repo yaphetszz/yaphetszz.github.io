@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <head>
     <title>红队基础设施建设与改造（三）——武装你的Burpsuite（下） // Y4ph3tS blog</title>
     <link rel="shortcut icon" href="/favicon.ico" />
     <meta charset="utf-8" />
@@ -46,7 +46,7 @@ callbacks.registerScopeChangeListener()
 该插件的完整代码如下：
 package burp; import java.io.PrintWriter; public class BurpExtender implements IBurpExtender, IHttpListener, ​ IProxyListener, IScannerListener, IExtensionStateListener, IScopeChangeListener { private IBurpExtenderCallbacks callbacks; private PrintWriter stdout; @Override public void registerExtenderCallbacks(IBurpExtenderCallbacks callbacks) { ​ this.callbacks = callbacks; ​ callbacks.setExtensionName(&#34;Advanced Event Listener&#34;); ​ stdout = new PrintWriter(callbacks.getStdout(), true); ​ callbacks.registerHttpListener(this); ​ callbacks.registerProxyListener(this); ​ callbacks.registerScannerListener(this); ​ callbacks.registerScopeChangeListener(this); ​ callbacks.registerExtensionStateListener(this); } @Override public void processHttpMessage(int toolFlag, boolean messageIsRequest, IHttpRequestResponse messageInfo) { ​ stdout.println( ​ (messageIsRequest ? &#34;HTTP request to &#34; : &#34;HTTP response from &#34;) &#43; ​ messageInfo.getHttpService() &#43; ​ &#34; [&#34; &#43; callbacks.getToolName(toolFlag) &#43; &#34;]&#34;); } @Override public void processProxyMessage(boolean messageIsRequest, IInterceptedProxyMessage message) { ​ stdout.println( ​ (messageIsRequest ? &#34;Proxy request to &#34; : &#34;Proxy response from &#34;) &#43; ​ message.getMessageInfo().getHttpService()); } @Override public void newScanIssue(IScanIssue issue) { ​ stdout.println(&#34;New scan issue: &#34; &#43; issue.getIssueName()); } @Override public void extensionUnloaded() { ​ stdout.println(&#34;Extension was unloaded&#34;); } @Override public void scopeChanged() { ​ stdout.println(&#34;ScopeChanged!&#34;); } } 其实带有图形化的插件和正常的Java程序差不多，开发过程也就和Java差不多，我们再来看看添加右键菜单。效果如下图所示：">
 
-    <meta property="og:url" content="http://localhost:1313/posts/%E7%BA%A2%E9%98%9F%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E5%BB%BA%E8%AE%BE%E4%B8%8E%E6%94%B9%E9%80%A0%E4%B8%89%E4%BC%AA%E8%A3%85%E4%BD%A0%E7%9A%84burpsuite%E4%B8%8B/">
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/%E7%BA%A2%E9%98%9F%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E5%BB%BA%E8%AE%BE%E4%B8%8E%E6%94%B9%E9%80%A0%E4%B8%89%E4%BC%AA%E8%A3%85%E4%BD%A0%E7%9A%84burpsuite%E4%B8%8B/">
   <meta property="og:site_name" content="Y4ph3tS blog">
   <meta property="og:title" content="红队基础设施建设与改造（三）——武装你的Burpsuite（下）">
   <meta property="og:description" content="前两篇文章主要讲了一下Burpsuite的插件，并且介绍了Burpsuite的API，本篇文章主要内容为高级插件的开发。
@@ -92,7 +92,7 @@ package burp; import java.io.PrintWriter; public class BurpExtender implements I
   </head>
   <body>
     <header class="app-header">
-      <a href="http://localhost:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
       <span class="app-header-title">Y4ph3tS blog</span>
       <nav class="app-header-menu">
           <a class="app-header-menu-item" href="/">主页</a>
@@ -147,14 +147,14 @@ package burp; import java.io.PrintWriter; public class BurpExtender implements I
         
         <div>
           <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-              <a class="tag" href="http://localhost:1313/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
-              <a class="tag" href="http://localhost:1313/tags/%E7%BA%A2%E9%98%9F%E6%AD%A6%E5%99%A8%E7%A0%94%E7%A9%B6/">红队武器研究</a>
-              <a class="tag" href="http://localhost:1313/tags/burpsuite/">Burpsuite</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%BA%A2%E9%98%9F%E6%AD%A6%E5%99%A8%E7%A0%94%E7%A9%B6/">红队武器研究</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/burpsuite/">Burpsuite</a>
         </div>
         <div>
           <p></p>
           <p>文章分类:    </p>
-              <a class="tag" href="http://localhost:1313/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/">攻防渗透</a>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/">攻防渗透</a>
         </div>
       </div>
     </header>

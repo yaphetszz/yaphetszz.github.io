@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <head>
     <title>keytool 生成证书链 // Y4ph3tS blog</title>
     <link rel="shortcut icon" href="/favicon.ico" />
     <meta charset="utf-8" />
@@ -27,7 +27,7 @@ keytool -exportcert -validity 36500 -alias rootca -file root.cer -keystore root.
 下面命令是生成二级证书密钥库，密钥库的名称为spky4，此时仍是自签的，证书颁发者和使用者都是自已：
 keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 12345678 -dname &#34;CN=y4.com,C=CN,OU=y4&#34; -alias spky4 -keystore sub.jks">
 
-    <meta property="og:url" content="http://localhost:1313/posts/keytool%E7%94%9F%E6%88%90%E8%AF%81%E4%B9%A6%E9%93%BE/">
+    <meta property="og:url" content="https://yaphetszz.github.io/posts/keytool%E7%94%9F%E6%88%90%E8%AF%81%E4%B9%A6%E9%93%BE/">
   <meta property="og:site_name" content="Y4ph3tS blog">
   <meta property="og:title" content="keytool 生成证书链">
   <meta property="og:description" content="数字证书基本概念 数字证书‌是一种由受信任的第三方机构（称为证书颁发机构，CA）颁发的电子文档，用于证明公钥的所有权。数字证书包含了证书持有者的信息（如名称和电子邮件地址）、证书持有者的公钥、证书有效期以及CA的签名等信息。其主要作用包括：
@@ -54,7 +54,7 @@ keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 1234
   </head>
   <body>
     <header class="app-header">
-      <a href="http://localhost:1313/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
+      <a href="https://yaphetszz.github.io/"><img class="app-header-avatar" src="/avatar.jpg" alt="Y4ph3tS" /></a>
       <span class="app-header-title">Y4ph3tS blog</span>
       <nav class="app-header-menu">
           <a class="app-header-menu-item" href="/">主页</a>
@@ -109,15 +109,15 @@ keytool -genkeypair -validity 36500 -keyalg EC -keypass 12345678 -storepass 1234
         
         <div>
           <svg class="icon icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
-              <a class="tag" href="http://localhost:1313/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a>
-              <a class="tag" href="http://localhost:1313/tags/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
-              <a class="tag" href="http://localhost:1313/tags/%E6%95%B0%E5%AD%97%E8%AF%81%E4%B9%A6/">数字证书</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
+              <a class="tag" href="https://yaphetszz.github.io/tags/%E6%95%B0%E5%AD%97%E8%AF%81%E4%B9%A6/">数字证书</a>
         </div>
         <div>
           <p></p>
           <p>文章分类:    </p>
-              <a class="tag" href="http://localhost:1313/categories/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a>
-              <a class="tag" href="http://localhost:1313/categories/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">环境配置</a>
+              <a class="tag" href="https://yaphetszz.github.io/categories/%E5%AF%86%E7%A0%81%E5%AD%A6/">密码学</a>
         </div>
       </div>
     </header>
